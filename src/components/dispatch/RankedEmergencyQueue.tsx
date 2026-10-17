@@ -18,6 +18,9 @@ import {
   Accessibility,
   ShieldAlert,
   CheckCircle2,
+  CheckCircle,
+  Radio,
+  Eye,
 } from 'lucide-react';
 
 interface RankedEmergencyQueueProps {
@@ -39,8 +42,30 @@ export function RankedEmergencyQueue({
 }: RankedEmergencyQueueProps) {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterVerification, setFilterVerification] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'assigned'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'assigned'>('open');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Live count calculations for filter badges
+  const counts = useMemo(() => {
+    const total = incidents.length;
+    const open = incidents.filter((i) => i.status === 'open').length;
+    const assigned = incidents.filter((i) => i.status === 'assigned').length;
+
+    let critical = 0;
+    let high = 0;
+    let medium = 0;
+    let low = 0;
+
+    for (const inc of incidents) {
+      const tier = getPriorityTier(inc.priority_score ?? 0);
+      if (tier === 'critical') critical++;
+      else if (tier === 'high') high++;
+      else if (tier === 'medium') medium++;
+      else low++;
+    }
+
+    return { total, open, assigned, critical, high, medium, low };
+  }, [incidents]);
 
   const filteredIncidents = useMemo(() => {
     return incidents
@@ -80,11 +105,25 @@ export function RankedEmergencyQueue({
       });
   }, [incidents, filterTier, filterVerification, filterStatus, searchQuery]);
 
+  const getTierAccentColor = (score: number) => {
+    const tier = getPriorityTier(score);
+    switch (tier) {
+      case 'critical':
+        return 'border-l-4 border-l-[#F16D70]';
+      case 'high':
+        return 'border-l-4 border-l-[#F5B544]';
+      case 'medium':
+        return 'border-l-4 border-l-blue-500';
+      case 'low':
+        return 'border-l-4 border-l-emerald-500';
+    }
+  };
+
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4 ${className}`}
+      className={`bg-white rounded-2xl border border-[#E2E8F0] shadow-card p-5 sm:p-6 space-y-4 ${className}`}
     >
-      {/* Header with Title & Stats */}
+      {/* Header with Title & Status Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
@@ -92,29 +131,69 @@ export function RankedEmergencyQueue({
               Ranked Emergency Queue
             </h3>
             <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-              {filteredIncidents.length} shown
+              {filteredIncidents.length} of {incidents.length}
             </span>
           </div>
           <p className="text-xs text-[#64748B]">
-            Life-First triage ranking: severe flood threats, urgent medical need, and time-to-harm.
+            Prioritized by threat severity, urgent medical criteria, and time-to-harm.
           </p>
         </div>
 
-        {/* Status Tab (All / Open / Assigned) */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          {(['all', 'open', 'assigned'] as const).map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
-                filterStatus === st
-                  ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800'
+        {/* Status Filter Tabs (Open / Assigned / All) with Live Badges */}
+        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl text-xs font-semibold">
+          <button
+            onClick={() => setFilterStatus('open')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              filterStatus === 'open'
+                ? 'bg-white text-slate-900 shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>Open</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                filterStatus === 'open' ? 'bg-teal-50 text-teal-700 font-bold' : 'bg-slate-200 text-slate-600'
               }`}
             >
-              {st}
-            </button>
-          ))}
+              {counts.open}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterStatus('assigned')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              filterStatus === 'assigned'
+                ? 'bg-white text-slate-900 shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>Assigned</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                filterStatus === 'assigned' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              {counts.assigned}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterStatus('all')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              filterStatus === 'all'
+                ? 'bg-white text-slate-900 shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>All</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                filterStatus === 'all' ? 'bg-slate-200 text-slate-800 font-bold' : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              {counts.total}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -125,7 +204,7 @@ export function RankedEmergencyQueue({
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search incident ID or details..."
+            placeholder="Filter by ID, details, or symptoms..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/40 focus:bg-white text-xs"
@@ -139,11 +218,11 @@ export function RankedEmergencyQueue({
             onChange={(e) => setFilterTier(e.target.value)}
             className="w-full py-1.5 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/40 focus:bg-white text-xs font-medium"
           >
-            <option value="all">All Tiers (0–100)</option>
-            <option value="critical">Critical (80–100)</option>
-            <option value="high">High (60–79)</option>
-            <option value="medium">Medium (30–59)</option>
-            <option value="low">Low (0–29)</option>
+            <option value="all">All Tiers ({counts.total})</option>
+            <option value="critical">Critical ({counts.critical})</option>
+            <option value="high">High ({counts.high})</option>
+            <option value="medium">Medium ({counts.medium})</option>
+            <option value="low">Low ({counts.low})</option>
           </select>
         </div>
 
@@ -162,8 +241,8 @@ export function RankedEmergencyQueue({
         </div>
       </div>
 
-      {/* Incidents List */}
-      <div className="space-y-2.5 max-h-[580px] overflow-y-auto pr-1">
+      {/* Incidents List with Scroll */}
+      <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1">
         {isLoading ? (
           <div className="py-12 text-center text-slate-400 space-y-2">
             <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -183,35 +262,56 @@ export function RankedEmergencyQueue({
             const isUnserved = unservedIncidentIds.has(incident.id);
             const isAssigned = incident.status === 'assigned';
             const tier = getPriorityTier(incident.priority_score ?? 0);
+            const tierAccent = getTierAccentColor(incident.priority_score ?? 0);
 
             return (
               <div
                 key={incident.id}
                 onClick={() => onSelectIncident(incident)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${tierAccent} ${
                   isSelected
-                    ? 'border-[#14B8A6] bg-teal-50/40 ring-2 ring-[#14B8A6]/30 shadow-card'
+                    ? 'border-[#14B8A6] bg-gradient-to-r from-teal-50/70 to-teal-50/30 ring-2 ring-[#14B8A6]/40 shadow-card-hover'
                     : isUnserved
-                    ? 'border-red-300 bg-red-50/30 hover:bg-red-50/60'
+                    ? 'border-red-300 bg-red-50/30 hover:bg-red-50/60 shadow-2xs'
                     : isAssigned
-                    ? 'border-blue-200 bg-blue-50/20 hover:bg-blue-50/40'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                    ? 'border-blue-200 bg-blue-50/20 hover:bg-blue-50/40 opacity-85'
+                    : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 shadow-2xs'
                 }`}
               >
                 {/* Header row: ID, Priority, Statuses */}
-                <div className="flex items-start justify-between gap-2 mb-1.5">
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-900">
+                    {/* Selection radio visual indicator */}
+                    <div
+                      className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${
+                        isSelected
+                          ? 'border-[#14B8A6] bg-[#14B8A6] text-white'
+                          : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+
+                    <span className="font-mono text-xs font-extrabold text-slate-900">
                       {incident.id.length > 12 ? `${incident.id.slice(0, 8)}...` : incident.id}
                     </span>
+
                     <PriorityBadge score={incident.priority_score ?? 0} size="sm" />
+
                     <span className="capitalize text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
                       Tier: {tier}
                     </span>
+
                     {isUnserved && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800">
+                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800">
                         <AlertOctagon className="w-3 h-3 text-red-600" />
-                        Resource Deficit
+                        Deficit
+                      </span>
+                    )}
+
+                    {isSelected && (
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-teal-600 text-white animate-in fade-in">
+                        INSPECTING
                       </span>
                     )}
                   </div>
@@ -238,28 +338,28 @@ export function RankedEmergencyQueue({
                 </p>
 
                 {/* Factors Chips */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                     <Waves className="w-3 h-3 text-blue-500" />
                     Flood Level {incident.flood_severity ?? 0}/3
                   </span>
 
                   {incident.medical_urgent && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200">
                       <HeartPulse className="w-3 h-3 text-red-500" />
                       Medical Alert
                     </span>
                   )}
 
                   {incident.mobility_help && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                       <Accessibility className="w-3 h-3 text-amber-500" />
-                      Mobility Help
+                      Mobility Assistance
                     </span>
                   )}
 
                   {incident.verification_status === 'conflicting' && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
                       <ShieldAlert className="w-3 h-3 text-purple-600" />
                       Conflicting Reports
                     </span>
@@ -269,13 +369,13 @@ export function RankedEmergencyQueue({
                 {/* Tags & Urgency Footer */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-slate-100 text-[11px]">
                   <div className="flex items-center gap-3 text-slate-500">
-                    <span className="flex items-center gap-1 font-semibold text-slate-700">
+                    <span className="flex items-center gap-1 font-semibold text-slate-800">
                       <Users className="w-3.5 h-3.5 text-slate-400" />
                       {incident.people_count ?? 1} persons needing rescue
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 font-mono tabular-nums">
+                  <div className="flex items-center gap-1.5 font-mono tabular-nums">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
                     {incident.minutes_to_harm !== null ? (
                       <span

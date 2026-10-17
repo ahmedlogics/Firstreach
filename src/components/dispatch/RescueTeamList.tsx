@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DbIncident, DbRescueTeam } from '@/lib/dispatch/types';
 import { calculateDistanceKm, estimateArrivalMinutes, formatPkr } from '@/lib/dispatch/cost';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -16,6 +16,8 @@ import {
   Coins,
   Shield,
   Layers,
+  Users,
+  Check,
 } from 'lucide-react';
 
 interface RescueTeamListProps {
@@ -35,6 +37,8 @@ export function RescueTeamList({
   isLoading = false,
   className = '',
 }: RescueTeamListProps) {
+  const [filterType, setFilterType] = useState<string>('all');
+
   const getTeamIcon = (type: DbRescueTeam['team_type']) => {
     switch (type) {
       case 'boat':
@@ -49,41 +53,77 @@ export function RescueTeamList({
   };
 
   const availableCount = teams.filter((t) => t.status === 'available').length;
+  const busyCount = teams.filter((t) => t.status === 'busy').length;
+
+  const filteredTeams = teams.filter((t) => {
+    if (filterType === 'all') return true;
+    return t.team_type === filterType;
+  });
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4 ${className}`}
+      className={`bg-white rounded-2xl border border-[#E2E8F0] shadow-card p-5 sm:p-6 space-y-4 ${className}`}
     >
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
         <div>
           <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
             Rescue Fleet & Resource Assets
           </h3>
           <p className="text-xs text-[#64748B]">
-            Fleet readiness, single-team capacities & operating rates.
+            Fleet readiness, single-team capacities & rate parameters.
           </p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-[#14B8A6] border border-teal-200">
-          {availableCount} of {teams.length} Ready
-        </span>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-50 text-[#14B8A6] border border-teal-200">
+            {availableCount} Ready
+          </span>
+          {busyCount > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+              {busyCount} Engaged
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+      {/* Type Filter Buttons */}
+      <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs font-medium">
+        {[
+          { label: 'All Craft', val: 'all' },
+          { label: 'Boats', val: 'boat' },
+          { label: 'Vehicles', val: 'vehicle' },
+          { label: 'Medical', val: 'medical' },
+        ].map(({ label, val }) => (
+          <button
+            key={val}
+            onClick={() => setFilterType(val)}
+            className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
+              filterType === val
+                ? 'bg-white text-[#0F172A] font-bold shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
         {isLoading ? (
           <div className="py-8 text-center text-slate-400 space-y-2">
             <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs">Loading fleet telemetry...</p>
           </div>
-        ) : teams.length === 0 ? (
+        ) : filteredTeams.length === 0 ? (
           <div className="p-4 text-center text-xs text-slate-500 border border-dashed rounded-xl">
-            No rescue teams found in fleet roster.
+            No rescue teams found matching filter.
           </div>
         ) : (
-          teams.map((team) => {
+          filteredTeams.map((team) => {
             const isSelected = selectedTeamId === team.id;
             const isBusy = team.status !== 'available';
 
-            // Calculate dynamic distance and simulated ETA to selected incident if available
+            // Calculate dynamic distance and simulated ETA to selected incident if coordinates exist
             const distanceKm =
               selectedIncident && selectedIncident.lat && selectedIncident.lng
                 ? calculateDistanceKm(
@@ -100,15 +140,23 @@ export function RescueTeamList({
                 onClick={() => !isBusy && onSelectTeam?.(team)}
                 className={`p-4 rounded-xl border transition-all ${
                   isBusy
-                    ? 'border-slate-200 bg-slate-50/70 opacity-75 cursor-not-allowed'
+                    ? 'border-slate-200 bg-slate-50/70 opacity-70 cursor-not-allowed'
                     : isSelected
                     ? 'border-[#14B8A6] bg-teal-50/30 ring-2 ring-[#14B8A6]/40 cursor-pointer shadow-subtle'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50 cursor-pointer'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer shadow-2xs'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-slate-100 border border-slate-200">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`p-2 rounded-xl border shadow-2xs ${
+                        team.team_type === 'boat'
+                          ? 'bg-teal-50 border-teal-200'
+                          : team.team_type === 'vehicle'
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-purple-50 border-purple-200'
+                      }`}
+                    >
                       {getTeamIcon(team.team_type)}
                     </div>
                     <div>
@@ -142,7 +190,8 @@ export function RescueTeamList({
 
                 {/* Metrics: Capacity, Rate Parameters, Distance/Simulated ETA */}
                 <div className="flex flex-wrap items-center justify-between pt-2.5 mt-2.5 border-t border-slate-100 text-xs">
-                  <span className="text-slate-600">
+                  <span className="text-slate-600 flex items-center gap-1 font-medium">
+                    <Users className="w-3.5 h-3.5 text-slate-400" />
                     Capacity: <strong className="text-slate-900">{team.capacity} pax</strong>
                   </span>
 

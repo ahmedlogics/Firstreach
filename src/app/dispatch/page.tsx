@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'reac
 import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { StatCard } from '@/components/shared/StatCard';
 import { AllocationPrincipleBanner } from '@/components/dispatch/AllocationPrincipleBanner';
 import { RankedEmergencyQueue } from '@/components/dispatch/RankedEmergencyQueue';
 import { RescueTeamList } from '@/components/dispatch/RescueTeamList';
@@ -28,6 +29,10 @@ import {
   Radio,
   ShieldCheck,
   ShieldAlert,
+  Flame,
+  LifeBuoy,
+  Users,
+  Navigation,
 } from 'lucide-react';
 
 function DispatchWorkspace() {
@@ -158,6 +163,27 @@ function DispatchWorkspace() {
     return map;
   }, [teams]);
 
+  // Operational HUD Metrics
+  const hudStats = useMemo(() => {
+    const criticalCount = incidents.filter(
+      (i) => (i.priority_score ?? 0) >= 80 && i.status === 'open'
+    ).length;
+
+    const availableTeams = teams.filter((t) => t.status === 'available');
+    const availableCapacity = availableTeams.reduce((acc, t) => acc + (t.capacity || 0), 0);
+
+    const openCount = incidents.filter((i) => i.status === 'open').length;
+    const missionCount = assignments.length;
+
+    return {
+      criticalCount,
+      availableTeamsCount: availableTeams.length,
+      availableCapacity,
+      openCount,
+      missionCount,
+    };
+  }, [incidents, teams, assignments]);
+
   // Handle open dispatch modal
   const handleInitiateDispatch = (team: DbRescueTeam, overrideReason?: string) => {
     setSelectedTeam(team);
@@ -285,11 +311,43 @@ function DispatchWorkspace() {
       />
 
       <div className="space-y-6">
+        {/* Operational HUD Stat Cards (4-column overview) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Critical Life Threats"
+            value={hudStats.criticalCount}
+            icon={Flame}
+            variant="critical"
+            subtitle="Triage Score ≥ 80 (Immediate)"
+          />
+          <StatCard
+            label="Available Craft Capacity"
+            value={`${hudStats.availableCapacity} pax`}
+            icon={LifeBuoy}
+            variant="teal"
+            subtitle={`${hudStats.availableTeamsCount} rescue units ready`}
+          />
+          <StatCard
+            label="Actionable Queue"
+            value={hudStats.openCount}
+            icon={Users}
+            variant="info"
+            subtitle="Emergencies awaiting triage"
+          />
+          <StatCard
+            label="Committed Missions"
+            value={hudStats.missionCount}
+            icon={Navigation}
+            variant="neutral"
+            subtitle="Database verified dispatches"
+          />
+        </div>
+
         {/* Core Allocation Principle Banner */}
         <AllocationPrincipleBanner />
 
-        {/* Two-Column Workspace Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Two-Column Workspace Layout (Sticky right column for optimal dispatcher ergonomics) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (7 cols): Ranked Queue & Unserved Alerts */}
           <div className="lg:col-span-7 space-y-6">
             <RankedEmergencyQueue
@@ -306,8 +364,8 @@ function DispatchWorkspace() {
             />
           </div>
 
-          {/* Right Column (5 cols): Assignment Recommendation & Fleet Readiness */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* Right Column (5 cols, Sticky on desktop): Recommendation & Fleet */}
+          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-4">
             <AssignmentRecommendationPanel
               selectedIncident={selectedIncident}
               recommendation={currentRecommendation}
