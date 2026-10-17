@@ -7,7 +7,7 @@ import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
 
 const DisasterMapClient = dynamic(() => import('./DisasterMapClient'), {
   ssr: false,
-  loading: () => <LoadingSkeleton variant="map" className="h-[460px] sm:h-[520px]" />,
+  loading: () => <LoadingSkeleton variant="map" className="h-[380px] sm:h-[440px] lg:h-[480px]" />,
 });
 
 interface DisasterMapProps {

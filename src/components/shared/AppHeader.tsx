@@ -28,8 +28,8 @@ export function AppHeader({ onToggleMobileMenu }: AppHeaderProps) {
     switch (pathname) {
       case '/dashboard':
         return {
-          title: 'Emergency Operations Overview',
-          subtitle: 'Real-time flood progression, zone priority ranking, and coordination command',
+          title: 'Operations Overview',
+          subtitle: 'Real-time flood progression and priority dispatch triage',
           crumb: 'Dashboard',
         };
       case '/report':

@@ -9,7 +9,6 @@ import {
   LifeBuoy,
   PhoneOff,
   AlertOctagon,
-  Users,
 } from 'lucide-react';
 
 interface DashboardStatsProps {
@@ -26,46 +25,34 @@ export function DashboardStats({
   className = '',
 }: DashboardStatsProps) {
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 ${className}`}>
+    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 ${className}`}>
       {/* 1. Active Emergencies */}
       <StatCard
         label="Active Emergencies"
         value={stats.activeEmergencies}
         icon={AlertTriangle}
         variant="neutral"
-        subtitle="Status: open / assigned / in progress"
-        trend={{
-          value: 'Live DB count',
-          isPositive: true,
-        }}
+        subtitle="Open or assigned"
         onClick={() => onFilterClick?.('active')}
       />
 
-      {/* 2. Critical Emergencies (priority_score >= 80) */}
+      {/* 2. Critical Emergencies */}
       <StatCard
         label="Critical Emergencies"
         value={stats.criticalEmergencies}
         icon={Flame}
         variant="critical"
-        subtitle="Priority score ≥ 80 (UI threshold)"
-        trend={{
-          value: 'Highest life-threat',
-          isPositive: false,
-        }}
+        subtitle="Priority score ≥ 80"
         onClick={() => onFilterClick?.('critical')}
       />
 
-      {/* 3. Available Rescue Teams */}
+      {/* 3. Available Teams */}
       <StatCard
         label="Available Teams"
         value={stats.availableRescueTeams}
         icon={LifeBuoy}
         variant="teal"
-        subtitle="Boats, vehicles & medical units"
-        trend={{
-          value: 'Ready for dispatch',
-          isPositive: true,
-        }}
+        subtitle="Ready for dispatch"
         onClick={() => onFilterClick?.('teams')}
       />
 
@@ -75,25 +62,17 @@ export function DashboardStats({
         value={stats.unreachableHouseholds}
         icon={PhoneOff}
         variant="warning"
-        subtitle={`+ ${stats.uncontactedHouseholds} unconfirmed contacts`}
-        trend={{
-          value: 'no_phone access',
-          isPositive: false,
-        }}
+        subtitle="No phone access"
         onClick={() => onFilterClick?.('unreachable')}
       />
 
-      {/* 5. Unserved Emergencies */}
+      {/* 5. Awaiting Assignment (Distinguished from genuinely unserved emergencies) */}
       <StatCard
-        label="Unserved Incidents"
+        label="Awaiting Assignment"
         value={stats.unservedEmergencies}
         icon={AlertOctagon}
         variant={typeof stats.unservedEmergencies === 'number' && stats.unservedEmergencies > 0 ? 'critical' : 'neutral'}
-        subtitle="Open with no active team assigned"
-        trend={{
-          value: 'Awaiting resource',
-          isPositive: false,
-        }}
+        subtitle="Pending team dispatch"
         onClick={() => onFilterClick?.('unserved')}
       />
     </div>

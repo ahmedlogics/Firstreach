@@ -17,19 +17,14 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import {
   Layers,
-  ZoomIn,
-  ZoomOut,
-  Crosshair,
   Flame,
   LifeBuoy,
   Home,
   Waves,
-  EyeOff,
   AlertTriangle,
-  HeartPulse,
-  Users,
-  Compass,
   ArrowRight,
+  Info,
+  ChevronDown,
 } from 'lucide-react';
 
 interface DisasterMapClientProps {
@@ -41,7 +36,7 @@ interface DisasterMapClientProps {
   onSelectIncident?: (incident: DbIncident) => void;
 }
 
-// Controller component to safely invalidate map size on mount
+// Controller component to safely invalidate map size after initial render
 function MapController() {
   const map = useMap();
   useEffect(() => {
@@ -50,7 +45,7 @@ function MapController() {
       try {
         map.invalidateSize();
       } catch (e) {
-        // ignore transient layout calculation
+        // Safe fallback
       }
     }, 200);
     return () => clearTimeout(timer);
@@ -67,7 +62,7 @@ export default function DisasterMapClient({
   onSelectIncident,
 }: DisasterMapClientProps) {
   const [activeLayer, setActiveLayer] = useState<'all' | 'incidents' | 'teams' | 'zones' | 'shelters'>('all');
-  const [mapZoom, setMapZoom] = useState(13);
+  const [isLegendOpen, setIsLegendOpen] = useState(true);
 
   // Default center based on zones or Karachi center (stable dependency)
   const initialCenter: [number, number] = useMemo(() => {
@@ -77,38 +72,35 @@ export default function DisasterMapClient({
     return [24.86, 67.02];
   }, [zones.length > 0 ? zones[0].id : 'default']);
 
-  // Create custom SVG DivIcons for Leaflet
+  // Create clean, readable custom DivIcons for Leaflet
   const createIncidentIcon = (incident: DbIncident) => {
     const { tier } = getPriorityTier(incident.priority_score);
     const isCritical = tier === 'Critical';
 
     let bgColor = '#14B8A6';
-    let ringColor = 'rgba(20, 184, 166, 0.4)';
+    let ringStyle = 'box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
 
     if (tier === 'Critical') {
-      bgColor = '#F16D70';
-      ringColor = 'rgba(241, 109, 112, 0.5)';
+      bgColor = '#EF4444';
+      ringStyle = 'box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45), 0 4px 8px rgba(0,0,0,0.35);';
     } else if (tier === 'High') {
-      bgColor = '#F5B544';
-      ringColor = 'rgba(245, 181, 68, 0.4)';
+      bgColor = '#F59E0B';
+      ringStyle = 'box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
     } else if (tier === 'Medium') {
       bgColor = '#0284C7';
-      ringColor = 'rgba(2, 132, 199, 0.4)';
+      ringStyle = 'box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
     }
 
     return L.divIcon({
       className: 'custom-leaflet-marker',
       html: `
-        <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
-          ${isCritical ? `<div style="position: absolute; inset: -4px; border-radius: 9999px; background-color: ${ringColor}; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
-          <div style="width: 30px; height: 30px; border-radius: 9999px; background-color: ${bgColor}; border: 2.5px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 800; font-family: monospace; font-size: 11px;">
-            ${incident.people_count}p
-          </div>
+        <div style="width: 30px; height: 30px; border-radius: 9999px; background-color: ${bgColor}; border: 2px solid #ffffff; ${ringStyle} display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 800; font-family: monospace; font-size: 11px;">
+          ${incident.people_count}p
         </div>
       `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-      popupAnchor: [0, -18],
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -16],
     });
   };
 
@@ -118,18 +110,18 @@ export default function DisasterMapClient({
     const isMedical = team.team_type === 'medical';
 
     const symbol = isBoat ? '⚓' : isMedical ? '✚' : '🚚';
-    const bgColor = isAvailable ? '#0D9488' : '#475569';
+    const bgColor = isAvailable ? '#0D9488' : '#64748B';
 
     return L.divIcon({
       className: 'custom-leaflet-team-marker',
       html: `
-        <div style="width: 30px; height: 30px; border-radius: 8px; background-color: ${bgColor}; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 13px;">
+        <div style="width: 28px; height: 28px; border-radius: 8px; background-color: ${bgColor}; border: 2px solid #ffffff; box-shadow: 0 3px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 13px;">
           ${symbol}
         </div>
       `,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -16],
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -15],
     });
   };
 
@@ -141,101 +133,101 @@ export default function DisasterMapClient({
     return L.divIcon({
       className: 'custom-leaflet-shelter-marker',
       html: `
-        <div style="width: 28px; height: 28px; border-radius: 8px; background-color: ${bgColor}; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 12px; font-weight: bold;">
+        <div style="width: 26px; height: 26px; border-radius: 7px; background-color: ${bgColor}; border: 2px solid #ffffff; box-shadow: 0 3px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 12px; font-weight: bold;">
           ⌂
         </div>
       `,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14],
-      popupAnchor: [0, -15],
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -14],
     });
   };
 
   return (
-    <div className="relative w-full h-[460px] sm:h-[520px] bg-[#0E1726] rounded-2xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex flex-col">
-      {/* Top Map Controls Header */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+    <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#0E1726] rounded-xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex flex-col">
+      {/* Top Map Layer Filter Bar */}
+      <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         {/* Layer Filter Pills */}
-        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl border border-slate-200/80 shadow-md text-xs font-semibold pointer-events-auto">
+        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200/90 shadow-md text-xs font-semibold pointer-events-auto">
           <button
             onClick={() => setActiveLayer('all')}
-            className={`px-2.5 py-1 rounded-lg transition-colors ${
+            className={`px-2 py-1 rounded-md transition-colors ${
               activeLayer === 'all' ? 'bg-[#0B1423] text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            All Layers
+            All
           </button>
           <button
             onClick={() => setActiveLayer('incidents')}
-            className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+            className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
               activeLayer === 'incidents' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <Flame className="w-3 h-3 text-red-500" /> Incidents ({incidents.length})
+            <Flame className="w-3 h-3 text-red-500" />
+            <span>Incidents ({incidents.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('teams')}
-            className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+            className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
               activeLayer === 'teams' ? 'bg-teal-600 text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <LifeBuoy className="w-3 h-3 text-teal-500" /> Teams ({rescueTeams.length})
+            <LifeBuoy className="w-3 h-3 text-teal-500" />
+            <span>Teams ({rescueTeams.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('zones')}
-            className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+            className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
               activeLayer === 'zones' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <Waves className="w-3 h-3 text-amber-500" /> Flood Zones ({zones.length})
+            <Waves className="w-3 h-3 text-amber-500" />
+            <span>Zones ({zones.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('shelters')}
-            className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+            className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
               activeLayer === 'shelters' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <Home className="w-3 h-3 text-blue-500" /> Shelters ({shelters.length})
+            <Home className="w-3 h-3 text-blue-500" />
+            <span>Shelters ({shelters.length})</span>
           </button>
         </div>
 
-        {/* Live Telemetry Tag */}
-        <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-mono font-medium flex items-center gap-2 pointer-events-auto shadow-md">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14B8A6] opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14B8A6]" />
-          </span>
-          <span>OpenStreetMap • Karachi Basin</span>
+        {/* Karachi Basin Live OSM Tag */}
+        <div className="bg-slate-900/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg border border-slate-700 text-[11px] font-mono font-medium flex items-center gap-1.5 pointer-events-auto shadow-md">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span>Karachi Basin</span>
         </div>
       </div>
 
-      {/* Actual React-Leaflet Map Container */}
+      {/* Leaflet Map Container */}
       <MapContainer
         center={initialCenter}
-        zoom={mapZoom}
+        zoom={13}
         scrollWheelZoom={true}
         style={{ width: '100%', height: '100%', background: '#0B1423' }}
       >
         <MapController />
 
-        {/* OpenStreetMap Tile Layer with Required Attribution */}
+        {/* OpenStreetMap Tile Layer */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={18}
         />
 
-        {/* 1. Zone Center Circles (Approximate circular visualization per schema) */}
+        {/* 1. Zone Center Circles */}
         {(activeLayer === 'all' || activeLayer === 'zones') &&
           zones.map((zone) => {
             const simulatedMinutes = getSimulatedMinutesToImpact(zone.minutes_to_impact, simulationMinutes);
             const isImpacted = simulatedMinutes !== null && simulatedMinutes <= 0;
 
-            let circleColor = '#0284C7'; // Blue for risk 1
-            if (zone.flood_risk === 3) circleColor = '#DC2626'; // Red for risk 3
-            else if (zone.flood_risk === 2) circleColor = '#D97706'; // Amber for risk 2
+            let circleColor = '#0284C7';
+            if (zone.flood_risk === 3) circleColor = '#DC2626';
+            else if (zone.flood_risk === 2) circleColor = '#D97706';
 
-            // Visual pulse if impacted during simulation
             if (isImpacted) {
               circleColor = '#EF4444';
             }
@@ -249,7 +241,7 @@ export default function DisasterMapClient({
                     color: circleColor,
                     fillColor: circleColor,
                     fillOpacity: isImpacted ? 0.35 : 0.18,
-                    weight: isImpacted ? 3 : 1.5,
+                    weight: isImpacted ? 2.5 : 1.5,
                     dashArray: zone.reporting_coverage === 'low' ? '6, 6' : undefined,
                   }}
                 >
@@ -260,7 +252,7 @@ export default function DisasterMapClient({
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                           zone.flood_risk === 3 ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
                         }`}>
-                          Risk Tier {zone.flood_risk}/3
+                          Risk Tier {zone.flood_risk}
                         </span>
                       </div>
 
@@ -270,23 +262,19 @@ export default function DisasterMapClient({
                           <strong className="capitalize">{zone.reporting_coverage}</strong>
                         </div>
                         <div className="flex justify-between">
-                          <span>Baseline Impact ETA:</span>
-                          <strong className="font-mono">{zone.minutes_to_impact !== null ? `${zone.minutes_to_impact} min` : 'Unknown'}</strong>
+                          <span>Surge ETA:</span>
+                          <strong className="font-mono">
+                            {simulatedMinutes !== null ? (isImpacted ? 'IMPACTED' : `${simulatedMinutes}m`) : 'Unknown'}
+                          </strong>
                         </div>
-                        {simulationMinutes > 0 && (
-                          <div className="flex justify-between text-red-600 font-semibold">
-                            <span>Simulated ETA (T+{simulationMinutes}m):</span>
-                            <span className="font-mono">{isImpacted ? 'IMPACTED' : `${simulatedMinutes} min remaining`}</span>
-                          </div>
-                        )}
                         <div className="flex justify-between">
-                          <span>Households Tracked:</span>
-                          <strong>{zone.householdCount} ({zone.noPhoneCount} no-phone)</strong>
+                          <span>Monitored Homes:</span>
+                          <strong>{zone.householdCount} ({zone.noPhoneCount} offline)</strong>
                         </div>
                       </div>
 
                       {zone.isBlindSpot && (
-                        <div className="mt-2 p-1.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[10px] flex items-start gap-1">
+                        <div className="mt-1.5 p-1.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[10px] flex items-start gap-1">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                           <span>Flagged: {zone.blindSpotReason}</span>
                         </div>
@@ -302,7 +290,6 @@ export default function DisasterMapClient({
         {(activeLayer === 'all' || activeLayer === 'incidents') &&
           incidents.map((inc) => {
             if (inc.lat === null || inc.lng === null) return null;
-            const priorityMeta = getPriorityTier(inc.priority_score);
             const severityMeta = formatFloodSeverity(inc.flood_severity);
 
             return (
@@ -315,30 +302,30 @@ export default function DisasterMapClient({
                   <div className="p-1.5 space-y-2 text-xs text-slate-800 font-sans min-w-[220px]">
                     <div className="flex items-center justify-between border-b pb-1.5">
                       <div>
-                        <span className="font-mono text-[10px] text-slate-400 block">ID: {inc.id.slice(0, 8)}...</span>
-                        <strong className="text-sm font-bold text-slate-900">{inc.zone_name || 'Emergency Incident'}</strong>
+                        <span className="font-mono text-[10px] text-slate-400 block">
+                          INC-{inc.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <strong className="text-sm font-bold text-slate-900">
+                          {inc.zone_name || 'Emergency Call'}
+                        </strong>
                       </div>
                       <PriorityBadge score={inc.priority_score} size="sm" />
                     </div>
 
-                    <p className="text-slate-600 text-xs italic">
-                      "{inc.details || 'No caller details recorded'}"
-                    </p>
+                    {inc.details && (
+                      <p className="text-slate-600 text-xs italic bg-slate-50 p-1.5 rounded border border-slate-100">
+                        "{inc.details}"
+                      </p>
+                    )}
 
-                    <div className="space-y-1 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <div className="space-y-1 text-[11px] text-slate-600">
                       <div className="flex justify-between">
-                        <span>Affected People:</span>
-                        <strong className="text-slate-900">{inc.people_count} individuals</strong>
+                        <span>Affected Individuals:</span>
+                        <strong className="text-slate-900">{inc.people_count}</strong>
                       </div>
                       <div className="flex justify-between">
                         <span>Flood Ingress:</span>
                         <span className={severityMeta.colorClass}>{severityMeta.label}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Medical Urgent:</span>
-                        <strong className={inc.medical_urgent ? 'text-red-600' : 'text-slate-600'}>
-                          {inc.medical_urgent ? 'YES (Critical)' : 'No'}
-                        </strong>
                       </div>
                       <div className="flex justify-between">
                         <span>Time Before Harm:</span>
@@ -346,7 +333,7 @@ export default function DisasterMapClient({
                           {inc.minutes_to_harm !== null ? `${inc.minutes_to_harm} min` : 'Unknown'}
                         </strong>
                       </div>
-                      <div className="flex justify-between pt-1 border-t border-slate-200/60">
+                      <div className="flex justify-between pt-1 border-t border-slate-100">
                         <span>Verification:</span>
                         <StatusBadge status={inc.verification_status} size="sm" />
                       </div>
@@ -357,7 +344,7 @@ export default function DisasterMapClient({
                         onClick={() => onSelectIncident(inc)}
                         className="w-full mt-1.5 py-1.5 px-3 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-bold flex items-center justify-center gap-1 transition-colors"
                       >
-                        <span>View Incident Drawer</span>
+                        <span>View Details</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -379,7 +366,7 @@ export default function DisasterMapClient({
                 icon={createTeamIcon(team)}
               >
                 <Popup className="firstreach-custom-popup">
-                  <div className="p-1 space-y-1.5 text-xs text-slate-800 font-sans min-w-[200px]">
+                  <div className="p-1 space-y-1 text-xs text-slate-800 font-sans min-w-[190px]">
                     <div className="flex items-center justify-between border-b pb-1">
                       <strong className="text-sm font-bold text-slate-900">{team.name}</strong>
                       <StatusBadge status={team.status} size="sm" />
@@ -387,20 +374,16 @@ export default function DisasterMapClient({
 
                     <div className="space-y-1 text-[11px] text-slate-600">
                       <div className="flex justify-between">
-                        <span>Asset Type:</span>
+                        <span>Type:</span>
                         <strong className="capitalize">{team.team_type}</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span>Rescue Capacity:</span>
-                        <strong>{team.capacity} persons / trip</strong>
+                        <span>Capacity:</span>
+                        <strong>{team.capacity} persons</strong>
                       </div>
                       <div className="flex justify-between">
                         <span>Capabilities:</span>
-                        <span>{team.capabilities?.join(', ') || 'Standard swiftwater'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Fixed Cost:</span>
-                        <span className="font-mono">PKR {team.fixed_cost}</span>
+                        <span>{team.capabilities?.join(', ') || 'Standard'}</span>
                       </div>
                     </div>
                   </div>
@@ -418,7 +401,7 @@ export default function DisasterMapClient({
               icon={createShelterIcon(shelter)}
             >
               <Popup className="firstreach-custom-popup">
-                <div className="p-1 space-y-1.5 text-xs text-slate-800 font-sans min-w-[190px]">
+                <div className="p-1 space-y-1 text-xs text-slate-800 font-sans min-w-[190px]">
                   <div className="flex items-center justify-between border-b pb-1">
                     <strong className="text-sm font-bold text-slate-900">{shelter.name}</strong>
                     <span className="text-[10px] font-mono text-slate-500">Shelter</span>
@@ -432,7 +415,7 @@ export default function DisasterMapClient({
                     </div>
                     <div className="flex justify-between">
                       <span>Available:</span>
-                      <strong className={shelter.capacity - shelter.occupied <= 5 ? 'text-red-600 font-bold' : 'text-emerald-700'}>
+                      <strong className={shelter.capacity - shelter.occupied <= 5 ? 'text-red-600' : 'text-emerald-700'}>
                         {Math.max(0, shelter.capacity - shelter.occupied)} beds
                       </strong>
                     </div>
@@ -443,37 +426,40 @@ export default function DisasterMapClient({
           ))}
       </MapContainer>
 
-      {/* Bottom Map Legend Bar */}
-      <div className="absolute bottom-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 space-y-1 max-w-[240px] pointer-events-auto shadow-lg">
-        <div className="flex items-center justify-between font-bold text-white text-xs mb-1">
+      {/* Compact Map Legend Bar */}
+      <div className="absolute bottom-2.5 left-2.5 z-10 bg-slate-950/90 backdrop-blur-md rounded-lg border border-slate-800 text-[11px] text-slate-300 pointer-events-auto shadow-lg overflow-hidden max-w-[230px]">
+        <button
+          onClick={() => setIsLegendOpen(!isLegendOpen)}
+          className="w-full flex items-center justify-between p-2 font-bold text-white text-xs hover:bg-slate-900/60 transition-colors"
+        >
           <span>Map Legend</span>
-          <span className="text-[10px] font-mono text-teal-400">T+{simulationMinutes}m</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-[#F16D70] border border-white shrink-0" />
-          <span>Critical Emergency (P80+)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-[#F5B544] border border-white shrink-0" />
-          <span>High Severity (P60-79)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-md bg-[#0D9488] shrink-0" />
-          <span>Rescue Team (Boat / Medical)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-md bg-[#2563EB] shrink-0" />
-          <span>Evacuation Shelter</span>
-        </div>
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-800 text-amber-300 text-[10px]">
-          <span className="w-3 h-1 border-b-2 border-dashed border-amber-400 shrink-0" />
-          <span>Dashed: Low Coverage Blind-Spot</span>
-        </div>
-      </div>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isLegendOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-      {/* Disclaimer on Bottom Right */}
-      <div className="absolute bottom-3 right-3 z-10 bg-slate-900/80 backdrop-blur-xs text-slate-400 px-2.5 py-1 rounded-lg text-[10px] pointer-events-auto border border-slate-800">
-        Coordinates are synthetic demo values
+        {isLegendOpen && (
+          <div className="px-2.5 pb-2.5 space-y-1 text-[10px] border-t border-slate-800/80 pt-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] border border-white shrink-0" />
+              <span>Critical Emergency (P80+)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] border border-white shrink-0" />
+              <span>High Priority (P60-79)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-md bg-[#0D9488] shrink-0" />
+              <span>Rescue Unit (Boat/Medical)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-md bg-[#2563EB] shrink-0" />
+              <span>Evacuation Shelter</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-amber-300 pt-0.5 border-t border-slate-850">
+              <span className="w-3 h-0.5 border-b-2 border-dashed border-amber-400 shrink-0" />
+              <span>Dashed: Verification Zone</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -64,17 +64,17 @@ export function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`group relative bg-white rounded-xl p-5 border shadow-subtle hover:shadow-card transition-all duration-200 ${variantStyles.border} ${
+      className={`group relative bg-white rounded-xl p-4 sm:p-4.5 border shadow-subtle hover:shadow-card transition-all duration-200 ${variantStyles.border} ${
         onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
       } ${className}`}
     >
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
             {label}
           </p>
           <div className="flex items-baseline gap-2">
-            <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${variantStyles.valColor}`}>
+            <span className={`text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums ${variantStyles.valColor}`}>
               {value}
             </span>
             {trend && (
@@ -93,8 +93,8 @@ export function StatCard({
             </p>
           )}
         </div>
-        <div className={`p-3 rounded-xl ${variantStyles.iconBg} transition-transform group-hover:scale-105 duration-200`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-2.5 rounded-xl ${variantStyles.iconBg} transition-transform group-hover:scale-105 duration-200 shrink-0`}>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
       </div>
     </div>
