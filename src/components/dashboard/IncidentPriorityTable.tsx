@@ -3,14 +3,15 @@
 import React, { useState, useMemo } from 'react';
 import { DbIncident } from '@/lib/dashboard/types';
 import { DataTableWrapper } from '@/components/shared/DataTableWrapper';
-import { SearchAndFilterBar } from '@/components/shared/SearchAndFilterBar';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { IncidentDetailDrawer } from './IncidentDetailDrawer';
 import { formatFloodSeverity, getPriorityTier } from '@/lib/dashboard/helpers';
 import {
   ArrowUpDown,
-  ExternalLink,
+  Search,
+  X,
+  ChevronDown,
   Users,
   Clock,
   ArrowRight,
@@ -73,58 +74,101 @@ export function IncidentPriorityTable({
     }
   };
 
+  const hasActiveFilters = Boolean(search || severityFilter !== 'all' || verificationFilter !== 'all' || statusFilter !== 'all');
+
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Compact Search and Filter Bar */}
-      <SearchAndFilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        placeholder="Filter by zone, ID, or caller note..."
-        totalResults={filteredIncidents.length}
-        onReset={() => {
-          setSearch('');
-          setSeverityFilter('all');
-          setVerificationFilter('all');
-          setStatusFilter('all');
-        }}
-        filters={[
-          {
-            id: 'priority_tier',
-            label: 'Priority',
-            value: severityFilter,
-            options: [
-              { label: 'All Tiers', value: 'all' },
-              { label: 'Critical (≥80)', value: 'critical' },
-              { label: 'High (60-79)', value: 'high' },
-              { label: 'Medium (40-59)', value: 'medium' },
-            ],
-            onChange: setSeverityFilter,
-          },
-          {
-            id: 'verification',
-            label: 'Verification',
-            value: verificationFilter,
-            options: [
-              { label: 'All', value: 'all' },
-              { label: 'Verified', value: 'verified' },
-              { label: 'Unverified', value: 'unverified' },
-            ],
-            onChange: setVerificationFilter,
-          },
-          {
-            id: 'status',
-            label: 'State',
-            value: statusFilter,
-            options: [
-              { label: 'All States', value: 'all' },
-              { label: 'Open', value: 'open' },
-              { label: 'Assigned', value: 'assigned' },
-              { label: 'In Progress', value: 'in_progress' },
-            ],
-            onChange: setStatusFilter,
-          },
-        ]}
-      />
+    <div className={`space-y-2.5 w-full min-w-0 max-w-full overflow-hidden ${className}`}>
+      {/* Compact dedicated toolbar: strictly constrained within 100% width */}
+      <div className="space-y-2 w-full min-w-0">
+        {/* Full-width Search Input */}
+        <div className="relative w-full min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search sector, ID, or caller note..."
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:bg-white transition-all"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* 3 Compact Filter Dropdowns strictly fitting inside 100% width */}
+        <div className="grid grid-cols-3 gap-1.5 w-full min-w-0">
+          {/* Priority Filter */}
+          <div className="relative w-full min-w-0">
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              title="Filter by priority tier"
+            >
+              <option value="all">Priority: All</option>
+              <option value="critical">Critical (≥80)</option>
+              <option value="high">High (60-79)</option>
+              <option value="medium">Medium (40-59)</option>
+            </select>
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Verification Filter */}
+          <div className="relative w-full min-w-0">
+            <select
+              value={verificationFilter}
+              onChange={(e) => setVerificationFilter(e.target.value)}
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              title="Filter by verification state"
+            >
+              <option value="all">Verify: All</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
+            </select>
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative w-full min-w-0">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              title="Filter by dispatch state"
+            >
+              <option value="all">State: All</option>
+              <option value="open">Open</option>
+              <option value="assigned">Assigned</option>
+              <option value="in_progress">In Progress</option>
+            </select>
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Filter status / active reset bar */}
+        {hasActiveFilters && (
+          <div className="flex items-center justify-between text-[11px] text-slate-500 px-0.5">
+            <span>{filteredIncidents.length} matching incidents</span>
+            <button
+              onClick={() => {
+                setSearch('');
+                setSeverityFilter('all');
+                setVerificationFilter('all');
+                setStatusFilter('all');
+              }}
+              className="text-red-600 hover:underline font-medium text-[11px]"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Incident Data Table */}
       <DataTableWrapper
@@ -141,10 +185,10 @@ export function IncidentPriorityTable({
       >
         <thead>
           <tr className="border-b border-[#E2E8F0] bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            <th className="py-2.5 px-3">Identifier</th>
-            <th className="py-2.5 px-3">Sector</th>
+            <th className="py-2 px-2.5">Identifier</th>
+            <th className="py-2 px-2.5">Sector</th>
             <th
-              className="py-2.5 px-3 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
               onClick={() => handleSort('people_count')}
             >
               <div className="flex items-center gap-1">
@@ -153,7 +197,7 @@ export function IncidentPriorityTable({
               </div>
             </th>
             <th
-              className="py-2.5 px-3 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
               onClick={() => handleSort('priority_score')}
             >
               <div className="flex items-center gap-1 text-[#14B8A6]">
@@ -162,7 +206,7 @@ export function IncidentPriorityTable({
               </div>
             </th>
             <th
-              className="py-2.5 px-3 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
               onClick={() => handleSort('minutes_to_harm')}
             >
               <div className="flex items-center gap-1">
@@ -170,9 +214,9 @@ export function IncidentPriorityTable({
                 <ArrowUpDown className="w-3 h-3" />
               </div>
             </th>
-            <th className="py-2.5 px-3">Verification</th>
-            <th className="py-2.5 px-3">Status</th>
-            <th className="py-2.5 px-3 text-right">Action</th>
+            <th className="py-2 px-2.5">Verification</th>
+            <th className="py-2 px-2.5">Status</th>
+            <th className="py-2 px-2.5 text-right">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#E2E8F0] text-xs">
@@ -194,7 +238,7 @@ export function IncidentPriorityTable({
                   onClick={() => setActiveIncident(incident)}
                 >
                   {/* Clean Non-Truncated ID with Full Tooltip */}
-                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">
+                  <td className="py-2 px-2.5 font-mono font-bold text-slate-900 whitespace-nowrap">
                     <span
                       title={`Full Database UUID: ${incident.id}`}
                       className="cursor-help inline-flex items-center gap-1.5"
@@ -207,7 +251,7 @@ export function IncidentPriorityTable({
                   </td>
 
                   {/* Sector & Details */}
-                  <td className="py-2.5 px-3 max-w-[140px] truncate">
+                  <td className="py-2 px-2.5 max-w-[130px] truncate">
                     <strong className="text-slate-800 font-semibold block truncate">
                       {incident.zone_name || 'Unassigned'}
                     </strong>
@@ -217,7 +261,7 @@ export function IncidentPriorityTable({
                   </td>
 
                   {/* People */}
-                  <td className="py-2.5 px-3 font-mono tabular-nums font-semibold text-slate-800 whitespace-nowrap">
+                  <td className="py-2 px-2.5 font-mono tabular-nums font-semibold text-slate-800 whitespace-nowrap">
                     <div className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5 text-slate-400" />
                       <span>{incident.people_count}</span>
@@ -225,12 +269,12 @@ export function IncidentPriorityTable({
                   </td>
 
                   {/* Priority Badge */}
-                  <td className="py-2.5 px-3 whitespace-nowrap">
+                  <td className="py-2 px-2.5 whitespace-nowrap">
                     <PriorityBadge score={incident.priority_score} size="sm" />
                   </td>
 
                   {/* Time to Harm */}
-                  <td className="py-2.5 px-3 whitespace-nowrap">
+                  <td className="py-2 px-2.5 whitespace-nowrap">
                     {incident.minutes_to_harm !== null ? (
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${
@@ -248,23 +292,23 @@ export function IncidentPriorityTable({
                   </td>
 
                   {/* Verification */}
-                  <td className="py-2.5 px-3 whitespace-nowrap">
+                  <td className="py-2 px-2.5 whitespace-nowrap">
                     <StatusBadge status={incident.verification_status} size="sm" />
                   </td>
 
                   {/* Status */}
-                  <td className="py-2.5 px-3 whitespace-nowrap">
+                  <td className="py-2 px-2.5 whitespace-nowrap">
                     <StatusBadge status={incident.status} size="sm" />
                   </td>
 
                   {/* View Details Action */}
-                  <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                  <td className="py-2 px-2.5 text-right whitespace-nowrap">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveIncident(incident);
                       }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-[#14B8A6] hover:text-white text-slate-700 transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-[#14B8A6] hover:text-white text-slate-700 transition-colors shadow-2xs"
                     >
                       <span>View Details</span>
                       <ArrowRight className="w-3 h-3" />

@@ -38,9 +38,9 @@ export function SearchAndFilterBar({
   const hasActiveFilters = searchValue.length > 0 || filters.some((f) => f.value !== 'all');
 
   return (
-    <div className={`flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-subtle ${className}`}>
+    <div className={`flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-subtle w-full min-w-0 max-w-full ${className}`}>
       {/* Search Input Box */}
-      <div className="relative flex-1 min-w-[240px]">
+      <div className="relative flex-1 min-w-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"

@@ -32,16 +32,10 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
 
-        {/* Global Footer with Hackathon Attribution & Disclaimer */}
-        <footer className="border-t border-[#E2E8F0] bg-white py-4 px-6 text-center text-xs text-[#64748B]">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-[#0F172A]">FirstReach</span>
-              <span>— Disaster Response Intelligence Platform</span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              CODE//CONNECT '26 Hackathon Prototype • Fictional Karachi Telemetry Simulation
-            </p>
+        {/* Global Footer */}
+        <footer className="border-t border-[#E2E8F0] bg-white py-3 px-6 text-xs text-[#64748B]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <span className="font-bold text-[#0F172A]">FirstReach</span>
           </div>
         </footer>
       </div>

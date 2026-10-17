@@ -168,20 +168,15 @@ export default function DashboardPage() {
           />
 
           {/* Row 2: Central Operational Intelligence — Risk Map (with compact docked Flood Simulation) + Priority Queue */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Left: Risk Map and visually associated Flood Simulation */}
-            <div className="lg:col-span-7 xl:col-span-7 space-y-2.5 flex flex-col">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
-                  Risk Map
-                </h2>
-                <span className="text-[11px] font-mono text-slate-400">
-                  OSM Tile Grid
-                </span>
-              </div>
+            <div className="lg:col-span-7 xl:col-span-7 space-y-2 flex flex-col min-w-0 max-w-full">
+              <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
+                Risk Map
+              </h2>
 
               {/* Visually associated container */}
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <FloodTimelineSlider
                   zones={data.zones}
                   simulationMinutes={simulationMinutes}
@@ -201,22 +196,17 @@ export default function DashboardPage() {
             </div>
 
             {/* Right: Emergency Priority Queue */}
-            <div className="lg:col-span-5 xl:col-span-5 space-y-2.5 flex flex-col">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
-                    Priority Queue
-                  </h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 font-mono">
-                    {data.incidents.length} active
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono text-slate-400">
-                  Harm Ranking
+            <div className="lg:col-span-5 xl:col-span-5 space-y-2 flex flex-col min-w-0 max-w-full">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
+                  Priority Queue
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 font-mono">
+                  {data.incidents.length} active
                 </span>
               </div>
 
-              <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-subtle p-3 sm:p-3.5 flex-1 flex flex-col">
+              <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-subtle p-3 sm:p-3.5 flex-1 flex flex-col min-w-0 max-w-full overflow-hidden">
                 <IncidentPriorityTable
                   incidents={data.incidents}
                   onForwardToDispatch={handleForwardToDispatch}
