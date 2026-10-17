@@ -62,7 +62,7 @@ test('schema: invalid UUID zone fails validation', () => {
   }
 });
 
-test('schema: future date and date older than 72 hours fail validation', () => {
+test('schema: observedAt allows up to 5 minutes clock drift (3 mins passes, 10 mins fails)', () => {
   const base = {
     zoneId: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
     locationDescription: 'Valid landmark location',
@@ -75,19 +75,28 @@ test('schema: future date and date older than 72 hours fail validation', () => {
     mobilityHelp: null,
   };
 
-  // 10 minutes in the future
-  const future = {
+  // 3 minutes in future (passes due to 5-minute clock drift allowance)
+  const threeMinutesAhead = {
+    ...base,
+    observedAt: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
+  };
+  const passResult = emergencyReportSchema.safeParse(threeMinutesAhead);
+  assert.equal(passResult.success, true, '3 minutes ahead should pass validation');
+
+  // 10 minutes in future (fails)
+  const tenMinutesAhead = {
     ...base,
     observedAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   };
-  assert.equal(emergencyReportSchema.safeParse(future).success, false);
+  const failResult = emergencyReportSchema.safeParse(tenMinutesAhead);
+  assert.equal(failResult.success, false, '10 minutes ahead should fail validation');
 
-  // 75 hours in the past
+  // 75 hours in the past (fails)
   const past = {
     ...base,
     observedAt: new Date(Date.now() - 75 * 60 * 60 * 1000).toISOString(),
   };
-  assert.equal(emergencyReportSchema.safeParse(past).success, false);
+  assert.equal(emergencyReportSchema.safeParse(past).success, false, '75 hours ago should fail');
 });
 
 test('schema: coordinates outside Karachi fail bounds validation', () => {
@@ -219,6 +228,34 @@ test('priority: never returns 0 and starts with "Provisional:"', () => {
   assert.ok(severeResult.score >= 90, 'Severe case should have very high priority');
 });
 
+test('priority: severity-3 trapped medical report scores higher than severity-1 all-unknown, bonus stays capped', () => {
+  const severeTrappedMedical = {
+    floodSeverity: 3,
+    trapped: true,
+    medicalUrgent: true,
+    mobilityHelp: false,
+    peopleCount: 1,
+  };
+  const evalSevere = calculateProvisionalPriority(severeTrappedMedical);
+
+  const severityOneAllUnknown = {
+    floodSeverity: 1,
+    trapped: null,
+    medicalUrgent: null,
+    mobilityHelp: null,
+    peopleCount: null,
+  };
+  const evalUnknown = calculateProvisionalPriority(severityOneAllUnknown);
+
+  assert.ok(
+    evalSevere.score > evalUnknown.score,
+    `Severe report (${evalSevere.score}) must score higher than all-unknown severity-1 report (${evalUnknown.score})`
+  );
+
+  // For severity 1: base = 30. Unknown bonus sum is 8+8+5+4 = 25, capped at 15. Total must equal 45, NOT 55.
+  assert.equal(evalUnknown.score, 45, 'Unknown bonus must be capped at +15 (30 base + 15 capped = 45)');
+});
+
 test('duplicates: haversine accurately measures short distances', () => {
   // Two points in Karachi approx 35 meters apart
   const d = haversineMeters(24.95000, 67.05000, 24.95025, 67.05020);
@@ -311,4 +348,39 @@ test('duplicates: mergeRaiseOnly only raises values and flags conflicting if dif
   assert.equal(mergedLower.updatedFields.people_count, 5, 'People count must not be lowered');
   assert.equal(mergedLower.updatedFields.medical_urgent, true, 'Medical urgency must not be downgraded');
   assert.equal(mergedLower.updatedFields.mobility_help, true, 'Mobility help must not be downgraded');
+});
+
+test('duplicates: mergeRaiseOnly leaves incident unchanged when follow-up report is less severe', () => {
+  const existingIncident: CandidateIncident = {
+    id: 'inc-original',
+    zone_id: 'zone-1',
+    lat: 24.95,
+    lng: 67.05,
+    status: 'open',
+    created_at: new Date().toISOString(),
+    flood_severity: 2,
+    people_count: 4,
+    medical_urgent: true,
+    mobility_help: true,
+    verification_status: 'unverified',
+  };
+
+  // Follow-up report is strictly less severe (severity 1, people 2, flags false)
+  const lessSevereFollowUp = {
+    floodSeverity: 1,
+    peopleCount: 2,
+    medicalUrgent: false,
+    mobilityHelp: false,
+  };
+
+  const result = mergeRaiseOnly(existingIncident, lessSevereFollowUp);
+
+  // Values remain completely unchanged from the existing incident
+  assert.equal(result.updatedFields.flood_severity, 2, 'Severity must remain 2');
+  assert.equal(result.updatedFields.people_count, 4, 'People count must remain 4');
+  assert.equal(result.updatedFields.medical_urgent, true, 'Medical urgency must remain true');
+  assert.equal(result.updatedFields.mobility_help, true, 'Mobility help must remain true');
+  assert.equal(result.updatedFields.verification_status, 'unverified', 'Verification status remains unverified since diff is 1');
+  assert.equal(result.isConflicting, false, 'Should not be conflicting since diff < 2');
+  assert.deepEqual(result.raisedFields, [], 'No fields should be raised');
 });
