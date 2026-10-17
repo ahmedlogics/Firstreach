@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
+  RotateCcw,
   Radio,
   ShieldCheck,
   ShieldAlert,
@@ -218,6 +219,21 @@ function DispatchWorkspace() {
     setEscalatedIncidentId(null);
   };
 
+  const handleResetScenario = async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await fetch('/api/assignments/reset', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reset scenario');
+      showToast('success', 'Scenario reset: All units available and incidents open.');
+      await fetchEngineData(true);
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to reset scenario');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <>
       {/* Toast Notification */}
@@ -244,16 +260,27 @@ function DispatchWorkspace() {
         description="Life-First Triage Engine: Prioritize urgent life threats, evaluate capable rescue craft, and authorize verified deployments."
         breadcrumbs={[{ label: 'Rescue Allocation' }]}
         actions={
-          <button
-            onClick={() => fetchEngineData()}
-            disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-subtle"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-teal-600' : ''}`}
-            />
-            <span>{isRefreshing ? 'Syncing...' : 'Sync Fleet Telemetry'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetScenario}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-subtle"
+              title="Reset scenario to unassigned open state for repeated demo runs"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Reset Scenario</span>
+            </button>
+            <button
+              onClick={() => fetchEngineData()}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors shadow-subtle"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`}
+              />
+              <span>{isRefreshing ? 'Syncing...' : 'Sync Fleet'}</span>
+            </button>
+          </div>
         }
       />
 
