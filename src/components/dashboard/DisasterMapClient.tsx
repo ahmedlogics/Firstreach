@@ -41,12 +41,20 @@ interface DisasterMapClientProps {
   onSelectIncident?: (incident: DbIncident) => void;
 }
 
-// Controller component to reset map view
-function MapViewHandler({ center, zoom }: { center: [number, number]; zoom: number }) {
+// Controller component to safely invalidate map size on mount
+function MapController() {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
+    if (!map) return;
+    const timer = setTimeout(() => {
+      try {
+        map.invalidateSize();
+      } catch (e) {
+        // ignore transient layout calculation
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map]);
   return null;
 }
 
@@ -61,13 +69,13 @@ export default function DisasterMapClient({
   const [activeLayer, setActiveLayer] = useState<'all' | 'incidents' | 'teams' | 'zones' | 'shelters'>('all');
   const [mapZoom, setMapZoom] = useState(13);
 
-  // Default center based on zones or Karachi center
+  // Default center based on zones or Karachi center (stable dependency)
   const initialCenter: [number, number] = useMemo(() => {
-    if (zones.length > 0) {
+    if (zones.length > 0 && typeof zones[0].center_lat === 'number') {
       return [zones[0].center_lat, zones[0].center_lng];
     }
     return [24.86, 67.02];
-  }, [zones]);
+  }, [zones.length > 0 ? zones[0].id : 'default']);
 
   // Create custom SVG DivIcons for Leaflet
   const createIncidentIcon = (incident: DbIncident) => {
@@ -208,7 +216,7 @@ export default function DisasterMapClient({
         scrollWheelZoom={true}
         style={{ width: '100%', height: '100%', background: '#0B1423' }}
       >
-        <MapViewHandler center={initialCenter} zoom={mapZoom} />
+        <MapController />
 
         {/* OpenStreetMap Tile Layer with Required Attribution */}
         <TileLayer
