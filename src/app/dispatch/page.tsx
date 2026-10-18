@@ -352,7 +352,7 @@ function DispatchWorkspace() {
 
         {/* Two-Column Workspace Layout (Sticky right column for optimal dispatcher ergonomics) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column (7 cols): Ranked Queue & Unserved Alerts */}
+          {/* Left Column (7 cols): Ranked Queue, Fleet Assets & Resource Deficit Alerts */}
           <div className="lg:col-span-7 space-y-6">
             <RankedEmergencyQueue
               incidents={incidents}
@@ -362,13 +362,21 @@ function DispatchWorkspace() {
               isLoading={isLoading}
             />
 
+            <RescueTeamList
+              teams={teams}
+              selectedTeamId={selectedTeam?.id}
+              selectedIncident={selectedIncident}
+              onSelectTeam={(team) => setSelectedTeam(team)}
+              isLoading={isLoading}
+            />
+
             <UnservedEmergenciesPanel
               unservedIncidents={unserved}
               onEscalate={handleEscalateIncident}
             />
           </div>
 
-          {/* Right Column (5 cols, Sticky on desktop): Recommendation & Fleet */}
+          {/* Right Column (5 cols, Sticky on desktop): Recommendation Decision Console */}
           <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-4">
             <AssignmentRecommendationPanel
               selectedIncident={selectedIncident}
@@ -377,14 +385,6 @@ function DispatchWorkspace() {
               onSelectTeam={(team) => setSelectedTeam(team)}
               onApproveDispatch={handleInitiateDispatch}
               isDispatching={isDispatching}
-            />
-
-            <RescueTeamList
-              teams={teams}
-              selectedTeamId={selectedTeam?.id}
-              selectedIncident={selectedIncident}
-              onSelectTeam={(team) => setSelectedTeam(team)}
-              isLoading={isLoading}
             />
           </div>
         </div>
