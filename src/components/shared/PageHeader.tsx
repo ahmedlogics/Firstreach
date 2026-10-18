@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { DemoModeBadge } from './DemoModeBadge';
 
 interface BreadcrumbItem {
   label: string;
@@ -27,7 +26,6 @@ export function PageHeader({
   breadcrumbs,
   actions,
   className = '',
-  showDemoBadge = true,
 }: PageHeaderProps) {
   return (
     <div className={`mb-6 sm:mb-8 ${className}`}>
@@ -58,7 +56,6 @@ export function PageHeader({
               {title}
             </h1>
             {badge}
-            {showDemoBadge && <DemoModeBadge />}
           </div>
           {description && (
             <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">

@@ -143,17 +143,15 @@ export function RankedEmergencyQueue({
         <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl text-xs font-semibold">
           <button
             onClick={() => setFilterStatus('open')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
-              filterStatus === 'open'
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${filterStatus === 'open'
                 ? 'bg-white text-slate-900 shadow-xs font-bold'
                 : 'text-slate-500 hover:text-slate-800'
-            }`}
+              }`}
           >
             <span>Open</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                filterStatus === 'open' ? 'bg-teal-50 text-teal-700 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${filterStatus === 'open' ? 'bg-teal-50 text-teal-700 font-bold' : 'bg-slate-200 text-slate-600'
+                }`}
             >
               {counts.open}
             </span>
@@ -161,17 +159,15 @@ export function RankedEmergencyQueue({
 
           <button
             onClick={() => setFilterStatus('assigned')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
-              filterStatus === 'assigned'
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${filterStatus === 'assigned'
                 ? 'bg-white text-slate-900 shadow-xs font-bold'
                 : 'text-slate-500 hover:text-slate-800'
-            }`}
+              }`}
           >
             <span>Assigned</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                filterStatus === 'assigned' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${filterStatus === 'assigned' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
+                }`}
             >
               {counts.assigned}
             </span>
@@ -179,17 +175,15 @@ export function RankedEmergencyQueue({
 
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
-              filterStatus === 'all'
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${filterStatus === 'all'
                 ? 'bg-white text-slate-900 shadow-xs font-bold'
                 : 'text-slate-500 hover:text-slate-800'
-            }`}
+              }`}
           >
             <span>All</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                filterStatus === 'all' ? 'bg-slate-200 text-slate-800 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${filterStatus === 'all' ? 'bg-slate-200 text-slate-800 font-bold' : 'bg-slate-200 text-slate-600'
+                }`}
             >
               {counts.total}
             </span>
@@ -268,26 +262,24 @@ export function RankedEmergencyQueue({
               <div
                 key={incident.id}
                 onClick={() => onSelectIncident(incident)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${tierAccent} ${
-                  isSelected
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${tierAccent} ${isSelected
                     ? 'border-[#14B8A6] bg-gradient-to-r from-teal-50/70 to-teal-50/30 ring-2 ring-[#14B8A6]/40 shadow-card-hover'
                     : isUnserved
-                    ? 'border-red-300 bg-red-50/30 hover:bg-red-50/60 shadow-2xs'
-                    : isAssigned
-                    ? 'border-blue-200 bg-blue-50/20 hover:bg-blue-50/40 opacity-85'
-                    : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 shadow-2xs'
-                }`}
+                      ? 'border-red-300 bg-red-50/30 hover:bg-red-50/60 shadow-2xs'
+                      : isAssigned
+                        ? 'border-blue-200 bg-blue-50/20 hover:bg-blue-50/40 opacity-85'
+                        : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 shadow-2xs'
+                  }`}
               >
                 {/* Header row: ID, Priority, Statuses */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Selection radio visual indicator */}
                     <div
-                      className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${
-                        isSelected
+                      className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${isSelected
                           ? 'border-[#14B8A6] bg-[#14B8A6] text-white'
                           : 'border-slate-300 bg-white'
-                      }`}
+                        }`}
                     >
                       {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
@@ -319,13 +311,12 @@ export function RankedEmergencyQueue({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <StatusBadge status={incident.status} size="sm" />
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        incident.verification_status === 'verified'
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${incident.verification_status === 'verified'
                           ? 'bg-emerald-100 text-emerald-800'
                           : incident.verification_status === 'conflicting'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
                     >
                       {incident.verification_status}
                     </span>
@@ -383,8 +374,8 @@ export function RankedEmergencyQueue({
                           incident.minutes_to_harm <= 30
                             ? 'text-red-600 font-bold'
                             : incident.minutes_to_harm <= 60
-                            ? 'text-amber-600 font-semibold'
-                            : 'text-slate-600'
+                              ? 'text-amber-600 font-semibold'
+                              : 'text-slate-600'
                         }
                       >
                         ~{incident.minutes_to_harm}m before critical harm
@@ -395,9 +386,8 @@ export function RankedEmergencyQueue({
                       </span>
                     )}
                     <ChevronRight
-                      className={`w-3.5 h-3.5 ml-1 transition-transform ${
-                        isSelected ? 'translate-x-1 text-[#14B8A6]' : 'text-slate-400'
-                      }`}
+                      className={`w-3.5 h-3.5 ml-1 transition-transform ${isSelected ? 'translate-x-1 text-[#14B8A6]' : 'text-slate-400'
+                        }`}
                     />
                   </div>
                 </div>

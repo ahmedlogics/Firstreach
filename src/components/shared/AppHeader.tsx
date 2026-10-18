@@ -12,7 +12,6 @@ import {
   X,
 } from 'lucide-react';
 import { ConnectionStatus } from './ConnectionStatus';
-import { DemoModeBadge } from './DemoModeBadge';
 import { MOCK_INCIDENTS } from '@/lib/mock-data';
 
 interface AppHeaderProps {
@@ -105,10 +104,6 @@ export function AppHeader({ onToggleMobileMenu }: AppHeaderProps) {
         <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
           <div className="hidden xl:block">
             <ConnectionStatus status="connected" showDetails={false} />
-          </div>
-
-          <div className="hidden sm:block">
-            <DemoModeBadge />
           </div>
 
           {/* Notifications Dropdown */}
