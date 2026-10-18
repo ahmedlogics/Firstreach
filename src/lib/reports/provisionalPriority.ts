@@ -89,7 +89,7 @@ export function calculateProvisionalPriority(
   const cappedUnknownBonus = Math.min(15, unknownBonus);
   if (cappedUnknownBonus > 0) {
     rawScore += cappedUnknownBonus;
-    reasons.push(`Safety uncertainty bonus [${unknownFactors.join(', ')}] (+${cappedUnknownBonus})`);
+    reasons.push(`Unknown: ${unknownFactors.join(', ')} (+${cappedUnknownBonus} caution bonus)`);
   }
 
   
