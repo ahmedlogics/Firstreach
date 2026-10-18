@@ -1,6 +1,6 @@
-import { getServiceSupabaseClient } from '@/lib/supabase';
 import { IncidentInsertColumns } from './mapping';
-import { CandidateIncident } from './duplicates';
+import { CandidateIncident, mergeRaiseOnly } from './duplicates';
+import { EmergencyReportInput } from './schema';
 
 export interface ZoneSummary {
   id: string;
@@ -13,7 +13,7 @@ export interface ReportRecord {
   id: string;
   incident_id: string | null;
   source: 'resident' | 'volunteer' | 'coordinator';
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   event_at: string;
   received_at: string;
   possible_duplicate_of: string | null;
@@ -23,7 +23,7 @@ export interface ReportRecord {
 export interface ReportInsert {
   incident_id?: string | null;
   source: 'resident' | 'volunteer' | 'coordinator';
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   event_at: string;
   possible_duplicate_of?: string | null;
   needs_review?: boolean;
@@ -52,10 +52,23 @@ export interface IncidentRecord {
 export interface ReportRepository {
   listZones(): Promise<ZoneSummary[]>;
   insertReport(report: ReportInsert): Promise<ReportRecord>;
+  updateReport(
+    id: string,
+    updates: Partial<Pick<ReportRecord, 'incident_id' | 'needs_review' | 'possible_duplicate_of'>>
+  ): Promise<ReportRecord>;
   findReportByIdempotencyKey(key: string): Promise<ReportRecord | null>;
   listRecentIncidents(hours?: number): Promise<CandidateIncident[]>;
   createIncident(incident: IncidentInsertColumns): Promise<IncidentRecord>;
-  updateIncident(id: string, updates: Partial<IncidentInsertColumns>): Promise<IncidentRecord>;
+  updateIncident(
+    id: string,
+    updates: Partial<IncidentInsertColumns>,
+    expectedUpdatedAt?: string,
+    incomingReport?: Pick<
+      EmergencyReportInput,
+      'floodSeverity' | 'peopleCount' | 'medicalUrgent' | 'mobilityHelp'
+    >
+  ): Promise<IncidentRecord>;
+  getIncidentById(id: string): Promise<IncidentRecord | null>;
   listLatest(limit?: number): Promise<Array<ReportRecord & { incident?: IncidentRecord | null }>>;
 }
 
@@ -96,10 +109,32 @@ export class MemoryReportRepository implements ReportRepository {
     return record;
   }
 
+  async updateReport(
+    id: string,
+    updates: Partial<Pick<ReportRecord, 'incident_id' | 'needs_review' | 'possible_duplicate_of'>>
+  ): Promise<ReportRecord> {
+    const idx = this.reports.findIndex((r) => r.id === id);
+    if (idx === -1) {
+      throw new Error(`Report with id ${id} not found`);
+    }
+    const current = this.reports[idx];
+    const updated: ReportRecord = {
+      ...current,
+      ...updates,
+    };
+    this.reports[idx] = updated;
+    return { ...updated };
+  }
+
+  async getIncidentById(id: string): Promise<IncidentRecord | null> {
+    const found = this.incidents.find((i) => i.id === id);
+    return found ? { ...found } : null;
+  }
+
   async findReportByIdempotencyKey(key: string): Promise<ReportRecord | null> {
     if (!key) return null;
     const found = this.reports.find(
-      (r) => r.payload && r.payload.idempotencyKey === key
+      (r) => r.payload && (r.payload as Record<string, unknown>).idempotencyKey === key
     );
     return found ? { ...found } : null;
   }
@@ -121,6 +156,7 @@ export class MemoryReportRepository implements ReportRepository {
         lng: inc.lng,
         status: inc.status,
         created_at: inc.created_at,
+        updated_at: inc.updated_at,
         flood_severity: inc.flood_severity,
         people_count: inc.people_count,
         medical_urgent: inc.medical_urgent,
@@ -143,7 +179,12 @@ export class MemoryReportRepository implements ReportRepository {
 
   async updateIncident(
     id: string,
-    updates: Partial<IncidentInsertColumns>
+    updates: Partial<IncidentInsertColumns>,
+    expectedUpdatedAt?: string,
+    incomingReport?: Pick<
+      EmergencyReportInput,
+      'floodSeverity' | 'peopleCount' | 'medicalUrgent' | 'mobilityHelp'
+    >
   ): Promise<IncidentRecord> {
     const idx = this.incidents.findIndex((i) => i.id === id);
     if (idx === -1) {
@@ -151,6 +192,23 @@ export class MemoryReportRepository implements ReportRepository {
     }
 
     const current = this.incidents[idx];
+
+    // Optimistic concurrency check: if expectedUpdatedAt was given and does not match
+    if (expectedUpdatedAt && current.updated_at !== expectedUpdatedAt) {
+      if (incomingReport) {
+        // Re-run mergeRaiseOnly on fresh values and retry once
+        const remerged = mergeRaiseOnly(current, incomingReport);
+        const retried: IncidentRecord = {
+          ...current,
+          ...remerged.updatedFields,
+          updated_at: new Date().toISOString(),
+        };
+        this.incidents[idx] = retried;
+        return { ...retried };
+      }
+      throw new Error(`Incident ${id} updated_at mismatch`);
+    }
+
     const updated: IncidentRecord = {
       ...current,
       ...updates,
@@ -181,12 +239,12 @@ export class MemoryReportRepository implements ReportRepository {
 }
 
 /**
- * Server-only Supabase repository using getServiceSupabaseClient().
- * Enforces strict secret key validation (no silent anon fallback) and
- * preserves raw payload immutability.
+ * Server-only Supabase repository.
+ * Lazily loads client via dynamic import so importing repository.ts never initializes Supabase.
+ * Enforces strict secret key validation (no silent anon fallback) and preserves raw payload immutability.
  */
 export class SupabaseReportRepository implements ReportRepository {
-  private ensureSecretKey(): void {
+  private async getClient() {
     const secretKey =
       process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!secretKey) {
@@ -194,11 +252,12 @@ export class SupabaseReportRepository implements ReportRepository {
         'Server configuration error: SUPABASE_SECRET_KEY is required for privileged repository operations.'
       );
     }
+    const { getServiceSupabaseClient } = await import('@/lib/supabase');
+    return getServiceSupabaseClient();
   }
 
   async listZones(): Promise<ZoneSummary[]> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
     const { data, error } = await client
       .from('zones')
       .select('id, name, flood_risk, reporting_coverage')
@@ -212,8 +271,7 @@ export class SupabaseReportRepository implements ReportRepository {
   }
 
   async insertReport(report: ReportInsert): Promise<ReportRecord> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
 
     const { data, error } = await client
       .from('reports')
@@ -236,33 +294,67 @@ export class SupabaseReportRepository implements ReportRepository {
     return data as ReportRecord;
   }
 
+  async updateReport(
+    id: string,
+    updates: Partial<Pick<ReportRecord, 'incident_id' | 'needs_review' | 'possible_duplicate_of'>>
+  ): Promise<ReportRecord> {
+    const client = await this.getClient();
+
+    const { data, error } = await client
+      .from('reports')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update report: ${error.message}`);
+    }
+
+    return data as ReportRecord;
+  }
+
+  async getIncidentById(id: string): Promise<IncidentRecord | null> {
+    const client = await this.getClient();
+
+    const { data, error } = await client
+      .from('incidents')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to fetch incident: ${error.message}`);
+    }
+
+    return (data as IncidentRecord) || null;
+  }
+
   async findReportByIdempotencyKey(key: string): Promise<ReportRecord | null> {
-    this.ensureSecretKey();
     if (!key) return null;
 
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
     const { data, error } = await client
       .from('reports')
       .select('*')
       .filter('payload->>idempotencyKey', 'eq', key)
-      .maybeSingle();
+      .limit(1);
 
     if (error) {
       throw new Error(`Failed to check idempotency: ${error.message}`);
     }
 
-    return (data as ReportRecord) || null;
+    return data && data.length > 0 ? (data[0] as ReportRecord) : null;
   }
 
   async listRecentIncidents(hours = 2): Promise<CandidateIncident[]> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
     const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await client
       .from('incidents')
       .select(
-        'id, zone_id, household_id, lat, lng, status, created_at, flood_severity, people_count, medical_urgent, mobility_help, verification_status'
+        'id, zone_id, household_id, lat, lng, status, created_at, updated_at, flood_severity, people_count, medical_urgent, mobility_help, verification_status'
       )
       .gte('created_at', cutoff)
       .in('status', ['open', 'assigned', 'in_progress']);
@@ -275,8 +367,7 @@ export class SupabaseReportRepository implements ReportRepository {
   }
 
   async createIncident(incident: IncidentInsertColumns): Promise<IncidentRecord> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
 
     const now = new Date().toISOString();
     const { data, error } = await client
@@ -297,33 +388,69 @@ export class SupabaseReportRepository implements ReportRepository {
 
   async updateIncident(
     id: string,
-    updates: Partial<IncidentInsertColumns>
+    updates: Partial<IncidentInsertColumns>,
+    expectedUpdatedAt?: string,
+    incomingReport?: Pick<
+      EmergencyReportInput,
+      'floodSeverity' | 'peopleCount' | 'medicalUrgent' | 'mobilityHelp'
+    >
   ): Promise<IncidentRecord> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
 
-    const { data, error } = await client
+    let query = client
       .from('incidents')
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
+
+    if (expectedUpdatedAt) {
+      query = query.eq('updated_at', expectedUpdatedAt);
+    }
+
+    const { data, error } = await query.select();
 
     if (error) {
       throw new Error(`Failed to update incident: ${error.message}`);
     }
 
-    return data as IncidentRecord;
+    // If optimistic lock failed (no rows updated)
+    if (!data || data.length === 0) {
+      if (expectedUpdatedAt && incomingReport) {
+        // Re-read fresh incident
+        const fresh = await this.getIncidentById(id);
+        if (!fresh) {
+          throw new Error(`Incident ${id} not found during optimistic retry`);
+        }
+        // Re-run mergeRaiseOnly on the fresh values to guarantee we only raise
+        const remerged = mergeRaiseOnly(fresh, incomingReport);
+        const retryResult = await client
+          .from('incidents')
+          .update({
+            ...remerged.updatedFields,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .eq('updated_at', fresh.updated_at)
+          .select()
+          .single();
+
+        if (retryResult.error) {
+          throw new Error(`Failed to update incident on retry: ${retryResult.error.message}`);
+        }
+        return retryResult.data as IncidentRecord;
+      }
+      throw new Error(`Incident ${id} updated_at mismatch (expected ${expectedUpdatedAt})`);
+    }
+
+    return data[0] as IncidentRecord;
   }
 
   async listLatest(
     limit = 20
   ): Promise<Array<ReportRecord & { incident?: IncidentRecord | null }>> {
-    this.ensureSecretKey();
-    const client = getServiceSupabaseClient();
+    const client = await this.getClient();
 
     const { data: reports, error: reportsErr } = await client
       .from('reports')
@@ -351,7 +478,11 @@ export class SupabaseReportRepository implements ReportRepository {
         .select('*')
         .in('id', incidentIds);
 
-      if (!incErr && incidents) {
+      if (incErr) {
+        throw new Error(`Failed to hydrate report incidents: ${incErr.message}`);
+      }
+
+      if (incidents) {
         incidentMap = incidents.reduce((acc, inc) => {
           acc[inc.id] = inc;
           return acc;
@@ -366,7 +497,31 @@ export class SupabaseReportRepository implements ReportRepository {
   }
 }
 
+let activeRepository: ReportRepository = new SupabaseReportRepository();
+
 /**
- * Default exported repository instance using Supabase
+ * Allows switching repository implementation (e.g. MemoryReportRepository for isolated unit tests).
  */
-export const reportRepository: ReportRepository = new SupabaseReportRepository();
+export function setReportRepository(repo: ReportRepository): void {
+  activeRepository = repo;
+}
+
+export function resetReportRepository(): void {
+  activeRepository = new SupabaseReportRepository();
+}
+
+/**
+ * Default exported repository instance delegating to activeRepository.
+ */
+export const reportRepository: ReportRepository = {
+  listZones: () => activeRepository.listZones(),
+  insertReport: (report) => activeRepository.insertReport(report),
+  updateReport: (id, updates) => activeRepository.updateReport(id, updates),
+  findReportByIdempotencyKey: (key) => activeRepository.findReportByIdempotencyKey(key),
+  listRecentIncidents: (hours) => activeRepository.listRecentIncidents(hours),
+  createIncident: (incident) => activeRepository.createIncident(incident),
+  updateIncident: (id, updates, expectedUpdatedAt, incomingReport) =>
+    activeRepository.updateIncident(id, updates, expectedUpdatedAt, incomingReport),
+  getIncidentById: (id) => activeRepository.getIncidentById(id),
+  listLatest: (limit) => activeRepository.listLatest(limit),
+};
