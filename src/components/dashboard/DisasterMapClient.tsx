@@ -63,6 +63,11 @@ export default function DisasterMapClient({
 }: DisasterMapClientProps) {
   const [activeLayer, setActiveLayer] = useState<'all' | 'incidents' | 'teams' | 'zones' | 'shelters'>('all');
   const [isLegendOpen, setIsLegendOpen] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Default center based on zones or Karachi center (stable dependency)
   const initialCenter: [number, number] = useMemo(() => {
@@ -143,6 +148,17 @@ export default function DisasterMapClient({
     });
   };
 
+  if (!isMounted) {
+    return (
+      <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#0E1726] rounded-xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex items-center justify-center">
+        <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+          <span>Loading Karachi Disaster Map Telemetry...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#0E1726] rounded-xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex flex-col">
       {/* Top Map Layer Filter Bar */}
@@ -204,6 +220,7 @@ export default function DisasterMapClient({
 
       {/* Leaflet Map Container */}
       <MapContainer
+        key={`disaster-map-${initialCenter[0]}-${initialCenter[1]}`}
         center={initialCenter}
         zoom={13}
         scrollWheelZoom={true}
