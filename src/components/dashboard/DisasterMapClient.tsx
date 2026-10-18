@@ -164,7 +164,7 @@ export default function DisasterMapClient({
 
   if (!isMounted) {
     return (
-      <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex items-center justify-center">
+      <div className="relative isolate z-0 w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex items-center justify-center">
         <div className="flex items-center gap-2 text-[#92979D] text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-[#536A82] animate-ping" />
           <span>Loading Karachi Disaster Map Telemetry...</span>
@@ -174,7 +174,7 @@ export default function DisasterMapClient({
   }
 
   return (
-    <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex flex-col">
+    <div className="relative isolate z-0 w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex flex-col">
       {/* Top Map Layer Filter Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         {/* Layer Filter Pills */}

@@ -75,7 +75,7 @@ class MapErrorBoundary extends React.Component<
 
 export function DisasterMap(props: DisasterMapProps) {
   return (
-    <div className={props.className}>
+    <div className={`relative isolate z-0 ${props.className || ''}`}>
       <MapErrorBoundary>
         <DisasterMapClient {...props} />
       </MapErrorBoundary>

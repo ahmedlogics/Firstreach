@@ -51,7 +51,7 @@ export function ConfirmationDialog({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
     >
       <div
         className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-[#E8E6E1] overflow-hidden transform transition-all"

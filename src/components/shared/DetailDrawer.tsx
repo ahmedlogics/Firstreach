@@ -47,14 +47,14 @@ export function DetailDrawer({
   }[width];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] overflow-hidden">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in"
         onClick={onClose}
       />
 
-      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
+      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10 z-[10000]">
         <div
           className={`w-screen ${widthClass} bg-white shadow-2xl border-l border-[#E8E6E1] flex flex-col transform transition-transform animate-in slide-in-from-right duration-200`}
           onClick={(e) => e.stopPropagation()}

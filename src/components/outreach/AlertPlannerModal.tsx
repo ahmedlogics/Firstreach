@@ -124,7 +124,7 @@ export function AlertPlannerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#252A30]/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#252A30]/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-[#E8E6E1] overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-[#E8E6E1] flex items-center justify-between">
