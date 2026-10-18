@@ -128,6 +128,23 @@ export interface TranslationDictionary {
     medicalLabel: string;
     mobilityLabel: string;
   };
+  validationErrors: {
+    zoneId: string;
+    locationDescription: string;
+    observedAt: string;
+    reportingFor: string;
+    reporterRole: string;
+    floodSeverity: string;
+    peopleCount: string;
+    reporterName: string;
+    reporterPhone: string;
+    lat: string;
+    lng: string;
+    description: string;
+    generalCorrection: string;
+    rateLimit: string;
+    serverError: string;
+  };
 }
 
 export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
@@ -259,6 +276,23 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       medicalLabel: 'Urgent Medical',
       mobilityLabel: 'Mobility Need',
     },
+    validationErrors: {
+      zoneId: 'Please select an emergency response zone',
+      locationDescription: 'Location description must be at least 5 characters',
+      observedAt: 'Observation time must be a valid time within the past 72 hours',
+      reportingFor: 'Please specify who you are reporting for',
+      reporterRole: 'Please select your relationship/role',
+      floodSeverity: 'Flood severity must be between 0 and 3',
+      peopleCount: 'People count must be between 1 and 500',
+      reporterName: 'Reporter name must contain only letters and be at least 2 characters',
+      reporterPhone: 'Phone number must be a valid number with 7 to 15 digits (e.g. +92 300 1234567)',
+      lat: 'Latitude must be within Karachi bounds (24.6 to 25.3)',
+      lng: 'Longitude must be within Karachi bounds (66.7 to 67.5)',
+      description: 'Description cannot exceed 1000 characters',
+      generalCorrection: 'Needs correction: please check the highlighted fields.',
+      rateLimit: 'Too many reports, please wait a minute',
+      serverError: 'Could not save report. Please try again.',
+    },
   },
 
   ur: {
@@ -389,6 +423,23 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       medicalLabel: 'طبی ضرورت',
       mobilityLabel: 'چلنے پھرنے میں مدد',
     },
+    validationErrors: {
+      zoneId: 'براہ کرم سیلابی زون / سیکٹر منتخب کریں',
+      locationDescription: 'گلی کا پتہ اور نشانی کم از کم ۵ حروف پر مشتمل ہونی چاہیے',
+      observedAt: 'مشاہدے کا وقت پچھلے ۷۲ گھنٹوں کے اندر ہونا چاہیے',
+      reportingFor: 'براہ کرم منتخب کریں کہ آپ کس کے لیے رپورٹ درج کر رہے ہیں',
+      reporterRole: 'براہ کرم رپورٹ کنندہ کی حیثیت منتخب کریں',
+      floodSeverity: 'سیلاب کی شدت کا درجہ ۰ سے ۳ کے درمیان منتخب کریں',
+      peopleCount: 'افراد کی تعداد ۱ سے ۵۰۰ کے درمیان ہونی چاہیے',
+      reporterName: 'نام میں صرف حروف ہونے چاہئیں (کم از کم ۲ حروف)',
+      reporterPhone: 'فون نمبر میں ۷ سے ۱۵ ہندسے ہونے چاہئیں (مثال: +92 300 1234567)',
+      lat: 'عرض بلد کراچی کی حدود (24.6 تا 25.3) کے اندر ہونا چاہیے',
+      lng: 'طول بلد کراچی کی حدود (66.7 تا 67.5) کے اندر ہونا چاہیے',
+      description: 'تفصیل ۱۰۰۰ حروف سے زیادہ نہیں ہو سکتی',
+      generalCorrection: 'درستگی درکار ہے: براہ کرم سرخ نشان زدہ خانوں کو درست کریں۔',
+      rateLimit: 'بہت زیادہ رپورٹس موصول ہو رہی ہیں، براہ کرم ایک منٹ بعد کوشش کریں۔',
+      serverError: 'رپورٹ محفوظ نہ ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔',
+    },
   },
 
   sd: {
@@ -518,6 +569,23 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       trappedLabel: 'ڦاٿل ماڻهو',
       medicalLabel: 'طبي ضرورت',
       mobilityLabel: 'هلڻ ڦرڻ ۾ مدد',
+    },
+    validationErrors: {
+      zoneId: 'مهرباني ڪري ٻوڏ جو علائقو / سيڪٽر چونڊيو',
+      locationDescription: 'گهٽي جو پتو ۽ نشاني گهٽ ۾ گهٽ ۵ اکر هجڻ کپي',
+      observedAt: 'ڏسڻ جو وقت گذريل ۷۲ ڪلاڪن اندر هجڻ کپي',
+      reportingFor: 'مهرباني ڪري چونڊيو ته اوهان ڪنهن لاءِ رپورٽ ڪري رهيا آهيو',
+      reporterRole: 'مهرباني ڪري رپورٽ ڪندڙ جي حيثيت چونڊيو',
+      floodSeverity: 'ٻوڏ جي شدت ۰ کان ۳ جي وچ ۾ هجڻ کپي',
+      peopleCount: 'ماڻهن جو انگ ۱ کان ۵۰۰ جي وچ ۾ هجڻ کپي',
+      reporterName: 'نالي ۾ صرف اکر هجڻ کپن (گهٽ ۾ گهٽ ۲ اکر)',
+      reporterPhone: 'فون نمبر ۾ ۷ کان ۱۵ انگ هجڻ کپن (مثال: +92 300 1234567)',
+      lat: 'ويڪرائي ڦاڪ ڪراچي جي حدن (24.6 کان 25.3) اندر هجڻ کپي',
+      lng: 'ڊگهائي ڦاڪ ڪراچي جي حدن (66.7 کان 67.5) اندر هجڻ کپي',
+      description: 'تفصيل ۱۰۰۰ اکرن کان وڌيڪ نه هئڻ کپي',
+      generalCorrection: 'درستي گهربل: مهرباني ڪري ڳاڙهي نشان لڳل خانن کي درست ڪريو.',
+      rateLimit: 'گهڻيون رپورٽون اچي رهيون آهن، مهرباني ڪري هڪ منٽ ترسو.',
+      serverError: 'رپورٽ محفوظ نه ٿي سگهي. مهرباني ڪري ٻيهر ڪوشش ڪريو.',
     },
   },
 };

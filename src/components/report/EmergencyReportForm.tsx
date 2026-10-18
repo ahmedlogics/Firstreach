@@ -99,11 +99,17 @@ export function EmergencyReportForm({
         }));
       }
     } catch {
-      setZonesError('Unable to load emergency response zones. Please check your connection.');
+      setZonesError(
+        language === 'ur'
+          ? 'امدادی زونز لوڈ کرنے میں ناکامی۔ براہ کرم انٹرنیٹ کنکشن چیک کریں۔'
+          : language === 'sd'
+          ? 'امدادي علائقا لوڊ ڪرڻ ۾ ناڪامي. مهرباني ڪري انٽرنيٽ چيڪ ڪريو.'
+          : 'Unable to load emergency response zones. Please check your connection.'
+      );
     } finally {
       setZonesLoading(false);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     fetchZones();
@@ -116,7 +122,13 @@ export function EmergencyReportForm({
 
   const handleUseMyLocation = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
+      setGpsError(
+        language === 'ur'
+          ? 'آپ کا براؤزر جی پی ایس لوکیشن کو سپورٹ نہیں کرتا۔'
+          : language === 'sd'
+          ? 'اوهان جو برائوزر جي پي ايس سپورٽ نٿو ڪري.'
+          : 'Geolocation is not supported by your browser.'
+      );
       return;
     }
 
@@ -137,11 +149,26 @@ export function EmergencyReportForm({
         setGpsSuccess(true);
       },
       (err) => {
-        let msg = 'Location access was denied or is unavailable.';
+        let msg =
+          language === 'ur'
+            ? 'لوکیشن تک رسائی حاصل نہیں ہو سکی۔'
+            : language === 'sd'
+            ? 'لوڪيشن جي رسائي حاصل نه ٿي سگهي.'
+            : 'Location access was denied or is unavailable.';
         if (err.code === err.PERMISSION_DENIED) {
-          msg = 'Location permission denied. You can enter coordinates manually or leave them blank.';
+          msg =
+            language === 'ur'
+              ? 'لوکیشن کی اجازت نہیں ملی۔ آپ خود درج کر سکتے ہیں یا خالی چھوڑ دیں۔'
+              : language === 'sd'
+              ? 'لوڪيشن جي اجازت ناهي ملي. اوهان پاڻ داخل ڪري سگهو ٿا يا خالي ڇڏيو.'
+              : 'Location permission denied. You can enter coordinates manually or leave them blank.';
         } else if (err.code === err.TIMEOUT) {
-          msg = 'Location request timed out. Please try again or enter manually.';
+          msg =
+            language === 'ur'
+              ? 'لوکیشن حاصل کرنے میں زیادہ وقت لگا۔ دوبارہ کوشش کریں یا خود درج کریں۔'
+              : language === 'sd'
+              ? 'لوڪيشن ۾ دير ٿي وئي. ٻيهر ڪوشش ڪريو يا پاڻ لکو.'
+              : 'Location request timed out. Please try again or enter manually.';
         }
         setGpsError(msg);
         setGpsLoading(false);
@@ -208,6 +235,12 @@ export function EmergencyReportForm({
     };
   };
 
+  // Helper to retrieve localized field validation message
+  const getFieldError = (field: string) => {
+    if (!errors[field]) return null;
+    return (t.validationErrors as Record<string, string>)?.[field] || errors[field];
+  };
+
   // Client-side validation using shared Zod schema
   const validateForm = () => {
     const payload = buildPayload();
@@ -218,7 +251,8 @@ export function EmergencyReportForm({
       for (const issue of result.error.issues) {
         const field = issue.path[0]?.toString() || 'general';
         if (!fieldErrors[field]) {
-          fieldErrors[field] = issue.message;
+          const localizedMsg = (t.validationErrors as Record<string, string>)?.[field];
+          fieldErrors[field] = localizedMsg || issue.message;
         }
       }
       setErrors(fieldErrors);
@@ -281,7 +315,7 @@ export function EmergencyReportForm({
       if (res.status === 429) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError('Too many reports, please wait a minute');
+        setGeneralError(t.validationErrors?.rateLimit || 'Too many reports, please wait a minute');
         return;
       }
 
@@ -295,13 +329,14 @@ export function EmergencyReportForm({
           for (const item of errData.details) {
             const field = item.field || (Array.isArray(item.path) ? item.path[0] : 'general');
             if (field && !serverFieldErrors[field]) {
-              serverFieldErrors[field] = item.message;
+              const localizedMsg = (t.validationErrors as Record<string, string>)?.[field];
+              serverFieldErrors[field] = localizedMsg || item.message;
             }
           }
           setErrors(serverFieldErrors);
-          setGeneralError('Needs correction: please check the highlighted fields.');
+          setGeneralError(t.validationErrors?.generalCorrection || 'Needs correction: please check the highlighted fields.');
         } else {
-          setGeneralError('Needs correction: ' + (errData.error || 'Validation failed.'));
+          setGeneralError(t.validationErrors?.generalCorrection || ('Needs correction: ' + (errData.error || 'Validation failed.')));
         }
         return;
       }
@@ -310,7 +345,7 @@ export function EmergencyReportForm({
       if (res.status === 500 || !res.ok) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError('Could not save report. Please try again.');
+        setGeneralError(t.validationErrors?.serverError || 'Could not save report. Please try again.');
         return;
       }
 
@@ -320,7 +355,7 @@ export function EmergencyReportForm({
       if (!data.ok) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError(data.error || 'Could not save report. Please try again.');
+        setGeneralError(t.validationErrors?.serverError || data.error || 'Could not save report. Please try again.');
         return;
       }
 
@@ -397,7 +432,7 @@ export function EmergencyReportForm({
         {generalError && (
           <div
             className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
-              generalError.includes('minute')
+              generalError === t.validationErrors?.rateLimit || generalError.includes('minute')
                 ? 'bg-amber-50 border-amber-300 text-amber-950'
                 : 'bg-red-50 border-red-300 text-red-950'
             }`}
@@ -405,19 +440,22 @@ export function EmergencyReportForm({
             <div className="flex items-center gap-2.5">
               <AlertTriangle
                 className={`w-4 h-4 shrink-0 ${
-                  generalError.includes('minute') ? 'text-amber-600' : 'text-red-600'
+                  generalError === t.validationErrors?.rateLimit || generalError.includes('minute') ? 'text-amber-600' : 'text-red-600'
                 }`}
               />
               <span className="font-semibold">{generalError}</span>
             </div>
 
             {/* Offer Retry button for 500 (keeps form values & same idempotencyKey) */}
-            {!generalError.includes('minute') && !generalError.includes('Needs correction') && (
+            {generalError !== t.validationErrors?.rateLimit &&
+              !generalError.includes('minute') &&
+              generalError !== t.validationErrors?.generalCorrection &&
+              !generalError.includes('Needs correction') && (
               <button
                 type="button"
                 onClick={executeSubmission}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shrink-0 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shrink-0 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
                 <span>{isSubmitting ? (language === 'ur' ? 'کوشش جاری...' : language === 'sd' ? 'ڪوشش جاري...' : 'Retrying...') : (language === 'ur' ? 'دوبارہ کوشش کریں' : language === 'sd' ? 'ٻيهر ڪوشش ڪريو' : 'Retry Submission')}</span>
@@ -487,7 +525,7 @@ export function EmergencyReportForm({
               </label>
             </div>
             {errors.reportingFor && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reportingFor}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reportingFor')}</p>
             )}
           </div>
 
@@ -520,7 +558,7 @@ export function EmergencyReportForm({
                 />
               </div>
               {errors.reporterName && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterName}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterName')}</p>
               )}
             </div>
 
@@ -552,7 +590,7 @@ export function EmergencyReportForm({
                 />
               </div>
               {errors.reporterPhone && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterPhone}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterPhone')}</p>
               )}
             </div>
 
@@ -576,7 +614,7 @@ export function EmergencyReportForm({
                 <option value="other">{t.sectionA.roles.other}</option>
               </select>
               {errors.reporterRole && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterRole}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterRole')}</p>
               )}
             </div>
           </div>
@@ -644,7 +682,7 @@ export function EmergencyReportForm({
               )}
             </select>
             {errors.zoneId && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.zoneId}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('zoneId')}</p>
             )}
           </div>
 
@@ -665,8 +703,8 @@ export function EmergencyReportForm({
               } ${isRtl ? 'text-right' : ''}`}
             />
             {errors.locationDescription && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">
-                {errors.locationDescription}
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                {getFieldError('locationDescription')}
               </p>
             )}
           </div>
@@ -749,7 +787,7 @@ export function EmergencyReportForm({
                   }`}
                 />
                 {errors.lat && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lat}</p>
+                  <p className={`text-[11px] text-red-600 mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lat')}</p>
                 )}
               </div>
 
@@ -775,7 +813,7 @@ export function EmergencyReportForm({
                   }`}
                 />
                 {errors.lng && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lng}</p>
+                  <p className={`text-[11px] text-red-600 mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lng')}</p>
                 )}
               </div>
             </div>
@@ -824,8 +862,8 @@ export function EmergencyReportForm({
                 <option value={0}>{t.sectionC.floodLevels[0].title} — {t.sectionC.floodLevels[0].desc}</option>
               </select>
               {errors.floodSeverity && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
-                  {errors.floodSeverity}
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                  {getFieldError('floodSeverity')}
                 </p>
               )}
             </div>
@@ -880,8 +918,8 @@ export function EmergencyReportForm({
                 />
               )}
               {errors.peopleCount && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
-                  {errors.peopleCount}
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                  {getFieldError('peopleCount')}
                 </p>
               )}
             </div>
@@ -1056,7 +1094,7 @@ export function EmergencyReportForm({
               }`}
             />
             {errors.description && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.description}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('description')}</p>
             )}
           </div>
         </div>
@@ -1099,7 +1137,7 @@ export function EmergencyReportForm({
               <option value="24h">{t.sectionD.options['24h']}</option>
             </select>
             {errors.observedAt && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.observedAt}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('observedAt')}</p>
             )}
           </div>
         </div>
