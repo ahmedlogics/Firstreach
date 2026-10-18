@@ -8,61 +8,68 @@ import {
   Footprints,
   Home,
 } from 'lucide-react';
-import { MOCK_HOUSEHOLDS, MOCK_SHELTERS } from '@/lib/mock-data';
+import { ReachabilityOverviewMetrics } from '@/lib/outreach/types';
 
-export function ReachabilityStats() {
-  const noPhoneCount = MOCK_HOUSEHOLDS.filter((h) => h.phoneReachability === 'none').length * 48; // scaled
-  const unconfirmedCount = 278;
-  const volunteerTasksRequired = 12;
-  const sheltersNearCapacity = MOCK_SHELTERS.filter((s) => s.status === 'near_capacity').length;
+interface ReachabilityStatsProps {
+  metrics: ReachabilityOverviewMetrics;
+  isLoading?: boolean;
+}
 
+export function ReachabilityStats({
+  metrics,
+  isLoading = false,
+}: ReachabilityStatsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat 1: Zero Phone Access */}
       <StatCard
         label="No Phone Access"
-        value={noPhoneCount}
+        value={isLoading ? '...' : metrics.noPhoneCount}
         icon={PhoneOff}
         variant="critical"
-        subtitle="Vulnerable to blackout"
+        subtitle="Blackout vulnerable households"
         trend={{
-          value: 'Requires in-person visit',
+          value: 'Requires ground visit',
           isPositive: false,
         }}
       />
 
+      {/* Stat 2: Uncontacted / Needs Visit */}
       <StatCard
-        label="Unconfirmed Check-ins"
-        value={unconfirmedCount}
+        label="Uncontacted / Needs Check"
+        value={isLoading ? '...' : metrics.uncontactedCount + metrics.needsVisitCount}
         icon={UserCheck}
         variant="warning"
-        subtitle="Overdue contact window"
+        subtitle="Unresponsive in flood path"
         trend={{
-          value: '>12h silence in flood zone',
+          value: 'Silence ≠ Emergency',
           isPositive: false,
         }}
       />
 
+      {/* Stat 3: Active Volunteer Patrols */}
       <StatCard
-        label="Volunteer Visits Needed"
-        value={volunteerTasksRequired}
+        label="Active Volunteer Patrols"
+        value={isLoading ? '...' : metrics.activeVolunteerTasks}
         icon={Footprints}
         variant="teal"
-        subtitle="Reconnaissance tasks"
+        subtitle="Field welfare reconnaissance"
         trend={{
-          value: '4 dispatched',
+          value: 'Ground scout checks',
           isPositive: true,
         }}
       />
 
+      {/* Stat 4: Shelter Fleet Availability */}
       <StatCard
-        label="Shelters Near Capacity"
-        value={sheltersNearCapacity}
+        label="Shelter Free Beds"
+        value={isLoading ? '...' : metrics.totalFreeBeds}
         icon={Home}
         variant="info"
-        subtitle="Surjani & Korangi complexes"
+        subtitle={`Of ${metrics.totalShelterCapacity} total capacity`}
         trend={{
-          value: '>85% occupied',
-          isPositive: false,
+          value: `${metrics.sheltersNearCapacityCount} near capacity`,
+          isPositive: metrics.totalFreeBeds > 10,
         }}
       />
     </div>
