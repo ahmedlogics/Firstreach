@@ -44,38 +44,38 @@ export function getSeverityColor(severity: SeverityLevel): {
   switch (severity) {
     case 'critical':
       return {
-        bg: 'bg-red-50',
-        text: 'text-red-700',
-        border: 'border-red-200',
-        dot: 'bg-[#F16D70]',
+        bg: 'bg-[#FAE8E7]',
+        text: 'text-[#B74349]',
+        border: 'border-[#B74349]/30',
+        dot: 'bg-[#B74349]',
       };
     case 'high':
       return {
-        bg: 'bg-amber-50',
-        text: 'text-amber-700',
-        border: 'border-amber-200',
-        dot: 'bg-[#F5B544]',
+        bg: 'bg-[#FFF2DD]',
+        text: 'text-[#A87426]',
+        border: 'border-[#A87426]/30',
+        dot: 'bg-[#A87426]',
       };
     case 'medium':
       return {
-        bg: 'bg-blue-50',
-        text: 'text-blue-700',
-        border: 'border-blue-200',
-        dot: 'bg-blue-500',
+        bg: 'bg-[#EDF1F5]',
+        text: 'text-[#536A82]',
+        border: 'border-[#536A82]/30',
+        dot: 'bg-[#536A82]',
       };
     case 'low':
       return {
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-700',
-        border: 'border-emerald-200',
-        dot: 'bg-[#10B981]',
+        bg: 'bg-[#E5EEE8]',
+        text: 'text-[#377D65]',
+        border: 'border-[#377D65]/30',
+        dot: 'bg-[#377D65]',
       };
     default:
       return {
-        bg: 'bg-slate-50',
-        text: 'text-slate-700',
-        border: 'border-slate-200',
-        dot: 'bg-slate-400',
+        bg: 'bg-[#F0F2F5]',
+        text: 'text-[#667085]',
+        border: 'border-[#E8E6E1]',
+        dot: 'bg-[#667085]',
       };
   }
 }
@@ -88,32 +88,32 @@ export function getPriorityScoreColor(score: number): {
 } {
   if (score >= 90) {
     return {
-      bg: 'bg-red-500',
-      text: 'text-red-700',
-      badge: 'bg-red-100 text-red-800 border-red-200',
+      bg: 'bg-[#B74349]',
+      text: 'text-[#B74349]',
+      badge: 'bg-[#FAE8E7] text-[#B74349] border-[#B74349]/30',
       level: 'Critical Priority',
     };
   }
   if (score >= 70) {
     return {
-      bg: 'bg-amber-500',
-      text: 'text-amber-700',
-      badge: 'bg-amber-100 text-amber-800 border-amber-200',
+      bg: 'bg-[#A87426]',
+      text: 'text-[#A87426]',
+      badge: 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/30',
       level: 'High Priority',
     };
   }
   if (score >= 40) {
     return {
-      bg: 'bg-blue-500',
-      text: 'text-blue-700',
-      badge: 'bg-blue-100 text-blue-800 border-blue-200',
+      bg: 'bg-[#536A82]',
+      text: 'text-[#536A82]',
+      badge: 'bg-[#EDF1F5] text-[#536A82] border-[#536A82]/30',
       level: 'Moderate Priority',
     };
   }
   return {
-    bg: 'bg-emerald-500',
-    text: 'text-emerald-700',
-    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    bg: 'bg-[#377D65]',
+    text: 'text-[#377D65]',
+    badge: 'bg-[#E5EEE8] text-[#377D65] border-[#377D65]/30',
     level: 'Low Urgency',
   };
 }

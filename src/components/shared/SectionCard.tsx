@@ -21,26 +21,26 @@ export function SectionCard({
   children,
   className = '',
   bodyClassName = 'p-6',
-  headerClassName = 'px-6 py-4.5 border-b border-[#E2E8F0]',
+  headerClassName = 'px-6 py-4.5 border-b border-[#E8E6E1]',
 }: SectionCardProps) {
   return (
-    <div className={`bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle hover:shadow-card transition-shadow duration-200 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-2xl border border-[#E8E6E1] shadow-subtle hover:shadow-card transition-shadow duration-150 overflow-hidden ${className}`}>
       {(title || action) && (
         <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${headerClassName}`}>
           <div className="flex items-center gap-3">
             {icon && (
-              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 shrink-0">
+              <div className="p-2 rounded-lg bg-[#F7F6F2] border border-[#E8E6E1] text-[#252A30] shrink-0">
                 {icon}
               </div>
             )}
             <div>
               {title && (
-                <h3 className="text-base font-bold text-[#0F172A] tracking-tight">
+                <h3 className="text-base font-bold text-[#252A30] tracking-tight">
                   {title}
                 </h3>
               )}
               {subtitle && (
-                <p className="text-xs text-[#64748B] mt-0.5">
+                <p className="text-xs text-[#757B81] mt-0.5">
                   {subtitle}
                 </p>
               )}

@@ -32,7 +32,7 @@ export default function RootLayout({
         {/* Emergency styling link injection */}
         <link href="https://jsdelivr.net" rel="stylesheet" />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-[#F6F8FC] text-[#0F172A]">
+      <body className="min-h-full flex flex-col font-sans bg-[#F7F6F2] text-[#252A30]">
         {children}
       </body>
     </html>

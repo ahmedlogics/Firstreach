@@ -12,47 +12,53 @@ import {
 
 export function ReportGuidelinesCard() {
   return (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
+    <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-sm p-5 sm:p-6 space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="p-2 rounded-lg bg-teal-50 text-[#14B8A6] border border-teal-100">
+        <div className="p-2 rounded-lg bg-[#EDF1F5] text-[#536A82] border border-[#E8E6E1]">
           <ShieldAlert className="w-4 h-4" />
         </div>
-        <h3 className="text-sm font-bold text-[#0F172A]">
+        <h3 className="text-sm font-bold text-[#252A30]">
           Reporting Protocol & Verification
         </h3>
       </div>
 
-      <p className="text-xs text-[#64748B] leading-relaxed">
-        FirstReach uses algorithmic triage to prioritize calls based on immediate danger to life. Accurate reports ensure limited boats and paramedics reach the most critical cases first.
-      </p>
-
       <div className="space-y-3 pt-1 text-xs">
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
-          <Clock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1]">
+          <Clock className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />
           <div>
-            <strong className="text-slate-800 block">Indicate Time of Last Sighting</strong>
-            <span className="text-slate-500">
+            <strong className="text-[#252A30] block">Indicate Time of Last Sighting</strong>
+            <span className="text-[#757B81]">
               Flood conditions evolve rapidly. State clearly when you last witnessed the location.
             </span>
           </div>
         </div>
 
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
-          <Compass className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1]">
+          <Compass className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />
           <div>
-            <strong className="text-slate-800 block">Provide Distinct Landmarks</strong>
-            <span className="text-slate-500">
+            <strong className="text-[#252A30] block">Provide Distinct Landmarks</strong>
+            <span className="text-[#757B81]">
               Street signs are submerged under water. Reference mosques, bridges, or high-rise water tanks.
             </span>
           </div>
         </div>
 
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426]">
+          <AlertCircle className="w-4 h-4 text-[#A87426] shrink-0 mt-0.5" />
           <div>
-            <strong className="text-amber-900 block font-semibold">Distinguish Known from Unverified</strong>
-            <span className="text-amber-800/90">
+            <strong className="text-[#A87426] block font-semibold">Distinguish Known from Unverified</strong>
+            <span className="text-[#A87426]/90">
               Second-hand social media reports must be marked as unverified so volunteers can cross-verify before allocating heavy craft.
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1]">
+          <HelpCircle className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />
+          <div>
+            <strong className="text-[#252A30] block">Unknown Information</strong>
+            <span className="text-[#757B81]">
+              Leave victim counts or coordinates blank if unsure. The system treats missing fields as explicit unknowns rather than zero danger.
             </span>
           </div>
         </div>

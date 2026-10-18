@@ -16,28 +16,28 @@ export function ConnectionStatus({
 }: ConnectionStatusProps) {
   const config = {
     connected: {
-      color: 'bg-emerald-500',
+      color: 'bg-[#377D65]',
       text: 'Telemetry Active',
       subtext: 'Supabase Engine Online',
-      textColor: 'text-emerald-700',
-      bgColor: 'bg-emerald-50',
-      borderColor: 'border-emerald-200',
+      textColor: 'text-[#377D65]',
+      bgColor: 'bg-[#E5EEE8]',
+      borderColor: 'border-[#377D65]/30',
     },
     syncing: {
-      color: 'bg-amber-500',
+      color: 'bg-[#A87426]',
       text: 'Syncing Simulation',
       subtext: 'Re-calculating crest models',
-      textColor: 'text-amber-700',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
+      textColor: 'text-[#A87426]',
+      bgColor: 'bg-[#FFF2DD]',
+      borderColor: 'border-[#A87426]/30',
     },
     offline: {
-      color: 'bg-red-500',
+      color: 'bg-[#B74349]',
       text: 'Simulation Disconnected',
       subtext: 'Cached state active',
-      textColor: 'text-red-700',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
+      textColor: 'text-[#B74349]',
+      bgColor: 'bg-[#FAE8E7]',
+      borderColor: 'border-[#B74349]/30',
     },
   }[status];
 

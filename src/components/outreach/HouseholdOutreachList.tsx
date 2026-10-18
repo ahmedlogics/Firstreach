@@ -84,29 +84,29 @@ export function HouseholdOutreachList({
     switch (reach) {
       case 'no_phone':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <PhoneOff className="w-3.5 h-3.5 text-rose-600" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FAE8E7] text-[#B74349] border border-[#B74349]/30">
+            <PhoneOff className="w-3.5 h-3.5 text-[#B74349]" />
             <span>No Phone</span>
           </span>
         );
       case 'basic_phone':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-            <Phone className="w-3.5 h-3.5 text-amber-600" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FFF2DD] text-[#A87426] border border-[#A87426]/30">
+            <Phone className="w-3.5 h-3.5 text-[#A87426]" />
             <span>Basic 2G</span>
           </span>
         );
       case 'smartphone':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-            <Smartphone className="w-3.5 h-3.5 text-teal-600" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/30">
+            <Smartphone className="w-3.5 h-3.5 text-[#536A82]" />
             <span>Smartphone</span>
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#F7F6F2] text-[#757B81] border border-[#E8E6E1]">
+            <HelpCircle className="w-3.5 h-3.5 text-[#92979D]" />
             <span>Unknown</span>
           </span>
         );
@@ -116,17 +116,17 @@ export function HouseholdOutreachList({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Search & Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-[#E8E6E1] shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search Bar */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#92979D] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by household code (e.g. DEMO-HH-B1) or zone..."
-              className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+              className="w-full pl-9 pr-4 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
             />
           </div>
 
@@ -136,7 +136,7 @@ export function HouseholdOutreachList({
             <select
               value={filterZone}
               onChange={(e) => setFilterZone(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+              className="px-3 py-2 bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] font-medium focus:outline-none focus:ring-2 focus:ring-[#536A82]"
             >
               <option value="all">All Sectors ({uniqueZones.length})</option>
               {uniqueZones.map((z) => (
@@ -150,7 +150,7 @@ export function HouseholdOutreachList({
             <select
               value={filterReachability}
               onChange={(e) => setFilterReachability(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+              className="px-3 py-2 bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] font-medium focus:outline-none focus:ring-2 focus:ring-[#536A82]"
             >
               <option value="all">All Connectivity</option>
               <option value="no_phone">No Phone Handset</option>
@@ -163,7 +163,7 @@ export function HouseholdOutreachList({
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+              className="px-3 py-2 bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] font-medium focus:outline-none focus:ring-2 focus:ring-[#536A82]"
             >
               <option value="all">All Contact Statuses</option>
               <option value="reached">Reached / Confirmed</option>
@@ -175,9 +175,9 @@ export function HouseholdOutreachList({
         </div>
 
         {/* Filter Summary Pill */}
-        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+        <div className="flex items-center justify-between text-[11px] text-[#757B81] pt-1 border-t border-[#E8E6E1]">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-[#252A30]">
               Showing {filtered.length} of {households.length} tracked households
             </span>
             {(search || filterZone !== 'all' || filterReachability !== 'all' || filterStatus !== 'all') && (
@@ -188,7 +188,7 @@ export function HouseholdOutreachList({
                   setFilterReachability('all');
                   setFilterStatus('all');
                 }}
-                className="text-[#0D9488] font-bold hover:underline"
+                className="text-[#536A82] font-semibold hover:underline cursor-pointer"
               >
                 Clear Filters
               </button>
@@ -196,7 +196,7 @@ export function HouseholdOutreachList({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#377D65]" />
             <span>Strict Schema Enums Validated</span>
           </div>
         </div>
@@ -206,17 +206,17 @@ export function HouseholdOutreachList({
       <DataTableWrapper
         footer={
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <span className="text-slate-600 font-medium">
+            <span className="text-[#757B81] font-medium">
               Updating status synchronizes immediately with server database.
             </span>
-            <span className="text-slate-400 italic">
+            <span className="text-[#92979D] italic">
               Simulated alerts log to <code>outreach_actions</code> without external SMS burn.
             </span>
           </div>
         }
       >
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <tr className="border-b border-[#E8E6E1] bg-[#F7F6F2] text-[11px] font-semibold uppercase tracking-wider text-[#757B81]">
             <th className="py-3 px-4 text-left">Household Ref / Family</th>
             <th className="py-3 px-4 text-left">Sector & Flood Risk</th>
             <th className="py-3 px-4 text-left">Vulnerabilities</th>
@@ -226,12 +226,12 @@ export function HouseholdOutreachList({
             <th className="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 text-xs">
+        <tbody className="divide-y divide-[#E8E6E1] text-xs">
           {isLoading ? (
             <tr>
               <td colSpan={7} className="p-12 text-center">
-                <div className="w-8 h-8 border-3 border-[#0D9488] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-xs text-slate-500 font-medium">
+                <div className="w-8 h-8 border-3 border-[#536A82] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-xs text-[#757B81] font-medium">
                   Synchronizing household registry from Supabase...
                 </p>
               </td>
@@ -239,9 +239,9 @@ export function HouseholdOutreachList({
           ) : filtered.length === 0 ? (
             <tr>
               <td colSpan={7} className="p-12 text-center">
-                <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <h4 className="text-sm font-bold text-slate-700">No matching households found</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                <Search className="w-8 h-8 text-[#92979D] mx-auto mb-2" />
+                <h4 className="text-sm font-semibold text-[#252A30]">No matching households found</h4>
+                <p className="text-xs text-[#757B81] max-w-sm mx-auto">
                   No household records matched your current query and filter selections. Try broadening your criteria.
                 </p>
               </td>
@@ -253,37 +253,37 @@ export function HouseholdOutreachList({
               return (
                 <tr
                   key={h.id}
-                  className="hover:bg-slate-50/70 transition-colors group"
+                  className="hover:bg-[#F7F6F2]/60 transition-colors group"
                 >
                   {/* Household Code & Count */}
                   <td className="py-3.5 px-4">
-                    <span className="font-mono font-extrabold text-slate-900 block text-xs">
+                    <span className="font-mono font-bold text-[#252A30] block text-xs">
                       {h.label}
                     </span>
-                    <span className="text-slate-500 text-[11px]">
+                    <span className="text-[#757B81] text-[11px]">
                       {h.people_count} family {h.people_count === 1 ? 'member' : 'members'}
                     </span>
                   </td>
 
                   {/* Zone & Flood Risk */}
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-slate-800 block truncate max-w-[160px]">
+                    <span className="font-medium text-[#252A30] block truncate max-w-[160px]">
                       {h.zone_name}
                     </span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span
-                        className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                           h.zone_flood_risk === 3
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-[#FAE8E7] text-[#B74349]'
                             : h.zone_flood_risk === 2
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-[#FFF2DD] text-[#A87426]'
+                            : 'bg-[#E5EEE8] text-[#377D65]'
                         }`}
                       >
                         Risk Tier {h.zone_flood_risk}
                       </span>
                       {h.zone_minutes_to_impact !== null && (
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-[#92979D]">
                           ~{h.zone_minutes_to_impact}m crest
                         </span>
                       )}
@@ -294,22 +294,22 @@ export function HouseholdOutreachList({
                   <td className="py-3.5 px-4 max-w-xs">
                     <div className="flex flex-wrap gap-1">
                       {h.elderly_present && (
-                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-200">
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#EDF1F5] text-[#536A82] text-[10px] font-medium border border-[#536A82]/20">
                           Elderly
                         </span>
                       )}
                       {h.mobility_assistance && (
-                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#EDF1F5] text-[#536A82] text-[10px] font-medium border border-[#536A82]/20">
                           Mobility
                         </span>
                       )}
                       {h.medical_support_needed && (
-                        <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
+                        <span className="px-1.5 py-0.5 rounded-md bg-[#FAE8E7] text-[#B74349] text-[10px] font-medium border border-[#B74349]/20">
                           Medical Urgent
                         </span>
                       )}
                       {!h.elderly_present && !h.mobility_assistance && !h.medical_support_needed && (
-                        <span className="text-[10px] text-slate-400 italic">None logged</span>
+                        <span className="text-[10px] text-[#92979D] italic">None logged</span>
                       )}
                     </div>
                   </td>
@@ -323,7 +323,7 @@ export function HouseholdOutreachList({
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2">
                       {isUpdating ? (
-                        <div className="w-4 h-4 border-2 border-[#0D9488] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-[#536A82] border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <select
                           value={h.contact_status}
@@ -333,14 +333,14 @@ export function HouseholdOutreachList({
                               e.target.value as ContactStatusType
                             )
                           }
-                          className={`text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none transition-colors cursor-pointer ${
+                          className={`text-xs font-semibold px-2 py-1 rounded-lg border focus:outline-none transition-colors cursor-pointer ${
                             h.contact_status === 'reached'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              ? 'bg-[#E5EEE8] text-[#377D65] border-[#377D65]/40'
                               : h.contact_status === 'needs_visit'
-                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              ? 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/40'
                               : h.contact_status === 'no_response'
-                              ? 'bg-rose-50 text-rose-800 border-rose-300'
-                              : 'bg-slate-100 text-slate-700 border-slate-300'
+                              ? 'bg-[#FAE8E7] text-[#B74349] border-[#B74349]/40'
+                              : 'bg-[#F7F6F2] text-[#757B81] border-[#E8E6E1]'
                           }`}
                         >
                           <option value="reached">Reached</option>
@@ -353,9 +353,9 @@ export function HouseholdOutreachList({
                   </td>
 
                   {/* Last Contact Time */}
-                  <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] whitespace-nowrap">
+                  <td className="py-3.5 px-4 text-[#757B81] font-mono text-[11px] whitespace-nowrap">
                     <div className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <Clock className="w-3.5 h-3.5 text-[#92979D]" />
                       <span>
                         {h.last_contact_at
                           ? new Date(h.last_contact_at).toLocaleTimeString([], {
@@ -365,7 +365,7 @@ export function HouseholdOutreachList({
                           : 'No record'}
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 block pt-0.5">
+                    <span className="text-[10px] text-[#92979D] block pt-0.5">
                       {h.silence_hours}h silent
                     </span>
                   </td>
@@ -374,7 +374,7 @@ export function HouseholdOutreachList({
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => onSelectSimulateOutreach(h)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D9488]/10 text-[#0D9488] hover:bg-[#0D9488] hover:text-white border border-[#0D9488]/30 transition-all shadow-2xs"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EDF1F5] text-[#536A82] hover:bg-[#536A82] hover:text-white border border-[#536A82]/30 transition-colors shadow-xs cursor-pointer"
                     >
                       <Radio className="w-3.5 h-3.5" />
                       <span>Simulate Alert</span>

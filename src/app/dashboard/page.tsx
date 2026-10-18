@@ -86,8 +86,8 @@ export default function DashboardPage() {
     <AppShell>
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2 text-xs animate-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#14B8A6]" />
+        <div className="fixed top-20 right-6 z-50 bg-[#252A30] text-white px-4 py-2.5 rounded-xl shadow-xl border border-[#343B43] flex items-center gap-2 text-xs animate-in slide-in-from-top-4 duration-150">
+          <CheckCircle2 className="w-4 h-4 text-[#377D65]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -103,15 +103,15 @@ export default function DashboardPage() {
             <button
               onClick={() => fetchOverview(true)}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-subtle disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#EDF1F5] transition-colors shadow-subtle disabled:opacity-60"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-[#14B8A6]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[#757B81] ${isRefreshing ? 'animate-spin text-[#536A82]' : ''}`} />
               <span>{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
             </button>
 
             <button
               onClick={() => router.push('/report')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-all shadow-subtle"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#536A82] hover:bg-[#40566D] text-white transition-all shadow-subtle"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New Incident Intake</span>
@@ -121,16 +121,16 @@ export default function DashboardPage() {
       />
 
       {/* Compact Telemetry Status Bar */}
-      <div className="mb-4 p-2.5 rounded-xl bg-white border border-[#E2E8F0] shadow-subtle flex items-center justify-between text-xs text-slate-600">
+      <div className="mb-4 p-2.5 rounded-xl bg-white border border-[#E8E6E1] shadow-subtle flex items-center justify-between text-xs text-[#757B81]">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-          <span className="font-semibold text-slate-800">Live Telemetry</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-slate-500 text-[11px]">12s Sync Cycle</span>
+          <span className="w-2 h-2 rounded-full bg-[#377D65] shrink-0" />
+          <span className="font-semibold text-[#252A30]">Live Telemetry</span>
+          <span className="text-[#E8E6E1]">•</span>
+          <span className="text-[#92979D] text-[11px]">12s Sync Cycle</span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-          <Clock className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1.5 text-[#92979D] font-mono text-[11px]">
+          <Clock className="w-3.5 h-3.5 text-[#92979D]" />
           <span>Synced: {data?.lastUpdated ? new Date(data.lastUpdated).toLocaleTimeString() : 'Connecting...'}</span>
         </div>
       </div>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Left: Risk Map and visually associated Flood Simulation */}
             <div className="lg:col-span-7 xl:col-span-7 space-y-2 flex flex-col min-w-0 max-w-full">
-              <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
+              <h2 className="text-sm font-extrabold text-[#252A30] tracking-tight">
                 Risk Map
               </h2>
 
@@ -198,15 +198,15 @@ export default function DashboardPage() {
             {/* Right: Emergency Priority Queue */}
             <div className="lg:col-span-5 xl:col-span-5 space-y-2 flex flex-col min-w-0 max-w-full">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
+                <h2 className="text-sm font-extrabold text-[#252A30] tracking-tight">
                   Priority Queue
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 font-mono">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAE8E7] text-[#B74349] border border-[#B74349]/30 font-mono">
                   {data.incidents.length} active
                 </span>
               </div>
 
-              <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-subtle p-3 sm:p-3.5 flex-1 flex flex-col min-w-0 max-w-full overflow-hidden">
+              <div className="bg-white rounded-xl border border-[#E8E6E1] shadow-subtle p-3 sm:p-3.5 flex-1 flex flex-col min-w-0 max-w-full overflow-hidden">
                 <IncidentPriorityTable
                   incidents={data.incidents}
                   onForwardToDispatch={handleForwardToDispatch}

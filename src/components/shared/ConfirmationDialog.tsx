@@ -42,26 +42,26 @@ export function ConfirmationDialog({
   if (!isOpen) return null;
 
   const variantButtonClass = {
-    teal: 'bg-[#14B8A6] hover:bg-[#0D9488] text-white focus:ring-[#14B8A6]',
-    danger: 'bg-[#F16D70] hover:bg-red-600 text-white focus:ring-red-500',
-    warning: 'bg-[#F5B544] hover:bg-amber-600 text-white focus:ring-amber-500',
+    teal: 'bg-[#536A82] hover:bg-[#40566D] text-white focus:ring-[#536A82]',
+    danger: 'bg-[#B74349] hover:bg-[#96373c] text-white focus:ring-[#B74349]',
+    warning: 'bg-[#A87426] hover:bg-[#8c601f] text-white focus:ring-[#A87426]',
   }[variant];
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
     >
       <div
-        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all"
+        className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-[#E8E6E1] overflow-hidden transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <div className="flex items-center justify-between p-6 border-b border-[#E8E6E1]">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl ${
-              variant === 'danger' ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-[#14B8A6]'
+              variant === 'danger' ? 'bg-[#FAE8E7] text-[#B74349]' : variant === 'warning' ? 'bg-[#FFF2DD] text-[#A87426]' : 'bg-[#EDF1F5] text-[#536A82]'
             }`}>
               {variant === 'danger' ? (
                 <AlertTriangle className="w-5 h-5" />
@@ -69,11 +69,11 @@ export function ConfirmationDialog({
                 <CheckCircle2 className="w-5 h-5" />
               )}
             </div>
-            <h3 className="text-lg font-bold text-[#0F172A]">{title}</h3>
+            <h3 className="text-lg font-bold text-[#252A30]">{title}</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-[#92979D] hover:text-[#252A30] hover:bg-[#EDF1F5] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -81,19 +81,19 @@ export function ConfirmationDialog({
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          <p className="text-sm text-[#64748B] leading-relaxed">
+          <p className="text-sm text-[#757B81] leading-relaxed">
             {description}
           </p>
 
           {details && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-2">
+            <div className="p-4 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] text-xs text-[#252A30] space-y-2">
               {details}
             </div>
           )}
 
           {isDemoAction && (
-            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426] text-xs">
+              <ShieldAlert className="w-4 h-4 text-[#A87426] shrink-0 mt-0.5" />
               <div>
                 <strong className="font-semibold">Simulated Action Notice:</strong> In this hackathon demo build, this action triggers local state workflow updates. Live radio and satellite dispatch triggers will link to Supabase RPC hooks in Phase 2.
               </div>
@@ -102,11 +102,11 @@ export function ConfirmationDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 bg-[#F7F6F2] border-t border-[#E8E6E1]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-[#757B81] hover:bg-[#E8E6E1] rounded-lg transition-colors"
           >
             {cancelLabel}
           </button>
@@ -116,7 +116,7 @@ export function ConfirmationDialog({
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 text-xs font-bold rounded-xl shadow-subtle focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${variantButtonClass}`}
+            className={`px-4 py-2 text-xs font-bold rounded-lg shadow-subtle focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${variantButtonClass}`}
           >
             {confirmLabel}
           </button>

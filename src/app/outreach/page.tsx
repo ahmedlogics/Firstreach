@@ -287,20 +287,20 @@ export default function OutreachPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
+          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
             toast.type === 'error'
-              ? 'bg-rose-950 text-white border-rose-800'
+              ? 'bg-[#252A30] text-white border-[#B74349]'
               : toast.type === 'info'
-              ? 'bg-slate-900 text-white border-slate-700'
-              : 'bg-slate-900 text-white border-slate-700'
+              ? 'bg-[#252A30] text-white border-[#536A82]'
+              : 'bg-[#252A30] text-white border-[#377D65]'
           }`}
         >
           {toast.type === 'error' ? (
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0" />
           ) : toast.type === 'info' ? (
-            <Info className="w-4 h-4 text-blue-400 shrink-0" />
+            <Info className="w-4 h-4 text-[#536A82] shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-[#0D9488] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#377D65] shrink-0" />
           )}
           <span className="font-medium">{toast.message}</span>
         </div>
@@ -309,14 +309,13 @@ export default function OutreachPage() {
       {/* Page Header */}
       <PageHeader
         title="Community Outreach & Shelter Coordination"
-        description="Verify reachability across high-risk sectors, coordinate door-to-door volunteer welfare patrols, and monitor shelter bed intake."
         breadcrumbs={[{ label: 'Outreach & Shelters' }]}
         actions={
           <button
             onClick={() => loadAllData()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-2xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#F7F6F2] text-xs font-semibold rounded-lg shadow-xs transition-colors"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+            <RefreshCw className="w-3.5 h-3.5 text-[#757B81]" />
             <span>Sync Live Data</span>
           </button>
         }
@@ -335,10 +334,10 @@ export default function OutreachPage() {
         {/* Row 3: Household Reachability Directory & Status Controls */}
         <div className="space-y-3">
           <div>
-            <h2 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
+            <h2 className="text-base font-semibold text-[#252A30] tracking-tight">
               High-Risk Household Reachability Directory
             </h2>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[#757B81]">
               Track vulnerable families in inundation sectors, update verified contact statuses, and launch simulated outreach alerts.
             </p>
           </div>

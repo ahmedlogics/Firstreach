@@ -44,13 +44,13 @@ export function IncidentDetailDrawer({
       badge={<PriorityBadge score={incident.priority_score} size="sm" />}
       footer={
         <div className="flex items-center justify-between w-full">
-          <span className="text-xs text-slate-500 font-medium">
-            Status: <strong className="capitalize text-slate-800">{incident.status}</strong>
+          <span className="text-xs text-[#757B81] font-medium">
+            Status: <strong className="capitalize text-[#252A30]">{incident.status}</strong>
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-[#E8E6E1] text-xs font-semibold text-[#757B81] hover:bg-[#EDF1F5] transition-colors"
             >
               Close
             </button>
@@ -60,7 +60,7 @@ export function IncidentDetailDrawer({
                   onClose();
                   onDispatchClick(incident);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-bold transition-colors shadow-subtle"
+                className="px-3.5 py-1.5 rounded-lg bg-[#536A82] hover:bg-[#40566D] text-white text-xs font-bold transition-colors shadow-subtle"
               >
                 Forward to Rescue Allocation
               </button>
@@ -69,13 +69,13 @@ export function IncidentDetailDrawer({
         </div>
       }
     >
-      {/* Priority Reason Banner (From actual database column priority_reason) */}
-      <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
+      {/* Priority Reason Banner */}
+      <div className="p-4 rounded-xl bg-[#252A30] text-white space-y-2 border border-[#343B43]">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#EDF1F5]">
             Stored Priority Rationale
           </span>
-          <span className="font-mono text-xs font-bold text-red-400">
+          <span className="font-mono text-xs font-bold text-[#FAE8E7]">
             Database Score: {incident.priority_score}/100
           </span>
         </div>
@@ -83,23 +83,23 @@ export function IncidentDetailDrawer({
           {incident.priority_reason ? (
             `"${incident.priority_reason}"`
           ) : (
-            <span className="text-slate-400 italic">Reason not yet available in database</span>
+            <span className="text-[#92979D] italic">Reason not yet available in database</span>
           )}
         </p>
       </div>
 
       {/* Incident Details / Caller notes */}
       <div className="space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#757B81]">
           Caller Observation & Details
         </h4>
-        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-800 space-y-1">
+        <div className="p-3.5 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] text-xs text-[#252A30] space-y-1">
           <p className="leading-relaxed">
             {incident.details || 'No additional narrative logged.'}
           </p>
           {incident.lat !== null && incident.lng !== null && (
-            <div className="flex items-center gap-1 text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-200/60">
-              <MapPin className="w-3.5 h-3.5 text-teal-600" />
+            <div className="flex items-center gap-1 text-[11px] font-mono text-[#757B81] pt-1 border-t border-[#E8E6E1]">
+              <MapPin className="w-3.5 h-3.5 text-[#536A82]" />
               <span>Coordinates: [{incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}]</span>
             </div>
           )}
@@ -108,24 +108,24 @@ export function IncidentDetailDrawer({
 
       {/* Vulnerability & Urgency Matrix */}
       <div className="space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#757B81]">
           Triage Factors (Database Fields)
         </h4>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-            incident.flood_severity >= 2 ? 'bg-red-50 border-red-200 text-red-900' : 'bg-slate-50 border-slate-200 text-slate-700'
+            incident.flood_severity >= 2 ? 'bg-[#FAE8E7] border-[#B74349]/30 text-[#B74349]' : 'bg-[#F7F6F2] border-[#E8E6E1] text-[#252A30]'
           }`}>
-            <Waves className="w-4 h-4 shrink-0 text-teal-600" />
+            <Waves className="w-4 h-4 shrink-0 text-[#536A82]" />
             <div>
               <span className="font-semibold block">Flood Severity</span>
-              <span className="text-[11px] text-slate-500">{severityMeta.label} ({incident.flood_severity}/3)</span>
+              <span className="text-[11px] text-[#757B81]">{severityMeta.label} ({incident.flood_severity}/3)</span>
             </div>
           </div>
 
           <div className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-            incident.medical_urgent ? 'bg-red-50 border-red-200 text-red-900' : 'bg-slate-50 border-slate-200 text-slate-500'
+            incident.medical_urgent ? 'bg-[#FAE8E7] border-[#B74349]/30 text-[#B74349]' : 'bg-[#F7F6F2] border-[#E8E6E1] text-[#757B81]'
           }`}>
-            <HeartPulse className={`w-4 h-4 shrink-0 ${incident.medical_urgent ? 'text-red-600' : 'text-slate-400'}`} />
+            <HeartPulse className={`w-4 h-4 shrink-0 ${incident.medical_urgent ? 'text-[#B74349]' : 'text-[#92979D]'}`} />
             <div>
               <span className="font-semibold block">Medical Urgency</span>
               <span className="text-[11px]">{incident.medical_urgent ? 'Urgent Need' : 'None indicated'}</span>
@@ -133,20 +133,20 @@ export function IncidentDetailDrawer({
           </div>
 
           <div className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-            incident.mobility_help ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-slate-50 border-slate-200 text-slate-500'
+            incident.mobility_help ? 'bg-[#FFF2DD] border-[#A87426]/30 text-[#A87426]' : 'bg-[#F7F6F2] border-[#E8E6E1] text-[#757B81]'
           }`}>
-            <PersonStanding className={`w-4 h-4 shrink-0 ${incident.mobility_help ? 'text-amber-600' : 'text-slate-400'}`} />
+            <PersonStanding className={`w-4 h-4 shrink-0 ${incident.mobility_help ? 'text-[#A87426]' : 'text-[#92979D]'}`} />
             <div>
               <span className="font-semibold block">Mobility Assistance</span>
               <span className="text-[11px]">{incident.mobility_help ? 'Assistance Required' : 'Self-mobile'}</span>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 flex items-center gap-2">
-            <User className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="p-2.5 rounded-lg border border-[#E8E6E1] bg-[#F7F6F2] text-[#252A30] flex items-center gap-2">
+            <User className="w-4 h-4 text-[#92979D] shrink-0" />
             <div>
               <span className="font-semibold block">Affected People</span>
-              <span className="text-[11px]">{incident.people_count} individuals</span>
+              <span className="text-[11px] text-[#757B81]">{incident.people_count} individuals</span>
             </div>
           </div>
         </div>
@@ -154,30 +154,30 @@ export function IncidentDetailDrawer({
 
       {/* Time-To-Harm & Verification Metadata */}
       <div className="space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#757B81]">
           Operational Metadata
         </h4>
-        <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-2 text-xs">
+        <div className="p-3 rounded-xl border border-[#E8E6E1] bg-white space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Estimated Minutes to Harm:</span>
-            <span className="font-mono font-bold text-red-600">
+            <span className="text-[#757B81]">Estimated Minutes to Harm:</span>
+            <span className="font-mono font-bold text-[#B74349]">
               {incident.minutes_to_harm !== null ? `${incident.minutes_to_harm} min` : 'Unknown / Unrecorded'}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Verification Status:</span>
+            <span className="text-[#757B81]">Verification Status:</span>
             <StatusBadge status={incident.verification_status} size="sm" />
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Dispatch State:</span>
+            <span className="text-[#757B81]">Dispatch State:</span>
             <StatusBadge status={incident.status} size="sm" />
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Reported Timestamp:</span>
-            <span className="font-mono text-slate-600 text-[11px]">
+            <span className="text-[#757B81]">Reported Timestamp:</span>
+            <span className="font-mono text-[#757B81] text-[11px]">
               {new Date(incident.created_at).toLocaleString()}
             </span>
           </div>

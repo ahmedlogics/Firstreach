@@ -25,7 +25,7 @@ export function StatusBadge({
     const colors = getSeverityColor(severity);
     return (
       <span
-        className={`inline-flex items-center gap-1.5 font-medium rounded-full border ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses} ${className}`}
+        className={`inline-flex items-center gap-1.5 font-medium rounded-md border ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses} ${className}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
         <span className="capitalize">{status}</span>
@@ -35,29 +35,29 @@ export function StatusBadge({
 
   // Pre-configured mappings
   const normalized = status.toLowerCase().replace(/_/g, ' ');
-  let style = 'bg-slate-100 text-slate-700 border-slate-200';
-  let dotColor = 'bg-slate-400';
+  let style = 'bg-[#F0F2F5] text-[#667085] border-[#E8E6E1]';
+  let dotColor = 'bg-[#667085]';
 
-  if (normalized.includes('critical') || normalized.includes('unserved') || normalized.includes('urgent')) {
-    style = 'bg-red-50 text-red-700 border-red-200';
-    dotColor = 'bg-[#F16D70]';
+  if (normalized.includes('critical') || normalized.includes('unserved') || normalized.includes('urgent') || normalized.includes('danger')) {
+    style = 'bg-[#FAE8E7] text-[#B74349] border-[#B74349]/30';
+    dotColor = 'bg-[#B74349]';
   } else if (normalized.includes('warning') || normalized.includes('high') || normalized.includes('near capacity') || normalized.includes('overdue')) {
-    style = 'bg-amber-50 text-amber-700 border-amber-200';
-    dotColor = 'bg-[#F5B544]';
-  } else if (normalized.includes('available') || normalized.includes('verified') || normalized.includes('rescued') || normalized.includes('safe') || normalized.includes('success')) {
-    style = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    dotColor = 'bg-[#10B981]';
-  } else if (normalized.includes('pending') || normalized.includes('en route') || normalized.includes('assigned') || normalized.includes('intermittent')) {
-    style = 'bg-blue-50 text-blue-700 border-blue-200';
-    dotColor = 'bg-blue-500';
+    style = 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/30';
+    dotColor = 'bg-[#A87426]';
+  } else if (normalized.includes('available') || normalized.includes('verified') || normalized.includes('rescued') || normalized.includes('safe') || normalized.includes('success') || normalized.includes('completed')) {
+    style = 'bg-[#E5EEE8] text-[#377D65] border-[#377D65]/30';
+    dotColor = 'bg-[#377D65]';
+  } else if (normalized.includes('pending') || normalized.includes('en route') || normalized.includes('assigned') || normalized.includes('in progress') || normalized.includes('intermittent')) {
+    style = 'bg-[#EDF1F5] text-[#536A82] border-[#536A82]/30';
+    dotColor = 'bg-[#536A82]';
   } else if (normalized.includes('unverified') || normalized.includes('busy') || normalized.includes('unreachable')) {
-    style = 'bg-purple-50 text-purple-700 border-purple-200';
-    dotColor = 'bg-purple-500';
+    style = 'bg-[#F0F2F5] text-[#667085] border-[#D0D5DD]';
+    dotColor = 'bg-[#667085]';
   }
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-medium rounded-full border ${style} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-medium rounded-md border ${style} ${sizeClasses} ${className}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
       <span className="capitalize">{normalized}</span>
