@@ -68,9 +68,6 @@ function MapController({ center }: { center: [number, number] }) {
   return null;
 }
 
-  return null;
-}
-
 export default function DisasterMapClient({
   zones,
   incidents,
