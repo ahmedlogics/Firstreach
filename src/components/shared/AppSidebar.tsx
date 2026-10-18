@@ -149,6 +149,19 @@ export function AppSidebar({
             </Link>
           );
         })}
+
+        {/* Public Landing Page Link */}
+        <div className="pt-2 border-t border-[#343B43]/60">
+          <Link
+            href="/"
+            onClick={onCloseMobile}
+            title={isCollapsed ? 'Public Landing Page' : undefined}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#92979D] hover:text-white hover:bg-[#343B43] transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            {!isCollapsed && <span>Public Landing Page</span>}
+          </Link>
+        </div>
       </div>
 
       {/* Bottom Status & Utility Section */}

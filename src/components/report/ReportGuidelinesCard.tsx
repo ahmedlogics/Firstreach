@@ -52,6 +52,16 @@ export function ReportGuidelinesCard() {
             </span>
           </div>
         </div>
+
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1]">
+          <HelpCircle className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />
+          <div>
+            <strong className="text-[#252A30] block">Unknown Information</strong>
+            <span className="text-[#757B81]">
+              Leave victim counts or coordinates blank if unsure. The system treats missing fields as explicit unknowns rather than zero danger.
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

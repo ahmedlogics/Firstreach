@@ -17,6 +17,8 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   className?: string;
   showDemoBadge?: boolean;
+  rootHref?: string;
+  rootLabel?: string;
 }
 
 export function PageHeader({
@@ -26,13 +28,15 @@ export function PageHeader({
   breadcrumbs,
   actions,
   className = '',
+  rootHref = '/dashboard',
+  rootLabel = 'FirstReach Ops',
 }: PageHeaderProps) {
   return (
     <div className={`mb-6 sm:mb-8 ${className}`}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#757B81] mb-2 font-medium">
-          <Link href="/dashboard" className="hover:text-[#252A30] transition-colors">
-            FirstReach Ops
+          <Link href={rootHref} className="hover:text-[#252A30] transition-colors">
+            {rootLabel}
           </Link>
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={idx}>

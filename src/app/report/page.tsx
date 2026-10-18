@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AppShell } from '@/components/shared/AppShell';
+import { PublicShell } from '@/components/shared/PublicShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmergencyReportForm } from '@/components/report/EmergencyReportForm';
 import { OfflineQueueList } from '@/components/report/OfflineQueueList';
@@ -36,18 +36,21 @@ export default function ReportPage() {
   };
 
   return (
-    <AppShell>
-      {/* Page Header: Neutral "Live intake (demo database)" badge */}
-      <PageHeader
-        title="Submit Emergency Report"
-        breadcrumbs={[{ label: 'Report Emergency' }]}
-        showDemoBadge={false}
-        badge={
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-[#F7F6F2] text-[#252A30] border border-[#E8E6E1]">
-            Live intake (demo database)
-          </span>
-        }
-      />
+    <PublicShell>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        {/* Page Header: Neutral "Live intake (demo database)" badge */}
+        <PageHeader
+          title="Submit Emergency Report"
+          rootHref="/"
+          rootLabel="Home"
+          breadcrumbs={[{ label: 'Report Emergency' }]}
+          showDemoBadge={false}
+          badge={
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-white text-[#252A30] border border-[#E8E6E1] shadow-2xs">
+              Live Intake Portal
+            </span>
+          }
+        />
 
       {/* Real Success Banner */}
       {successResult && successResult.ok && (
@@ -179,6 +182,7 @@ export default function ReportPage() {
           </div>
         </div>
       </div>
-    </AppShell>
+      </div>
+    </PublicShell>
   );
 }
