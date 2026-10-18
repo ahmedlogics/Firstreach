@@ -173,15 +173,15 @@ export function AppSidebar({
           </div>
         </div>
 
-        {/* Demo Mode Notice */}
+        {/* Live System Operational Status */}
         {!isCollapsed && (
-          <div className="px-2.5 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300">
+          <div className="px-2.5 py-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-300">
             <div className="font-bold flex items-center justify-between">
-              <span>DEMO MODE</span>
-              <span className="text-[9px] uppercase tracking-wider bg-amber-400/20 px-1 rounded">Offline Safe</span>
+              <span>LIVE OPERATIONS</span>
+              <span className="text-[9px] uppercase tracking-wider bg-teal-400/20 px-1 rounded text-teal-200">Database Active</span>
             </div>
-            <p className="text-[10px] text-amber-200/80 mt-0.5 leading-tight">
-              Pre-seeded flood telemetry. Backend dispatches simulated.
+            <p className="text-[10px] text-teal-200/80 mt-0.5 leading-tight">
+              Live emergency telemetry & active transactional dispatch.
             </p>
           </div>
         )}

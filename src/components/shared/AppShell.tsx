@@ -40,7 +40,7 @@ export function AppShell({ children }: AppShellProps) {
               <span>— Disaster Response Intelligence Platform</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              CODE//CONNECT '26 Hackathon Prototype • Fictional Karachi Telemetry Simulation
+              CODE//CONNECT '26 • Karachi Basin Emergency Response Command System
             </p>
           </div>
         </footer>
