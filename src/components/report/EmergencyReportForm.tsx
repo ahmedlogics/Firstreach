@@ -495,11 +495,21 @@ export function EmergencyReportForm({
                 <input
                   type="text"
                   value={formData.reporterName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, reporterName: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({ ...prev, reporterName: val }));
+                    if (errors.reporterName) {
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.reporterName;
+                        return copy;
+                      });
+                    }
+                  }}
                   placeholder="e.g. Tariq Mehmood"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  className={`w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
+                    errors.reporterName ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  }`}
                 />
               </div>
               {errors.reporterName && (
@@ -516,11 +526,21 @@ export function EmergencyReportForm({
                 <input
                   type="tel"
                   value={formData.reporterPhone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, reporterPhone: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({ ...prev, reporterPhone: val }));
+                    if (errors.reporterPhone) {
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.reporterPhone;
+                        return copy;
+                      });
+                    }
+                  }}
                   placeholder="+92 300 1234567"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  className={`w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
+                    errors.reporterPhone ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  }`}
                 />
               </div>
               {errors.reporterPhone && (
