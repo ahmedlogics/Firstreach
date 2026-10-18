@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 
 export function PublicNav() {
   const pathname = usePathname();
@@ -14,17 +14,14 @@ export function PublicNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-[#252A30] text-white flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
-            <Shield className="w-4 h-4 text-[#F7F6F2]" />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-base tracking-tight text-[#252A30]">
-              FirstReach
-            </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/20">
-              v1.0
-            </span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="FirstReach"
+            className="w-8 h-8 rounded-lg shadow-xs object-cover transition-transform group-hover:scale-105"
+          />
+          <span className="font-bold text-base tracking-tight text-[#252A30]">
+            FirstReach
+          </span>
         </Link>
 
         {/* Desktop Nav Links */}

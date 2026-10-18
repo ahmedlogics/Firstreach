@@ -10,7 +10,6 @@ import {
   Users2,
   ChevronLeft,
   ChevronRight,
-  Shield,
   Settings,
   User,
   Radio,
@@ -67,19 +66,16 @@ export function AppSidebar({
           href="/dashboard"
           className="flex items-center gap-3 overflow-hidden group focus:outline-none"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#536A82] flex items-center justify-center text-white font-black shrink-0 shadow-sm group-hover:bg-[#40566D] transition-colors">
-            <Shield className="w-5 h-5 fill-current" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="FirstReach"
+            className="w-9 h-9 rounded-xl shrink-0 shadow-sm object-cover"
+          />
           {!isCollapsed && (
             <div className="flex flex-col leading-tight min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-extrabold tracking-tight text-white font-sans">
-                  FirstReach
-                </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#343B43] text-[#F7F6F2] border border-[#434B54]">
-                  v1.0
-                </span>
-              </div>
+              <span className="text-base font-extrabold tracking-tight text-white font-sans">
+                FirstReach
+              </span>
               <span className="text-[11px] text-[#92979D] font-medium truncate">
                 Disaster Response Intelligence
               </span>
