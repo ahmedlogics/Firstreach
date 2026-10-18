@@ -28,8 +28,10 @@ export const emergencyReportSchema = z
     zoneId: z.string().uuid({ message: 'Zone ID must be a valid UUID' }),
     locationDescription: z
       .string()
-      .min(5, { message: 'Location description must be at least 5 characters' })
-      .max(1000, { message: 'Location description cannot exceed 1000 characters' }),
+      .max(1000, { message: 'Location description cannot exceed 1000 characters' })
+      .refine((val) => val.trim().length >= 5, {
+        message: 'Location description must be at least 5 characters',
+      }),
     observedAt: z
       .union([z.string(), z.date()])
       .refine(isValidObservedAt, {
@@ -75,12 +77,29 @@ export const emergencyReportSchema = z
     reporterName: z
       .string()
       .max(100, { message: 'Reporter name cannot exceed 100 characters' })
+      .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true;
+          const trimmed = val.trim();
+          return trimmed.length >= 2 && /^[a-zA-Z\u0600-\u06FF\s'.\-]{2,100}$/.test(trimmed);
+        },
+        { message: 'Reporter name must contain only letters and be at least 2 characters' }
+      )
       .nullable()
-      .optional(),
+      .optional()
+      .or(z.literal('')),
     reporterPhone: z
       .string()
       .max(25, { message: 'Phone number cannot exceed 25 characters' })
-      .regex(/^[\d+\s\-()]{3,25}$/, { message: 'Phone number must contain only digits, spaces, dashes, or +' })
+      .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true;
+          if (!/^[\d+\s\-()]{7,25}$/.test(val)) return false;
+          const digits = val.replace(/\D/g, '');
+          return digits.length >= 7 && digits.length <= 15;
+        },
+        { message: 'Phone number must be a valid number with 7 to 15 digits (e.g. +92 300 1234567)' }
+      )
       .nullable()
       .optional()
       .or(z.literal('')),

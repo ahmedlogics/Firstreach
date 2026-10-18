@@ -198,7 +198,43 @@ test('API POST /api/reports: valid submission creates incident and returns 201',
   assert.equal(data.needsReview, false);
   assert.equal(data.possibleDuplicateOf, null);
   assert.ok(data.priorityScore > 0);
-  assert.ok(data.priorityReason.startsWith('Provisional:'));
+  // Check the deterministic dispatch explanation
+  assert.ok(
+    data.priorityReason.includes('severe catastrophic flooding') ||
+    data.priorityReason.includes('urgent medical')
+  );
+  assert.ok(data.priorityReason.includes('trapped occupants'));
+
+  // Also verify that when fields are unknown, priorityReason includes both dispatch explanation AND "Unknown: ..." caution text
+  const unknownPayload = {
+    ...validPayload,
+    idempotencyKey: 'idemp-test-unknown-fields',
+    locationDescription: 'Distant location Sector 10 Road',
+    lat: 24.80,
+    lng: 67.00,
+    mobilityHelp: null,
+    peopleCount: null,
+  };
+  const unknownReq = new NextRequest('http://localhost:3000/api/reports', {
+    method: 'POST',
+    body: JSON.stringify(unknownPayload),
+    headers: {
+      'content-type': 'application/json',
+      'x-forwarded-for': '192.168.1.85',
+    },
+  });
+  const unknownRes = await postReport(unknownReq);
+  assert.equal(unknownRes.status, 201);
+  const unknownData = await unknownRes.json();
+  assert.equal(unknownData.ok, true);
+  assert.ok(
+    unknownData.priorityReason.includes('severe catastrophic flooding') ||
+    unknownData.priorityReason.includes('urgent medical')
+  );
+  assert.ok(
+    unknownData.priorityReason.includes('Unknown:'),
+    `Expected priorityReason to contain "Unknown:", got "${unknownData.priorityReason}"`
+  );
 
   // Test idempotency replay: same request must return 200 and same IDs
   const replayReq = new NextRequest('http://localhost:3000/api/reports', {
@@ -352,5 +388,78 @@ test('API POST /api/reports: failure in createIncident returns 500 ok:false and 
   assert.equal(savedReport.needs_review, true, 'Report must be flagged with needs_review = true');
 
   // Restore testRepo for other tests
+  setReportRepository(testRepo);
+});
+
+test('API POST /api/reports: if existing report found by idempotency key has no incident_id, resumes duplicate check / creation and returns 201', async () => {
+  _resetRateLimitsForTesting();
+
+  const orphanRepo = new MemoryReportRepository({
+    zones: [
+      {
+        id: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+        name: 'Demo Zone A',
+        flood_risk: 2,
+        reporting_coverage: 'adequate',
+      },
+    ],
+  });
+  setReportRepository(orphanRepo);
+
+  // Pre-insert an orphan report (no incident_id)
+  const orphanReport = await orphanRepo.insertReport({
+    source: 'resident',
+    payload: {
+      zoneId: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+      locationDescription: 'Near Sector 4B Water Pump, Street 12',
+      observedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      reportingFor: 'myself',
+      reporterRole: 'resident',
+      floodSeverity: 2,
+      peopleCount: 3,
+      trapped: false,
+      medicalUrgent: false,
+      mobilityHelp: false,
+      lat: 24.95,
+      lng: 67.05,
+      idempotencyKey: 'idemp-orphan-resume-1',
+    },
+    event_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    needs_review: true,
+  });
+
+  assert.equal(orphanReport.incident_id, null);
+
+  const req = new NextRequest('http://localhost:3000/api/reports', {
+    method: 'POST',
+    body: JSON.stringify({
+      zoneId: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+      locationDescription: 'Near Sector 4B Water Pump, Street 12',
+      observedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      reportingFor: 'myself',
+      reporterRole: 'resident',
+      floodSeverity: 2,
+      peopleCount: 3,
+      trapped: false,
+      medicalUrgent: false,
+      mobilityHelp: false,
+      lat: 24.95,
+      lng: 67.05,
+      idempotencyKey: 'idemp-orphan-resume-1',
+    }),
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '192.168.1.101' },
+  });
+
+  const res = await postReport(req);
+  assert.equal(res.status, 201, 'Should return 201 because it resumed incident creation rather than 200');
+  const data = await res.json();
+  assert.equal(data.ok, true);
+  assert.equal(data.reportId, orphanReport.id, 'Must reuse the existing report record');
+  assert.ok(data.incidentId, 'Must create and link a new incident');
+
+  // Verify the orphan report in repository now has the incident_id linked
+  const updatedReport = await orphanRepo.findReportByIdempotencyKey('idemp-orphan-resume-1');
+  assert.equal(updatedReport?.incident_id, data.incidentId);
+
   setReportRepository(testRepo);
 });

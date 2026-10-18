@@ -134,6 +134,113 @@ test('schema: unknown extra keys are rejected by strict()', () => {
   assert.equal(emergencyReportSchema.safeParse(extraKeys).success, false);
 });
 
+test('schema: reporterName rejects numbers, phone numbers, and symbols but accepts valid names', () => {
+  const base = {
+    zoneId: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
+    locationDescription: 'Some street location',
+    observedAt: new Date().toISOString(),
+    reportingFor: 'myself' as const,
+    reporterRole: 'resident' as const,
+    floodSeverity: 1,
+    peopleCount: 1,
+    trapped: null,
+    medicalUrgent: null,
+    mobilityHelp: null,
+  };
+
+  // Rejects phone number written in name field
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: '+92 300 1234567' }).success,
+    false,
+    'Phone number in name field should fail'
+  );
+
+  // Rejects pure numbers in name field
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: '12345678' }).success,
+    false,
+    'Pure numbers in name field should fail'
+  );
+
+  // Rejects symbols in name field
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: 'John@#$%^' }).success,
+    false,
+    'Symbols in name field should fail'
+  );
+
+  // Rejects 1-char name
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: 'A' }).success,
+    false,
+    'Single letter name should fail'
+  );
+
+  // Accepts valid names (English & Urdu)
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: 'Tariq Mehmood' }).success,
+    true
+  );
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterName: 'Dr. Ali-Reza' }).success,
+    true
+  );
+});
+
+test('schema: reporterPhone rejects letters and short/malformed numbers but accepts valid phones', () => {
+  const base = {
+    zoneId: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
+    locationDescription: 'Some street location',
+    observedAt: new Date().toISOString(),
+    reportingFor: 'myself' as const,
+    reporterRole: 'resident' as const,
+    floodSeverity: 1,
+    peopleCount: 1,
+    trapped: null,
+    medicalUrgent: null,
+    mobilityHelp: null,
+  };
+
+  // Rejects names/letters in phone field
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: 'Tariq Mehmood' }).success,
+    false,
+    'Letters in phone field should fail'
+  );
+
+  // Rejects short numbers
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: '123' }).success,
+    false,
+    'Too short phone number should fail'
+  );
+
+  // Rejects pure punctuation
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: '---+++---' }).success,
+    false,
+    'Pure punctuation phone number should fail'
+  );
+
+  // Accepts valid phone numbers
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: '+92 300 1234567' }).success,
+    true
+  );
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: '03001234567' }).success,
+    true
+  );
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: '' }).success,
+    true
+  );
+  assert.equal(
+    emergencyReportSchema.safeParse({ ...base, reporterPhone: null }).success,
+    true
+  );
+});
+
 test('mapping: reporterRoleToSource maps correctly', () => {
   assert.equal(reporterRoleToSource('volunteer'), 'volunteer');
   assert.equal(reporterRoleToSource('resident'), 'resident');

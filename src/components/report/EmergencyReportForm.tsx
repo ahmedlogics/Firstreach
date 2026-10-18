@@ -21,11 +21,16 @@ import {
   CheckCircle,
   X,
   Navigation,
+  Map,
 } from 'lucide-react';
+
+import { Language, TRANSLATIONS } from '@/lib/reports/i18n';
+import { LocationMapPicker } from './LocationMapPicker';
 
 interface EmergencyReportFormProps {
   onSubmitSuccess: (result: ReportSuccessResult) => void;
   className?: string;
+  language?: Language;
 }
 
 const DEFAULT_FORM_DATA = (initialKey: string): ReportFormData => ({
@@ -51,7 +56,11 @@ const DEFAULT_FORM_DATA = (initialKey: string): ReportFormData => ({
 export function EmergencyReportForm({
   onSubmitSuccess,
   className = '',
+  language = 'en',
 }: EmergencyReportFormProps) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const isRtl = language === 'ur' || language === 'sd';
+
   // 1. Idempotency Key State
   const [idempotencyKey, setIdempotencyKey] = useState<string>('');
 
@@ -92,11 +101,17 @@ export function EmergencyReportForm({
         }));
       }
     } catch {
-      setZonesError('Unable to load emergency response zones. Please check your connection.');
+      setZonesError(
+        language === 'ur'
+          ? 'امدادی زونز لوڈ کرنے میں ناکامی۔ براہ کرم انٹرنیٹ کنکشن چیک کریں۔'
+          : language === 'sd'
+          ? 'امدادي علائقا لوڊ ڪرڻ ۾ ناڪامي. مهرباني ڪري انٽرنيٽ چيڪ ڪريو.'
+          : 'Unable to load emergency response zones. Please check your connection.'
+      );
     } finally {
       setZonesLoading(false);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     fetchZones();
@@ -109,7 +124,13 @@ export function EmergencyReportForm({
 
   const handleUseMyLocation = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
+      setGpsError(
+        language === 'ur'
+          ? 'آپ کا براؤزر جی پی ایس لوکیشن کو سپورٹ نہیں کرتا۔'
+          : language === 'sd'
+          ? 'اوهان جو برائوزر جي پي ايس سپورٽ نٿو ڪري.'
+          : 'Geolocation is not supported by your browser.'
+      );
       return;
     }
 
@@ -130,11 +151,26 @@ export function EmergencyReportForm({
         setGpsSuccess(true);
       },
       (err) => {
-        let msg = 'Location access was denied or is unavailable.';
+        let msg =
+          language === 'ur'
+            ? 'لوکیشن تک رسائی حاصل نہیں ہو سکی۔'
+            : language === 'sd'
+            ? 'لوڪيشن جي رسائي حاصل نه ٿي سگهي.'
+            : 'Location access was denied or is unavailable.';
         if (err.code === err.PERMISSION_DENIED) {
-          msg = 'Location permission denied. You can enter coordinates manually or leave them blank.';
+          msg =
+            language === 'ur'
+              ? 'لوکیشن کی اجازت نہیں ملی۔ آپ خود درج کر سکتے ہیں یا خالی چھوڑ دیں۔'
+              : language === 'sd'
+              ? 'لوڪيشن جي اجازت ناهي ملي. اوهان پاڻ داخل ڪري سگهو ٿا يا خالي ڇڏيو.'
+              : 'Location permission denied. You can enter coordinates manually or leave them blank.';
         } else if (err.code === err.TIMEOUT) {
-          msg = 'Location request timed out. Please try again or enter manually.';
+          msg =
+            language === 'ur'
+              ? 'لوکیشن حاصل کرنے میں زیادہ وقت لگا۔ دوبارہ کوشش کریں یا خود درج کریں۔'
+              : language === 'sd'
+              ? 'لوڪيشن ۾ دير ٿي وئي. ٻيهر ڪوشش ڪريو يا پاڻ لکو.'
+              : 'Location request timed out. Please try again or enter manually.';
         }
         setGpsError(msg);
         setGpsLoading(false);
@@ -147,6 +183,48 @@ export function EmergencyReportForm({
     setFormData((prev) => ({ ...prev, lat: null, lng: null }));
     setGpsSuccess(false);
     setGpsError(null);
+  };
+
+  // Interactive Map & Pin-drop state
+  const [isMapOpen, setIsMapOpen] = useState<boolean>(false);
+
+  const handleMapLocationSelect = (newLat: number | null, newLng: number | null, areaName?: string) => {
+    setFormData((prev) => {
+      let desc = prev.locationDescription;
+      if (areaName && !desc.trim()) {
+        desc = areaName;
+      }
+      return {
+        ...prev,
+        lat: newLat,
+        lng: newLng,
+        locationDescription: desc,
+      };
+    });
+    setGpsSuccess(false);
+    setGpsError(null);
+    if (errors.lat || errors.lng) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.lat;
+        delete copy.lng;
+        return copy;
+      });
+    }
+  };
+
+  const handleMapZoneSelect = (newZoneId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      zoneId: newZoneId,
+    }));
+    if (errors.zoneId) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.zoneId;
+        return copy;
+      });
+    }
   };
 
   // 5. Validation, submission error, and offline state
@@ -201,6 +279,12 @@ export function EmergencyReportForm({
     };
   };
 
+  // Helper to retrieve localized field validation message
+  const getFieldError = (field: string) => {
+    if (!errors[field]) return null;
+    return (t.validationErrors as Record<string, string>)?.[field] || errors[field];
+  };
+
   // Client-side validation using shared Zod schema
   const validateForm = () => {
     const payload = buildPayload();
@@ -211,7 +295,8 @@ export function EmergencyReportForm({
       for (const issue of result.error.issues) {
         const field = issue.path[0]?.toString() || 'general';
         if (!fieldErrors[field]) {
-          fieldErrors[field] = issue.message;
+          const localizedMsg = (t.validationErrors as Record<string, string>)?.[field];
+          fieldErrors[field] = localizedMsg || issue.message;
         }
       }
       setErrors(fieldErrors);
@@ -274,7 +359,7 @@ export function EmergencyReportForm({
       if (res.status === 429) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError('Too many reports, please wait a minute');
+        setGeneralError(t.validationErrors?.rateLimit || 'Too many reports, please wait a minute');
         return;
       }
 
@@ -288,13 +373,14 @@ export function EmergencyReportForm({
           for (const item of errData.details) {
             const field = item.field || (Array.isArray(item.path) ? item.path[0] : 'general');
             if (field && !serverFieldErrors[field]) {
-              serverFieldErrors[field] = item.message;
+              const localizedMsg = (t.validationErrors as Record<string, string>)?.[field];
+              serverFieldErrors[field] = localizedMsg || item.message;
             }
           }
           setErrors(serverFieldErrors);
-          setGeneralError('Needs correction: please check the highlighted fields.');
+          setGeneralError(t.validationErrors?.generalCorrection || 'Needs correction: please check the highlighted fields.');
         } else {
-          setGeneralError('Needs correction: ' + (errData.error || 'Validation failed.'));
+          setGeneralError(t.validationErrors?.generalCorrection || ('Needs correction: ' + (errData.error || 'Validation failed.')));
         }
         return;
       }
@@ -303,7 +389,7 @@ export function EmergencyReportForm({
       if (res.status === 500 || !res.ok) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError('Could not save report. Please try again.');
+        setGeneralError(t.validationErrors?.serverError || 'Could not save report. Please try again.');
         return;
       }
 
@@ -313,7 +399,7 @@ export function EmergencyReportForm({
       if (!data.ok) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError(data.error || 'Could not save report. Please try again.');
+        setGeneralError(t.validationErrors?.serverError || data.error || 'Could not save report. Please try again.');
         return;
       }
 
@@ -361,7 +447,7 @@ export function EmergencyReportForm({
 
   return (
     <>
-      <form onSubmit={handleReviewClick} className={`space-y-6 ${className}`}>
+      <form dir={isRtl ? 'rtl' : 'ltr'} onSubmit={handleReviewClick} className={`space-y-6 ${className}`}>
         {/* OFFLINE NOTICE BANNER (Rule 3: Saved on this device. NOT delivered yet.) */}
         {offlineNotice && (
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
@@ -369,10 +455,10 @@ export function EmergencyReportForm({
               <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0" />
               <div>
                 <h5 className="font-extrabold text-xs text-amber-900 tracking-tight">
-                  Saved on this device. NOT delivered yet.
+                  {language === 'ur' ? 'اس ڈیوائس پر محفوظ ہو گیا۔ ابھی ارسال نہیں ہوا۔' : language === 'sd' ? 'هن ڊوائيس تي محفوظ ٿي ويو. اڃا تائين ناهي پهتو.' : 'Saved on this device. NOT delivered yet.'}
                 </h5>
                 <p className="text-[11px] text-amber-800 mt-0.5">
-                  Your emergency intake is securely stored in your browser's offline storage. It will be dispatched automatically as soon as internet connection is restored.
+                  {language === 'ur' ? 'آپ کی رپورٹ براؤزر کے محفوظ اسٹوریج میں رکھی گئی ہے۔ انٹرنیٹ بحال ہوتے ہی خودکار طور پر روانہ ہو جائے گی۔' : language === 'sd' ? 'اوهان جي رپورٽ برائوزر ۾ محفوظ آهي. انٽرنيٽ هلڻ سان پاڻمرادو ريسڪيو ڏانهن موڪلي ويندي.' : 'Your emergency intake is securely stored in your browser offline storage. It will be dispatched automatically as soon as internet connection is restored.'}
                 </p>
               </div>
             </div>
@@ -381,7 +467,7 @@ export function EmergencyReportForm({
               onClick={() => setOfflineNotice(null)}
               className="px-2.5 py-1 rounded-lg text-amber-800 hover:bg-amber-100 text-xs font-semibold shrink-0 cursor-pointer"
             >
-              Dismiss
+              {language === 'ur' ? 'بند کریں' : language === 'sd' ? 'بند ڪريو' : 'Dismiss'}
             </button>
           </div>
         )}
@@ -390,7 +476,7 @@ export function EmergencyReportForm({
         {generalError && (
           <div
             className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
-              generalError.includes('minute')
+              generalError === t.validationErrors?.rateLimit || generalError.includes('minute')
                 ? 'bg-amber-50 border-amber-300 text-amber-950'
                 : 'bg-red-50 border-red-300 text-red-950'
             }`}
@@ -398,22 +484,25 @@ export function EmergencyReportForm({
             <div className="flex items-center gap-2.5">
               <AlertTriangle
                 className={`w-4 h-4 shrink-0 ${
-                  generalError.includes('minute') ? 'text-amber-600' : 'text-red-600'
+                  generalError === t.validationErrors?.rateLimit || generalError.includes('minute') ? 'text-amber-600' : 'text-red-600'
                 }`}
               />
               <span className="font-semibold">{generalError}</span>
             </div>
 
             {/* Offer Retry button for 500 (keeps form values & same idempotencyKey) */}
-            {!generalError.includes('minute') && !generalError.includes('Needs correction') && (
+            {generalError !== t.validationErrors?.rateLimit &&
+              !generalError.includes('minute') &&
+              generalError !== t.validationErrors?.generalCorrection &&
+              !generalError.includes('Needs correction') && (
               <button
                 type="button"
                 onClick={executeSubmission}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shrink-0 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shrink-0 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
-                <span>{isSubmitting ? 'Retrying...' : 'Retry Submission'}</span>
+                <span>{isSubmitting ? (language === 'ur' ? 'کوشش جاری...' : language === 'sd' ? 'ڪوشش جاري...' : 'Retrying...') : (language === 'ur' ? 'دوبارہ کوشش کریں' : language === 'sd' ? 'ٻيهر ڪوشش ڪريو' : 'Retry Submission')}</span>
               </button>
             )}
           </div>
@@ -423,14 +512,14 @@ export function EmergencyReportForm({
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
             <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
-              1
+              {t.sectionA.num}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">
-                Section A: Reporter Information
+                {t.sectionA.title}
               </h3>
               <p className="text-xs text-[#64748B]">
-                Who is submitting this incident notification?
+                {t.sectionA.subtitle}
               </p>
             </div>
           </div>
@@ -438,9 +527,9 @@ export function EmergencyReportForm({
           {/* Radio toggle: Myself vs Someone Else */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-700 block">
-              Reporting Status <span className="text-red-500">*</span>
+              {t.sectionA.reportingForLabel} <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3 max-w-md">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
               <label
                 className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
                   formData.reportingFor === 'myself'
@@ -457,7 +546,7 @@ export function EmergencyReportForm({
                   }
                   className="accent-[#14B8A6]"
                 />
-                <span>Reporting for Myself / Family</span>
+                <span>{t.sectionA.reportingForMyself}</span>
               </label>
 
               <label
@@ -471,16 +560,17 @@ export function EmergencyReportForm({
                   type="radio"
                   name="reportingFor"
                   checked={formData.reportingFor === 'someone_else'}
-                  onChange={() =>
-                    setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }))
-                  }
+                  onChange={() => {
+                    setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }));
+                    setIsMapOpen(true);
+                  }}
                   className="accent-[#14B8A6]"
                 />
-                <span>Reporting for Someone Else</span>
+                <span>{t.sectionA.reportingForSomeoneElse}</span>
               </label>
             </div>
             {errors.reportingFor && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reportingFor}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reportingFor')}</p>
             )}
           </div>
 
@@ -488,49 +578,70 @@ export function EmergencyReportForm({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Your Name <span className="text-slate-400 font-normal">(Optional)</span>
+                {t.sectionA.reporterNameLabel} <span className="text-slate-400 font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
                 <input
                   type="text"
                   value={formData.reporterName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, reporterName: e.target.value }))
-                  }
-                  placeholder="e.g. Tariq Mehmood"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({ ...prev, reporterName: val }));
+                    if (errors.reporterName) {
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.reporterName;
+                        return copy;
+                      });
+                    }
+                  }}
+                  placeholder={t.sectionA.reporterNamePlaceholder}
+                  className={`w-full ${isRtl ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3'} py-2 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
+                    errors.reporterName ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  }`}
                 />
               </div>
               {errors.reporterName && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterName}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterName')}</p>
               )}
             </div>
 
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Callback Phone <span className="text-slate-400 font-normal">(Optional)</span>
+                {t.sectionA.reporterPhoneLabel} <span className="text-slate-400 font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Phone className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
                 <input
                   type="tel"
+                  dir="ltr"
                   value={formData.reporterPhone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, reporterPhone: e.target.value }))
-                  }
-                  placeholder="+92 300 1234567"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({ ...prev, reporterPhone: val }));
+                    if (errors.reporterPhone) {
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.reporterPhone;
+                        return copy;
+                      });
+                    }
+                  }}
+                  placeholder={t.sectionA.reporterPhonePlaceholder}
+                  className={`w-full ${isRtl ? 'pr-9 pl-3' : 'pl-9 pr-3'} py-2 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
+                    errors.reporterPhone ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  }`}
                 />
               </div>
               {errors.reporterPhone && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterPhone}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterPhone')}</p>
               )}
             </div>
 
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Reporter Relationship <span className="text-red-500">*</span>
+                {t.sectionA.reporterRoleLabel} <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.reporterRole}
@@ -542,13 +653,13 @@ export function EmergencyReportForm({
                 }
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
               >
-                <option value="resident">Affected Resident</option>
-                <option value="neighbor">Nearby Neighbor</option>
-                <option value="volunteer">Field Volunteer</option>
-                <option value="other">Public Passerby / Relative</option>
+                <option value="resident">{t.sectionA.roles.resident}</option>
+                <option value="neighbor">{t.sectionA.roles.neighbor}</option>
+                <option value="volunteer">{t.sectionA.roles.volunteer}</option>
+                <option value="other">{t.sectionA.roles.other}</option>
               </select>
               {errors.reporterRole && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterRole}</p>
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterRole')}</p>
               )}
             </div>
           </div>
@@ -558,14 +669,14 @@ export function EmergencyReportForm({
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
             <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
-              2
+              {t.sectionB.num}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">
-                Section B: Incident Location & Coordinates
+                {t.sectionB.title}
               </h3>
               <p className="text-xs text-[#64748B]">
-                Precise sector identification to dispatch nearest rescue unit.
+                {t.sectionB.subtitle}
               </p>
             </div>
           </div>
@@ -583,7 +694,7 @@ export function EmergencyReportForm({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-red-200 text-red-800 hover:bg-red-100 font-semibold text-[11px]"
               >
                 <RefreshCw className="w-3 h-3" />
-                <span>Retry</span>
+                <span>{language === 'ur' ? 'دوبارہ کوشش کریں' : language === 'sd' ? 'ٻيهر ڪوشش ڪريو' : 'Retry'}</span>
               </button>
             </div>
           )}
@@ -591,7 +702,7 @@ export function EmergencyReportForm({
           {/* Zone Selector */}
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Select Sector / Zone <span className="text-red-500">*</span>
+              {t.sectionB.zoneLabel} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.zoneId}
@@ -604,26 +715,26 @@ export function EmergencyReportForm({
               }`}
             >
               {zonesLoading ? (
-                <option value="">Loading response zones...</option>
+                <option value="">{t.sectionB.zoneLoading}</option>
               ) : zones.length === 0 ? (
-                <option value="">No zones available</option>
+                <option value="">{t.sectionB.zoneEmpty}</option>
               ) : (
                 zones.map((z) => (
                   <option key={z.id} value={z.id}>
-                    {z.name} {z.flood_risk ? `(Risk: ${z.flood_risk})` : ''}
+                    {z.name} {z.flood_risk ? `(${language === 'ur' ? 'خطرہ' : language === 'sd' ? 'خطرو' : 'Risk'}: ${z.flood_risk})` : ''}
                   </option>
                 ))
               )}
             </select>
             {errors.zoneId && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.zoneId}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('zoneId')}</p>
             )}
           </div>
 
           {/* Location Description & Landmarks */}
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Detailed Street Address & Landmark <span className="text-red-500">*</span>
+              {t.sectionB.locationDescLabel} <span className="text-red-500">*</span>
             </label>
             <textarea
               rows={2}
@@ -631,14 +742,14 @@ export function EmergencyReportForm({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, locationDescription: e.target.value }))
               }
-              placeholder="e.g. House 42-B, St 6, behind submerged Jamia Mosque. Yellow gate, 2nd floor balcony."
+              placeholder={t.sectionB.locationDescPlaceholder}
               className={`w-full p-3 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
                 errors.locationDescription ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
-              }`}
+              } ${isRtl ? 'text-right' : ''}`}
             />
             {errors.locationDescription && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">
-                {errors.locationDescription}
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                {getFieldError('locationDescription')}
               </p>
             )}
           </div>
@@ -649,44 +760,73 @@ export function EmergencyReportForm({
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#14B8A6]" />
                 <span className="text-xs font-bold text-slate-800">
-                  GPS Location Coordinates
+                  {t.sectionB.gpsTitle}
                 </span>
                 <span className="text-[11px] text-slate-500 font-normal">
-                  (Optional &bull; Enables precision mapping)
+                  {t.sectionB.gpsSubtitle}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Pick on Map button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMapOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-xs transition-colors cursor-pointer ${
+                    isMapOpen
+                      ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+                      : 'bg-white border-teal-300 text-[#0F766E] hover:bg-teal-50'
+                  }`}
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  <span>{isMapOpen ? t.sectionB.toggleMapButtonClose : t.sectionB.toggleMapButtonOpen}</span>
+                </button>
+
+                {/* Use My Location button */}
                 <button
                   type="button"
                   onClick={handleUseMyLocation}
                   disabled={gpsLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-teal-200 text-[#0F766E] hover:bg-teal-50 text-xs font-bold shadow-xs transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
                 >
                   <Navigation
-                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-teal-600' : 'text-teal-600'}`}
+                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-teal-600' : 'text-slate-500'}`}
                   />
-                  <span>{gpsLoading ? 'Acquiring GPS...' : 'Use My Location'}</span>
+                  <span>{gpsLoading ? t.sectionB.acquiringGps : t.sectionB.useGpsButton}</span>
                 </button>
 
                 {(formData.lat !== null || formData.lng !== null) && (
                   <button
                     type="button"
                     onClick={handleClearCoordinates}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium cursor-pointer"
                     title="Clear coordinates"
                   >
                     <X className="w-3.5 h-3.5" />
-                    <span>Clear</span>
+                    <span>{t.sectionB.clearGps}</span>
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Inline Interactive Map with Search & Pin-Drop */}
+            {isMapOpen && (
+              <LocationMapPicker
+                lat={formData.lat}
+                lng={formData.lng}
+                zones={zones}
+                selectedZoneId={formData.zoneId}
+                onLocationSelect={handleMapLocationSelect}
+                onZoneSelect={handleMapZoneSelect}
+                language={language}
+                t={t}
+              />
+            )}
+
             {gpsSuccess && (
               <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1.5 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
                 <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>GPS coordinates acquired from your device.</span>
+                <span>{language === 'ur' ? 'جی پی ایس کوآرڈینیٹس کامیابی سے حاصل کر لیے گئے۔' : language === 'sd' ? 'جي پي ايس ڪوآرڊينيٽس حاصل ٿي ويا.' : 'GPS coordinates acquired from your device.'}</span>
               </p>
             )}
 
@@ -701,12 +841,13 @@ export function EmergencyReportForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                  Latitude (Karachi: 24.6000 to 25.3000)
+                  {t.sectionB.latLabel}
                 </label>
                 <input
                   type="number"
+                  dir="ltr"
                   step="0.00001"
-                  placeholder="e.g. 24.86300 (or leave blank)"
+                  placeholder={t.sectionB.latPlaceholder}
                   value={formData.lat ?? ''}
                   onChange={(e) => {
                     const val = e.target.value.trim();
@@ -720,18 +861,19 @@ export function EmergencyReportForm({
                   }`}
                 />
                 {errors.lat && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lat}</p>
+                  <p className={`text-[11px] text-red-600 mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lat')}</p>
                 )}
               </div>
 
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                  Longitude (Karachi: 66.7000 to 67.5000)
+                  {t.sectionB.lngLabel}
                 </label>
                 <input
                   type="number"
+                  dir="ltr"
                   step="0.00001"
-                  placeholder="e.g. 67.01400 (or leave blank)"
+                  placeholder={t.sectionB.lngPlaceholder}
                   value={formData.lng ?? ''}
                   onChange={(e) => {
                     const val = e.target.value.trim();
@@ -745,13 +887,13 @@ export function EmergencyReportForm({
                   }`}
                 />
                 {errors.lng && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lng}</p>
+                  <p className={`text-[11px] text-red-600 mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lng')}</p>
                 )}
               </div>
             </div>
 
             <p className="text-[11px] text-slate-500 italic">
-              Note: If coordinates are omitted, the report is saved with approximate zone location and flagged for coordinator verification.
+              {language === 'ur' ? 'نوٹ: کوآرڈینیٹس نہ ہونے کی صورت میں رپورٹ قریبی زون کے تخمینے کے ساتھ محفوظ کی جاتی ہے۔' : language === 'sd' ? 'نوٽ: ڪوآرڊينيٽس کانسواءِ رپورٽ ويجهي علائقي جي اندازي سان محفوظ ڪئي ويندي.' : 'Note: If coordinates are omitted, the report is saved with approximate zone location and flagged for coordinator verification.'}
             </p>
           </div>
         </div>
@@ -760,14 +902,14 @@ export function EmergencyReportForm({
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-5">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
             <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
-              3
+              {t.sectionC.num}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">
-                Section C: Emergency Urgency & Vulnerability Matrix
+                {t.sectionC.title}
               </h3>
               <p className="text-xs text-[#64748B]">
-                These indicators directly determine the algorithmic life-safety priority score.
+                {t.sectionC.subtitle}
               </p>
             </div>
           </div>
@@ -776,7 +918,7 @@ export function EmergencyReportForm({
             {/* Flood Severity (0..3) */}
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Water Depth & Flood Severity <span className="text-red-500">*</span>
+                {t.sectionC.floodSeverityLabel} <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.floodSeverity}
@@ -788,14 +930,14 @@ export function EmergencyReportForm({
                 }
                 className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
               >
-                <option value={3}>Level 3: Severe (Waist-to-neck level, rising fast)</option>
-                <option value={2}>Level 2: Moderate (Ground floor flooded, knee level)</option>
-                <option value={1}>Level 1: Minor (Street impassable, threshold level)</option>
-                <option value={0}>Level 0: Low (Precautionary evacuation notice)</option>
+                <option value={3}>{t.sectionC.floodLevels[3].title} — {t.sectionC.floodLevels[3].desc}</option>
+                <option value={2}>{t.sectionC.floodLevels[2].title} — {t.sectionC.floodLevels[2].desc}</option>
+                <option value={1}>{t.sectionC.floodLevels[1].title} — {t.sectionC.floodLevels[1].desc}</option>
+                <option value={0}>{t.sectionC.floodLevels[0].title} — {t.sectionC.floodLevels[0].desc}</option>
               </select>
               {errors.floodSeverity && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
-                  {errors.floodSeverity}
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                  {getFieldError('floodSeverity')}
                 </p>
               )}
             </div>
@@ -804,7 +946,7 @@ export function EmergencyReportForm({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-slate-700 block">
-                  People Needing Evacuation
+                  {t.sectionC.peopleCountLabel}
                 </label>
                 <label className="flex items-center gap-1.5 text-[11px] text-amber-800 font-semibold cursor-pointer">
                   <input
@@ -820,15 +962,15 @@ export function EmergencyReportForm({
                     }}
                     className="accent-amber-600 rounded"
                   />
-                  <span>Count Unknown</span>
+                  <span>{t.sectionC.unknownPeopleCheckbox}</span>
                 </label>
               </div>
 
               {formData.isPeopleCountUnknown ? (
                 <div className="px-3 py-2 text-xs font-semibold bg-amber-50 border border-amber-200 rounded-lg text-amber-900 flex items-center justify-between">
-                  <span>Count Unknown (Sent as null)</span>
+                  <span>{t.sectionC.triState.unknown} (null)</span>
                   <span className="text-[10px] text-amber-700 uppercase font-bold tracking-wider">
-                    Flagged for review
+                    {language === 'ur' ? 'جائزہ کیلئے نشان زد' : language === 'sd' ? 'جائزي لاءِ نشان لڳل' : 'Flagged for review'}
                   </span>
                 </div>
               ) : (
@@ -850,8 +992,8 @@ export function EmergencyReportForm({
                 />
               )}
               {errors.peopleCount && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
-                  {errors.peopleCount}
+                <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
+                  {getFieldError('peopleCount')}
                 </p>
               )}
             </div>
@@ -861,10 +1003,10 @@ export function EmergencyReportForm({
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800 block">
-                Tri-State Vulnerability Indicators
+                {language === 'ur' ? 'تین رخی خطرے کی علامات' : language === 'sd' ? 'ٽي رخا خطري جا نشان' : 'Tri-State Vulnerability Indicators'}
               </label>
               <span className="text-[11px] text-slate-500 italic">
-                Unknown is logged as unverified null, never as false
+                {language === 'ur' ? 'معلوم نہیں کا مطلب خطرہ موجود سمجھا جائے گا' : language === 'sd' ? 'اڻڄاتل جو مطلب خطرو موجود سمجهيو ويندو' : 'Unknown is logged as unverified null, never as false'}
               </span>
             </div>
 
@@ -873,44 +1015,44 @@ export function EmergencyReportForm({
               <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                   <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span>Physically Trapped</span>
+                  <span>{t.sectionC.trappedLabel}</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
-                  Blocked exits, cutoff on upper roof, or rising water.
+                  {t.sectionC.trappedDesc}
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                       formData.trapped === true
                         ? 'bg-red-600 text-white border-red-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Yes
+                    {t.sectionC.triState.yes}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                       formData.trapped === false
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    No
+                    {t.sectionC.triState.no}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                       formData.trapped === null
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Unknown
+                    {t.sectionC.triState.unknown}
                   </button>
                 </div>
               </div>
@@ -919,44 +1061,44 @@ export function EmergencyReportForm({
               <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                   <HeartPulse className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span>Urgent Medical Need</span>
+                  <span>{t.sectionC.medicalLabel}</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
-                  Oxygen, dialysis, insulin, injury, or critical illness.
+                  {t.sectionC.medicalDesc}
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                       formData.medicalUrgent === true
                         ? 'bg-red-600 text-white border-red-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Yes
+                    {t.sectionC.triState.yes}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                       formData.medicalUrgent === false
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    No
+                    {t.sectionC.triState.no}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                       formData.medicalUrgent === null
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Unknown
+                    {t.sectionC.triState.unknown}
                   </button>
                 </div>
               </div>
@@ -965,44 +1107,44 @@ export function EmergencyReportForm({
               <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                   <PersonStanding className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span>Mobility Assistance</span>
+                  <span>{t.sectionC.mobilityLabel}</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
-                  Bedridden, wheelchair, infant, or elderly unable to wade.
+                  {t.sectionC.mobilityDesc}
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                       formData.mobilityHelp === true
                         ? 'bg-red-600 text-white border-red-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Yes
+                    {t.sectionC.triState.yes}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                       formData.mobilityHelp === false
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    No
+                    {t.sectionC.triState.no}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                       formData.mobilityHelp === null
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Unknown
+                    {t.sectionC.triState.unknown}
                   </button>
                 </div>
               </div>
@@ -1012,7 +1154,7 @@ export function EmergencyReportForm({
           {/* Additional Medical or Rescue Notes */}
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Additional Medical or Rescue Notes <span className="text-slate-400 font-normal">(Optional)</span>
+              {t.sectionC.notesLabel} <span className="text-slate-400 font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
             </label>
             <textarea
               rows={2}
@@ -1020,11 +1162,13 @@ export function EmergencyReportForm({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, description: e.target.value }))
               }
-              placeholder="e.g. Diabetic needing insulin cooling; power disconnected; two elderly residents on second floor."
-              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+              placeholder={t.sectionC.notesPlaceholder}
+              className={`w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
+                isRtl ? 'text-right' : ''
+              }`}
             />
             {errors.description && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.description}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('description')}</p>
             )}
           </div>
         </div>
@@ -1033,21 +1177,21 @@ export function EmergencyReportForm({
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
             <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
-              4
+              {t.sectionD.num}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">
-                Section D: Observation Timing
+                {t.sectionD.title}
               </h3>
               <p className="text-xs text-[#64748B]">
-                Help coordinators evaluate report freshness and decay rates.
+                {t.sectionD.subtitle}
               </p>
             </div>
           </div>
 
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              When did you observe this situation? <span className="text-red-500">*</span>
+              {t.sectionD.timingLabel} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.observationOption}
@@ -1059,15 +1203,15 @@ export function EmergencyReportForm({
               }
               className="w-full sm:w-80 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
             >
-              <option value="now">Observed just now / within last 5 minutes</option>
-              <option value="15m">Observed about 15 minutes ago</option>
-              <option value="1h">Observed 1 hour ago</option>
-              <option value="3h">Observed 2 to 4 hours ago</option>
-              <option value="12h">Observed earlier today (~12 hours ago)</option>
-              <option value="24h">Observed yesterday (~24 hours ago)</option>
+              <option value="now">{t.sectionD.options.now}</option>
+              <option value="15m">{t.sectionD.options['15m']}</option>
+              <option value="1h">{t.sectionD.options['1h']}</option>
+              <option value="3h">{t.sectionD.options['3h']}</option>
+              <option value="12h">{t.sectionD.options['12h']}</option>
+              <option value="24h">{t.sectionD.options['24h']}</option>
             </select>
             {errors.observedAt && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.observedAt}</p>
+              <p className={`text-[11px] text-red-600 mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('observedAt')}</p>
             )}
           </div>
         </div>
@@ -1076,7 +1220,7 @@ export function EmergencyReportForm({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <HelpCircle className="w-4 h-4 text-[#14B8A6] shrink-0" />
-            <span>Reports are algorithmically ranked before dispatcher assignment.</span>
+            <span>{t.actions.algorithmNotice}</span>
           </div>
 
           <button
@@ -1085,7 +1229,7 @@ export function EmergencyReportForm({
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white text-sm font-bold shadow-card transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
-            <span>{isSubmitting ? 'Evaluating Triage...' : 'Review & Submit Report'}</span>
+            <span>{isSubmitting ? t.actions.submittingButton : t.actions.submitButton}</span>
           </button>
         </div>
       </form>
@@ -1098,6 +1242,7 @@ export function EmergencyReportForm({
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={executeSubmission}
         isSubmitting={isSubmitting}
+        language={language}
       />
     </>
   );
