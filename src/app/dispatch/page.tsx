@@ -17,6 +17,7 @@ import {
   DbAssignment,
   DbIncident,
   DbRescueTeam,
+  DbShelter,
   RecommendedAssignment,
   UnservedIncident,
 } from '@/lib/dispatch/types';
@@ -43,6 +44,7 @@ function DispatchWorkspace() {
   const [incidents, setIncidents] = useState<DbIncident[]>([]);
   const [teams, setTeams] = useState<DbRescueTeam[]>([]);
   const [assignments, setAssignments] = useState<DbAssignment[]>([]);
+  const [shelters, setShelters] = useState<DbShelter[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedAssignment[]>([]);
   const [unserved, setUnserved] = useState<UnservedIncident[]>([]);
 
@@ -82,12 +84,14 @@ function DispatchWorkspace() {
       const fetchedRecommendations: RecommendedAssignment[] = data.recommendations || [];
       const fetchedUnserved: UnservedIncident[] = data.unserved || [];
       const fetchedAssignments: DbAssignment[] = data.activeAssignments || [];
+      const fetchedShelters: DbShelter[] = data.shelters || [];
 
       setIncidents(fetchedIncidents);
       setTeams(fetchedTeams);
       setRecommendations(fetchedRecommendations);
       setUnserved(fetchedUnserved);
       setAssignments(fetchedAssignments);
+      setShelters(fetchedShelters);
 
       // Determine initial selected incident
       setSelectedIncident((current) => {
@@ -390,6 +394,8 @@ function DispatchWorkspace() {
           assignments={assignments}
           incidentsMap={incidentsMap}
           teamsMap={teamsMap}
+          shelters={shelters}
+          onOperationUpdated={fetchEngineData}
         />
       </div>
 

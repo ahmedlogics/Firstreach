@@ -41,6 +41,12 @@ export async function POST(req: NextRequest) {
       .select('*')
       .order('approved_at', { ascending: false });
 
+    // Fetch shelters for destination coordination
+    const { data: rawShelters } = await supabase
+      .from('shelters')
+      .select('*')
+      .order('name');
+
     const incidents = (rawIncidents as DbIncident[]) || [];
     const teams = (rawTeams as DbRescueTeam[]) || [];
 
@@ -64,6 +70,7 @@ export async function POST(req: NextRequest) {
       allIncidents: incidents,
       allTeams: teams,
       activeAssignments: rawAssignments || [],
+      shelters: rawShelters || [],
     });
   } catch (err: any) {
     console.error('[API /api/assignments/recommend] Unexpected error:', err);
