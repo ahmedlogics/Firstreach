@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/shared/AppShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmergencyReportForm } from '@/components/report/EmergencyReportForm';
+import { OfflineQueueList } from '@/components/report/OfflineQueueList';
 import { ReportGuidelinesCard } from '@/components/report/ReportGuidelinesCard';
 import { ReportSuccessResult } from '@/components/report/types';
 import { useRouter } from 'next/navigation';
@@ -12,8 +13,6 @@ import {
   FileText,
   AlertTriangle,
   ArrowRight,
-  ShieldCheck,
-  Copy,
   Info,
 } from 'lucide-react';
 
@@ -38,11 +37,17 @@ export default function ReportPage() {
 
   return (
     <AppShell>
-      {/* Page Header */}
+      {/* Page Header: Neutral "Live intake (demo database)" badge replaces orange demo badge */}
       <PageHeader
         title="Submit Emergency Report"
         description="Provide essential information so response coordinators can evaluate and prioritize assistance during active flood surges."
         breadcrumbs={[{ label: 'Report Emergency' }]}
+        showDemoBadge={false}
+        badge={
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            Live intake (demo database)
+          </span>
+        }
       />
 
       {/* Real Success Banner */}
@@ -146,9 +151,13 @@ export default function ReportPage() {
         </div>
       )}
 
-      {/* Main Grid: Form on Left, Guidelines & Help on Right */}
+      {/* Main Grid: Form & Offline Queue on Left, Guidelines & Help on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {/* Offline Queue List (Rule 6) */}
+          <OfflineQueueList />
+
+          {/* Emergency Intake Form */}
           <EmergencyReportForm onSubmitSuccess={handleFormSuccess} />
         </div>
 
