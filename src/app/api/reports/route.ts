@@ -5,9 +5,12 @@ import {
   reporterRoleToSource,
   toIncidentColumns,
   calculateProvisionalPriority,
+  computeReportPriority,
+  computeMergedPriority,
   findPossibleDuplicate,
   mergeRaiseOnly,
   reportRepository,
+  ReportRecord,
 } from '@/lib/reports';
 
 // In-memory rate limiting map: IP -> array of request timestamps (epoch ms)
@@ -166,37 +169,45 @@ export async function POST(request: NextRequest) {
 
     const input = validation.data;
 
-    // 4. If idempotencyKey already exists, return earlier result with 200 and create nothing
+    let insertedReport: ReportRecord | null = null;
+    let isResumed = false;
+
+    // 4. If idempotencyKey already exists
     if (input.idempotencyKey) {
       const existing = await reportRepository.findReportByIdempotencyKey(
         input.idempotencyKey
       );
       if (existing) {
-        let incident = null;
         if (existing.incident_id) {
-          incident = await reportRepository.getIncidentById(existing.incident_id);
-        }
-        const missing = computeMissingFields(input);
-        const prov = calculateProvisionalPriority(input);
+          const incident = await reportRepository.getIncidentById(existing.incident_id);
+          const missing = computeMissingFields(input);
+          const priority = computeReportPriority(input);
 
-        return NextResponse.json(
-          {
-            ok: true,
-            reportId: existing.id,
-            incidentId: existing.incident_id,
-            verificationStatus: incident?.verification_status ?? 'unverified',
-            needsReview: existing.needs_review,
-            possibleDuplicateOf: existing.possible_duplicate_of,
-            missingFields: existing.payload?.missingFields ?? missing,
-            priorityScore: incident?.priority_score ?? prov.score,
-            priorityReason: incident?.priority_reason ?? prov.reason,
-          },
-          { status: 200 }
-        );
+          return NextResponse.json(
+            {
+              ok: true,
+              reportId: existing.id,
+              incidentId: existing.incident_id,
+              verificationStatus: incident?.verification_status ?? 'unverified',
+              needsReview: existing.needs_review,
+              possibleDuplicateOf: existing.possible_duplicate_of,
+              missingFields: (existing.payload as Record<string, any>)?.missingFields ?? missing,
+              priorityScore: incident?.priority_score ?? priority.score,
+              priorityReason: incident?.priority_reason ?? priority.reason,
+            },
+            { status: 200 }
+          );
+        } else {
+          // If an existing report found by idempotency key has no incident_id,
+          // don't return 200; resume duplicate check / incident creation for that report.
+          insertedReport = existing;
+          insertedReportId = existing.id;
+          isResumed = true;
+        }
       }
     }
 
-    // 5. Insert original submission into reports first (payload holds full validated input, missingFields, received info)
+    // 5. Insert original submission into reports first (if not resuming an orphan report)
     const missingFields = computeMissingFields(input);
     const source = reporterRoleToSource(input.reporterRole);
     const eventAt =
@@ -213,14 +224,16 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const insertedReport = await reportRepository.insertReport({
-      source,
-      payload: fullPayload,
-      event_at: eventAt,
-      possible_duplicate_of: null,
-      needs_review: missingFields.length > 0,
-    });
-    insertedReportId = insertedReport.id;
+    if (!isResumed) {
+      insertedReport = await reportRepository.insertReport({
+        source,
+        payload: fullPayload,
+        event_at: eventAt,
+        possible_duplicate_of: null,
+        needs_review: missingFields.length > 0,
+      });
+      insertedReportId = insertedReport.id;
+    }
 
     // 6. Run findPossibleDuplicate. If found: link to incident, set needs_review & possible_duplicate_of, apply mergeRaiseOnly
     const recentIncidents = await reportRepository.listRecentIncidents(2);
@@ -241,19 +254,49 @@ export async function POST(request: NextRequest) {
 
       const mergeResult = mergeRaiseOnly(matchedIncident, input);
 
+      // Fetch all reports linked to this incident to compute effective inputs
+      const existingReports = await reportRepository.listReportsByIncident(matchedIncident.id);
+      const allPayloads = [
+        ...existingReports.map((r) => r.payload),
+        fullPayload,
+      ];
+
+      // Recompute priority based on effective inputs from all reports and merged incident columns
+      const mergedPriority = computeMergedPriority(
+        mergeResult.updatedFields,
+        allPayloads
+      );
+
+      // Fetch stored incident to ensure accurate priority_score and priority_reason
+      const existingIncident = await reportRepository.getIncidentById(matchedIncident.id);
+      const storedScore = existingIncident?.priority_score ?? matchedIncident.priority_score ?? 0;
+      const storedReason = existingIncident?.priority_reason ?? matchedIncident.priority_reason ?? '';
+
+      // Rule: Write max(storedScore, newScore). Update priority_reason only when the score goes up. Never lower a stored score.
+      const finalScore = Math.max(storedScore, mergedPriority.score);
+      const finalReason =
+        mergedPriority.score > storedScore
+          ? mergedPriority.reason
+          : (storedReason || mergedPriority.reason);
+
+      const fieldsToUpdate = {
+        ...mergeResult.updatedFields,
+        priority_score: finalScore,
+        priority_reason: finalReason,
+      };
+
       const updatedIncident = await reportRepository.updateIncident(
         matchedIncident.id,
-        mergeResult.updatedFields,
+        fieldsToUpdate,
         matchedIncident.updated_at || matchedIncident.created_at,
         input
       );
 
-      // Find the earlier report id associated with this incident
+      // Find the earlier report id associated with this incident (must be a report id or null, never an incident id)
       const earlierReportId =
-        (await reportRepository.findEarliestReportIdByIncidentId(matchedIncident.id)) ||
-        matchedIncident.id;
+        (await reportRepository.findEarliestReportIdByIncidentId(matchedIncident.id)) || null;
 
-      await reportRepository.updateReport(insertedReport.id, {
+      await reportRepository.updateReport(insertedReport!.id, {
         incident_id: matchedIncident.id,
         needs_review: true,
         possible_duplicate_of: earlierReportId,
@@ -262,7 +305,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           ok: true,
-          reportId: insertedReport.id,
+          reportId: insertedReport!.id,
           incidentId: matchedIncident.id,
           verificationStatus: updatedIncident.verification_status,
           needsReview: true,
@@ -275,8 +318,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. If not a duplicate: create an incident (unverified, open) with provisional priority and reason
-    const priority = calculateProvisionalPriority(input);
+    // 7. If not a duplicate: create an incident (unverified, open) with computed priority and reason
+    const priority = computeReportPriority(input);
     const incidentColumns = toIncidentColumns(
       input,
       priority.score,
@@ -287,7 +330,7 @@ export async function POST(request: NextRequest) {
       incidentColumns
     );
 
-    await reportRepository.updateReport(insertedReport.id, {
+    await reportRepository.updateReport(insertedReport!.id, {
       incident_id: createdIncident.id,
       needs_review: missingFields.length > 0,
       possible_duplicate_of: null,
@@ -297,7 +340,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: true,
-        reportId: insertedReport.id,
+        reportId: insertedReport!.id,
         incidentId: createdIncident.id,
         verificationStatus: createdIncident.verification_status,
         needsReview: missingFields.length > 0,
