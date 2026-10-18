@@ -79,3 +79,154 @@ body {
 .shadow-card-hover {
   box-shadow: 0 10px 15px -3px rgba(37, 42, 48, 0.06), 0 4px 6px -4px rgba(37, 42, 48, 0.03);
 }
+
+/* ========================================================
+   LANDING PAGE ANIMATIONS & INTERACTIVE EFFECTS
+   ======================================================== */
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popUp {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.94);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes pulseHalo {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(55, 125, 101, 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 14px rgba(55, 125, 101, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(55, 125, 101, 0);
+  }
+}
+
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes liveTicker {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes glowShift {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.08) translate(15px, -10px);
+  }
+}
+
+/* Entrance utility classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pop-up {
+  animation: popUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: floatGentle 4.5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatGentle 5s ease-in-out infinite 2s;
+}
+
+.animate-halo {
+  animation: pulseHalo 2.5s infinite;
+}
+
+.animate-glow-shift {
+  animation: glowShift 8s ease-in-out infinite;
+}
+
+/* Card Hover Elevation & 3D Pop Effect */
+.card-pop-hover {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+  will-change: transform, box-shadow;
+}
+
+.card-pop-hover:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 20px 25px -5px rgba(37, 42, 48, 0.08), 0 8px 10px -6px rgba(37, 42, 48, 0.04);
+  border-color: #536A82;
+}
+
+/* Button shiny reflection animation */
+.btn-shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transform: rotate(25deg);
+  transition: none;
+}
+
+.btn-shine-effect:hover::after {
+  left: 140%;
+  transition: all 0.75s ease-in-out;
+}
+
