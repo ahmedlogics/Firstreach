@@ -22,10 +22,6 @@ export function ReportGuidelinesCard() {
         </h3>
       </div>
 
-      <p className="text-xs text-[#757B81] leading-relaxed">
-        FirstReach uses algorithmic triage to prioritize calls based on immediate danger to life. Accurate reports ensure limited boats and paramedics reach the most critical cases first.
-      </p>
-
       <div className="space-y-3 pt-1 text-xs">
         <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1]">
           <Clock className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />

@@ -309,7 +309,6 @@ export default function OutreachPage() {
       {/* Page Header */}
       <PageHeader
         title="Community Outreach & Shelter Coordination"
-        description="Verify reachability across high-risk sectors, coordinate door-to-door volunteer welfare patrols, and monitor shelter bed intake."
         breadcrumbs={[{ label: 'Outreach & Shelters' }]}
         actions={
           <button

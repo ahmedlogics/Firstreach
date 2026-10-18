@@ -84,9 +84,6 @@ export function SilenceEscalationTimeline({
               Proactive Outreach Logic
             </span>
           </div>
-          <p className="text-xs text-[#757B81] mt-0.5">
-            How unresponsive households are escalated safely without false emergency declarations.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto">

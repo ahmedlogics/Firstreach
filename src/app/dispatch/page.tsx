@@ -287,7 +287,6 @@ function DispatchWorkspace() {
       {/* Page Header */}
       <PageHeader
         title="Rescue Resource Allocation"
-        description="Life-First Triage Engine: Prioritize urgent life threats, evaluate capable rescue craft, and authorize verified deployments."
         breadcrumbs={[{ label: 'Rescue Allocation' }]}
         actions={
           <div className="flex items-center gap-2">

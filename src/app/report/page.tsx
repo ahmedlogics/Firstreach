@@ -40,7 +40,6 @@ export default function ReportPage() {
       {/* Page Header: Neutral "Live intake (demo database)" badge */}
       <PageHeader
         title="Submit Emergency Report"
-        description="Provide essential information so response coordinators can evaluate and prioritize assistance during active flood surges."
         breadcrumbs={[{ label: 'Report Emergency' }]}
         showDemoBadge={false}
         badge={
