@@ -13,7 +13,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC] flex text-[#0F172A] antialiased">
+    <div className="min-h-screen bg-[#F7F6F2] flex text-[#252A30] antialiased">
       {/* Sidebar (Desktop sticky + Mobile drawer) */}
       <AppSidebar
         isCollapsed={isSidebarCollapsed}
@@ -33,9 +33,9 @@ export function AppShell({ children }: AppShellProps) {
         </main>
 
         {/* Global Footer */}
-        <footer className="border-t border-[#E2E8F0] bg-white py-3 px-6 text-xs text-[#64748B]">
+        <footer className="border-t border-[#E8E6E1] bg-white py-3 px-6 text-xs text-[#757B81]">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <span className="font-bold text-[#0F172A]">FirstReach</span>
+            <span className="font-bold text-[#252A30]">FirstReach</span>
           </div>
         </footer>
       </div>

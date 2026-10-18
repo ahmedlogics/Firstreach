@@ -31,7 +31,7 @@ export function SilenceEscalationTimeline({
         'Household is sent an automated welfare ping. Silence is safely treated as battery-saving, mobile network lag, or power conservation.',
       outcome: 'No emergency declared. Re-poll scheduled.',
       icon: Clock,
-      color: 'border-slate-300 text-slate-800 bg-slate-50',
+      color: 'border-[#E8E6E1] text-[#252A30] bg-[#F7F6F2]',
     },
     {
       step: 2,
@@ -43,7 +43,7 @@ export function SilenceEscalationTimeline({
         'If water level is projected to rise within 6 hours, system attempts voice call and notifies registered verified neighbors in same sector.',
       outcome: 'Flagged for outreach. Not counted as confirmed disaster victim.',
       icon: Radio,
-      color: 'border-amber-300 text-amber-950 bg-amber-50',
+      color: 'border-[#A87426]/30 text-[#A87426] bg-[#FFF2DD]',
     },
     {
       step: 3,
@@ -55,7 +55,7 @@ export function SilenceEscalationTimeline({
         'System automatically generates a door-to-door welfare check for mobile field scouts. Avoids deploying precious swiftwater craft blindly.',
       outcome: 'Field scout visits location to ascertain physical condition.',
       icon: Footprints,
-      color: 'border-teal-400 text-teal-950 bg-teal-50',
+      color: 'border-[#536A82]/30 text-[#536A82] bg-[#EDF1F5]',
     },
     {
       step: 4,
@@ -67,31 +67,31 @@ export function SilenceEscalationTimeline({
         'Only once field scout physically confirms individuals are trapped or in medical distress does it enter the boat/vehicle dispatch pipeline.',
       outcome: 'Assigned to nearest qualified rescue team with target ETA.',
       icon: ShieldCheck,
-      color: 'border-red-400 text-red-950 bg-red-50',
+      color: 'border-[#B74349]/30 text-[#B74349] bg-[#FAE8E7]',
     },
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-5">
+    <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8E6E1]">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+            <h3 className="text-sm font-semibold text-[#252A30]">
               Silence Escalation Protocol
             </h3>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-100 text-teal-800 border border-teal-200">
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/20">
               Proactive Outreach Logic
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#757B81] mt-0.5">
             How unresponsive households are escalated safely without false emergency declarations.
           </p>
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 font-medium">
-            Core Rule: <strong>Silence &ne; Automatic Emergency</strong>
+          <div className="text-xs text-[#757B81] bg-[#F7F6F2] px-3 py-1.5 rounded-lg border border-[#E8E6E1] font-medium">
+            Core Rule: <strong className="text-[#252A30]">Silence &ne; Automatic Emergency</strong>
           </div>
 
           {onTriggerEscalation && (
@@ -99,7 +99,7 @@ export function SilenceEscalationTimeline({
               type="button"
               disabled={isEscalating}
               onClick={onTriggerEscalation}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-slate-300 shadow-xs flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#536A82] hover:bg-[#40566D] disabled:bg-slate-300 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               {isEscalating ? (
                 <>
@@ -108,7 +108,7 @@ export function SilenceEscalationTimeline({
                 </>
               ) : (
                 <>
-                  <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                  <Zap className="w-3.5 h-3.5 text-white" />
                   <span>Run Escalation Scan</span>
                 </>
               )}
@@ -130,28 +130,28 @@ export function SilenceEscalationTimeline({
               onClick={() => setActiveStep(s.step)}
               className={`p-3 rounded-xl border text-left transition-all ${
                 isSelected
-                  ? 'border-[#0D9488] bg-teal-50/50 ring-2 ring-[#0D9488]/30 shadow-xs'
-                  : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100/70'
+                  ? 'border-[#536A82] bg-[#EDF1F5] ring-1 ring-[#536A82] shadow-xs'
+                  : 'border-[#E8E6E1] bg-[#F7F6F2] hover:bg-[#EDF1F5]/40'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#92979D]">
                   Step 0{s.step}
                 </span>
                 <Icon
                   className={`w-3.5 h-3.5 ${
-                    isSelected ? 'text-[#0D9488]' : 'text-slate-400'
+                    isSelected ? 'text-[#536A82]' : 'text-[#92979D]'
                   }`}
                 />
               </div>
               <h4
-                className={`text-xs font-bold leading-tight ${
-                  isSelected ? 'text-slate-900' : 'text-slate-700'
+                className={`text-xs font-semibold leading-tight ${
+                  isSelected ? 'text-[#252A30]' : 'text-[#757B81]'
                 }`}
               >
                 {s.title}
               </h4>
-              <p className="text-[10px] text-slate-500 mt-1 truncate">
+              <p className="text-[10px] text-[#92979D] mt-1 truncate">
                 {s.timeframe}
               </p>
             </button>

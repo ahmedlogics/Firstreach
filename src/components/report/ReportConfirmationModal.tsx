@@ -34,7 +34,7 @@ export function ReportConfirmationModal({
   const renderTriStateBadge = (val: boolean | null, trueLabel: string, falseLabel: string) => {
     if (val === true) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-800 border border-red-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#FAE8E7] text-[#B74349] border border-[#B74349]/20">
           <AlertTriangle className="w-3 h-3" />
           <span>{trueLabel}</span>
         </span>
@@ -42,14 +42,14 @@ export function ReportConfirmationModal({
     }
     if (val === false) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#E5EEE8] text-[#377D65] border border-[#377D65]/20">
           <CheckCircle className="w-3 h-3" />
           <span>{falseLabel}</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FFF2DD] text-[#A87426] border border-[#A87426]/20">
         <HelpCircle className="w-3 h-3" />
         <span>Unknown / Unconfirmed</span>
       </span>
@@ -71,59 +71,59 @@ export function ReportConfirmationModal({
       isDemoAction={false}
       details={
         <div className="space-y-2.5 text-xs">
-          <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500 font-medium">Target Zone:</span>
-            <span className="font-bold text-slate-800">{zoneName || formData.zoneId}</span>
+          <div className="flex justify-between border-b border-[#E8E6E1] pb-2">
+            <span className="text-[#757B81] font-medium">Target Zone:</span>
+            <span className="font-bold text-[#252A30]">{zoneName || formData.zoneId}</span>
           </div>
 
-          <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500 font-medium">Assessed Severity:</span>
-            <span className="font-bold text-slate-900">
+          <div className="flex justify-between border-b border-[#E8E6E1] pb-2">
+            <span className="text-[#757B81] font-medium">Assessed Severity:</span>
+            <span className="font-bold text-[#252A30]">
               {severityLabels[formData.floodSeverity] ?? `Level ${formData.floodSeverity}`}
             </span>
           </div>
 
-          <div className="flex justify-between border-b border-slate-200 pb-2">
-            <span className="text-slate-500 font-medium">People Needing Evacuation:</span>
-            <span className="font-bold text-slate-800">
+          <div className="flex justify-between border-b border-[#E8E6E1] pb-2">
+            <span className="text-[#757B81] font-medium">People Needing Evacuation:</span>
+            <span className="font-bold text-[#252A30]">
               {formData.peopleCount !== null ? (
                 `${formData.peopleCount} individuals`
               ) : (
-                <span className="text-amber-700 italic">Unknown (Flagged for review)</span>
+                <span className="text-[#A87426] italic">Unknown (Flagged for review)</span>
               )}
             </span>
           </div>
 
-          <div className="border-b border-slate-200 pb-2 space-y-1.5">
-            <span className="text-slate-500 font-medium block">Vulnerability Indicators:</span>
+          <div className="border-b border-[#E8E6E1] pb-2 space-y-1.5">
+            <span className="text-[#757B81] font-medium block">Vulnerability Indicators:</span>
             <div className="grid grid-cols-1 gap-1.5 pt-0.5">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-600">Physically Trapped:</span>
+                <span className="text-[#757B81]">Physically Trapped:</span>
                 {renderTriStateBadge(formData.trapped, 'Trapped', 'Not Trapped')}
               </div>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-600">Urgent Medical Condition:</span>
+                <span className="text-[#757B81]">Urgent Medical Condition:</span>
                 {renderTriStateBadge(formData.medicalUrgent, 'Urgent Medical', 'No Urgent Medical')}
               </div>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-600">Mobility / Wheelchair Assistance:</span>
+                <span className="text-[#757B81]">Mobility / Wheelchair Assistance:</span>
                 {renderTriStateBadge(formData.mobilityHelp, 'Assistance Needed', 'No Help Needed')}
               </div>
             </div>
           </div>
 
-          <div className="border-b border-slate-200 pb-2">
+          <div className="border-b border-[#E8E6E1] pb-2">
             <div className="flex justify-between text-[11px]">
-              <span className="text-slate-500 font-medium">Coordinates:</span>
-              <span className={`font-mono font-semibold ${hasCoords ? 'text-teal-700' : 'text-amber-700 italic'}`}>
+              <span className="text-[#757B81] font-medium">Coordinates:</span>
+              <span className={`font-mono font-semibold ${hasCoords ? 'text-[#536A82]' : 'text-[#A87426] italic'}`}>
                 {hasCoords ? `${formData.lat}, ${formData.lng}` : 'None (Approximate Zone Location)'}
               </span>
             </div>
           </div>
 
           <div>
-            <span className="text-slate-500 font-medium block">Location Landmark:</span>
-            <p className="text-slate-800 italic mt-0.5 text-[11px] leading-relaxed bg-slate-50 p-2 rounded border border-slate-200">
+            <span className="text-[#757B81] font-medium block">Location Landmark:</span>
+            <p className="text-[#252A30] italic mt-0.5 text-[11px] leading-relaxed bg-[#F7F6F2] p-2 rounded-lg border border-[#E8E6E1]">
               {formData.locationDescription}
             </p>
           </div>

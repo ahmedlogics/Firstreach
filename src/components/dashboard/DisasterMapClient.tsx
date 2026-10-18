@@ -80,20 +80,19 @@ export default function DisasterMapClient({
   // Create clean, readable custom DivIcons for Leaflet
   const createIncidentIcon = (incident: DbIncident) => {
     const { tier } = getPriorityTier(incident.priority_score);
-    const isCritical = tier === 'Critical';
 
-    let bgColor = '#14B8A6';
-    let ringStyle = 'box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
+    let bgColor = '#536A82';
+    let ringStyle = 'box-shadow: 0 0 0 2px rgba(83, 106, 130, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
 
     if (tier === 'Critical') {
-      bgColor = '#EF4444';
-      ringStyle = 'box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45), 0 4px 8px rgba(0,0,0,0.35);';
+      bgColor = '#B74349';
+      ringStyle = 'box-shadow: 0 0 0 3px rgba(183, 67, 73, 0.45), 0 4px 8px rgba(0,0,0,0.35);';
     } else if (tier === 'High') {
-      bgColor = '#F59E0B';
-      ringStyle = 'box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
+      bgColor = '#A87426';
+      ringStyle = 'box-shadow: 0 0 0 2px rgba(168, 116, 38, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
     } else if (tier === 'Medium') {
-      bgColor = '#0284C7';
-      ringStyle = 'box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
+      bgColor = '#536A82';
+      ringStyle = 'box-shadow: 0 0 0 2px rgba(83, 106, 130, 0.4), 0 3px 6px rgba(0,0,0,0.3);';
     }
 
     return L.divIcon({
@@ -115,7 +114,7 @@ export default function DisasterMapClient({
     const isMedical = team.team_type === 'medical';
 
     const symbol = isBoat ? '⚓' : isMedical ? '✚' : '🚚';
-    const bgColor = isAvailable ? '#0D9488' : '#64748B';
+    const bgColor = isAvailable ? '#377D65' : '#757B81';
 
     return L.divIcon({
       className: 'custom-leaflet-team-marker',
@@ -133,7 +132,7 @@ export default function DisasterMapClient({
   const createShelterIcon = (shelter: DbShelter) => {
     const isFull = shelter.occupied >= shelter.capacity;
     const isNearFull = shelter.occupied / shelter.capacity >= 0.8;
-    const bgColor = isFull ? '#DC2626' : isNearFull ? '#D97706' : '#2563EB';
+    const bgColor = isFull ? '#B74349' : isNearFull ? '#A87426' : '#536A82';
 
     return L.divIcon({
       className: 'custom-leaflet-shelter-marker',
@@ -150,9 +149,9 @@ export default function DisasterMapClient({
 
   if (!isMounted) {
     return (
-      <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#0E1726] rounded-xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex items-center justify-center">
-        <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+      <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex items-center justify-center">
+        <div className="flex items-center gap-2 text-[#92979D] text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-[#536A82] animate-ping" />
           <span>Loading Karachi Disaster Map Telemetry...</span>
         </div>
       </div>
@@ -160,15 +159,15 @@ export default function DisasterMapClient({
   }
 
   return (
-    <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#0E1726] rounded-xl overflow-hidden border border-[#E2E8F0] shadow-subtle flex flex-col">
+    <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex flex-col">
       {/* Top Map Layer Filter Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         {/* Layer Filter Pills */}
-        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200/90 shadow-md text-xs font-semibold pointer-events-auto">
+        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-[#E8E6E1] shadow-md text-xs font-semibold pointer-events-auto">
           <button
             onClick={() => setActiveLayer('all')}
             className={`px-2 py-1 rounded-md transition-colors ${
-              activeLayer === 'all' ? 'bg-[#0B1423] text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeLayer === 'all' ? 'bg-[#252A30] text-white' : 'text-[#757B81] hover:bg-[#EDF1F5]'
             }`}
           >
             All
@@ -176,44 +175,44 @@ export default function DisasterMapClient({
           <button
             onClick={() => setActiveLayer('incidents')}
             className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-              activeLayer === 'incidents' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeLayer === 'incidents' ? 'bg-[#B74349] text-white' : 'text-[#757B81] hover:bg-[#EDF1F5]'
             }`}
           >
-            <Flame className="w-3 h-3 text-red-500" />
+            <Flame className="w-3 h-3 text-[#B74349]" />
             <span>Incidents ({incidents.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('teams')}
             className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-              activeLayer === 'teams' ? 'bg-teal-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeLayer === 'teams' ? 'bg-[#377D65] text-white' : 'text-[#757B81] hover:bg-[#EDF1F5]'
             }`}
           >
-            <LifeBuoy className="w-3 h-3 text-teal-500" />
+            <LifeBuoy className="w-3 h-3 text-[#377D65]" />
             <span>Teams ({rescueTeams.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('zones')}
             className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-              activeLayer === 'zones' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeLayer === 'zones' ? 'bg-[#A87426] text-white' : 'text-[#757B81] hover:bg-[#EDF1F5]'
             }`}
           >
-            <Waves className="w-3 h-3 text-amber-500" />
+            <Waves className="w-3 h-3 text-[#A87426]" />
             <span>Zones ({zones.length})</span>
           </button>
           <button
             onClick={() => setActiveLayer('shelters')}
             className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-              activeLayer === 'shelters' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              activeLayer === 'shelters' ? 'bg-[#536A82] text-white' : 'text-[#757B81] hover:bg-[#EDF1F5]'
             }`}
           >
-            <Home className="w-3 h-3 text-blue-500" />
+            <Home className="w-3 h-3 text-[#536A82]" />
             <span>Shelters ({shelters.length})</span>
           </button>
         </div>
 
         {/* Karachi Basin Live OSM Tag */}
-        <div className="bg-slate-900/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg border border-slate-700 text-[11px] font-mono font-medium flex items-center gap-1.5 pointer-events-auto shadow-md">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+        <div className="bg-[#252A30]/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg border border-[#343B43] text-[11px] font-mono font-medium flex items-center gap-1.5 pointer-events-auto shadow-md">
+          <span className="w-2 h-2 rounded-full bg-[#377D65]" />
           <span>Karachi Basin</span>
         </div>
       </div>
@@ -359,7 +358,7 @@ export default function DisasterMapClient({
                     {onSelectIncident && (
                       <button
                         onClick={() => onSelectIncident(inc)}
-                        className="w-full mt-1.5 py-1.5 px-3 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                        className="w-full mt-1.5 py-1.5 px-3 rounded-lg bg-[#536A82] hover:bg-[#40566D] text-white text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                       >
                         <span>View Details</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -456,23 +455,23 @@ export default function DisasterMapClient({
         {isLegendOpen && (
           <div className="px-2.5 pb-2.5 space-y-1 text-[10px] border-t border-slate-800/80 pt-1.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] border border-white shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#B74349] border border-white shrink-0" />
               <span>Critical Emergency (P80+)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] border border-white shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#A87426] border border-white shrink-0" />
               <span>High Priority (P60-79)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-md bg-[#0D9488] shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-md bg-[#536A82] shrink-0" />
               <span>Rescue Unit (Boat/Medical)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-md bg-[#2563EB] shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-md bg-[#252A30] border border-slate-600 shrink-0" />
               <span>Evacuation Shelter</span>
             </div>
-            <div className="flex items-center gap-1.5 text-amber-300 pt-0.5 border-t border-slate-850">
-              <span className="w-3 h-0.5 border-b-2 border-dashed border-amber-400 shrink-0" />
+            <div className="flex items-center gap-1.5 text-amber-300 pt-0.5 border-t border-slate-800">
+              <span className="w-3 h-0.5 border-b-2 border-dashed border-[#A87426] shrink-0" />
               <span>Dashed: Verification Zone</span>
             </div>
           </div>

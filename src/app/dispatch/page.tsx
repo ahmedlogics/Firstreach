@@ -269,16 +269,16 @@ function DispatchWorkspace() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
+          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
             toast.type === 'success'
-              ? 'bg-slate-900 text-white border-slate-700'
-              : 'bg-red-900 text-white border-red-700'
+              ? 'bg-[#252A30] text-[#F7F6F2] border-[#343B43]'
+              : 'bg-[#B74349] text-white border-[#B74349]'
           }`}
         >
           {toast.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-[#14B8A6] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#377D65] shrink-0" />
           ) : (
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-[#FFF2DD] shrink-0" />
           )}
           <span>{toast.message}</span>
         </div>
@@ -294,16 +294,16 @@ function DispatchWorkspace() {
             <button
               onClick={handleResetScenario}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-subtle"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#F7F6F2] transition-colors shadow-2xs"
               title="Reset scenario to unassigned open state for repeated demo runs"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <RotateCcw className="w-3.5 h-3.5 text-[#757B81]" />
               <span>Reset Scenario</span>
             </button>
             <button
               onClick={() => fetchEngineData()}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors shadow-subtle"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-[#536A82] hover:bg-[#40566D] text-white transition-colors shadow-2xs"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`}

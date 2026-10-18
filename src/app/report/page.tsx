@@ -37,14 +37,14 @@ export default function ReportPage() {
 
   return (
     <AppShell>
-      {/* Page Header: Neutral "Live intake (demo database)" badge replaces orange demo badge */}
+      {/* Page Header: Neutral "Live intake (demo database)" badge */}
       <PageHeader
         title="Submit Emergency Report"
         description="Provide essential information so response coordinators can evaluate and prioritize assistance during active flood surges."
         breadcrumbs={[{ label: 'Report Emergency' }]}
         showDemoBadge={false}
         badge={
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-[#F7F6F2] text-[#252A30] border border-[#E8E6E1]">
             Live intake (demo database)
           </span>
         }
@@ -52,31 +52,31 @@ export default function ReportPage() {
 
       {/* Real Success Banner */}
       {successResult && successResult.ok && (
-        <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col gap-4 animate-in fade-in duration-200 shadow-xs">
+        <div className="mb-6 p-5 rounded-2xl bg-[#E5EEE8] border border-[#377D65]/30 text-[#252A30] flex flex-col gap-4 animate-in fade-in duration-200 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
+              <div className="p-2 rounded-xl bg-white text-[#377D65] border border-[#377D65]/20 shrink-0 mt-0.5">
                 <CheckCircle className="w-5 h-5" />
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-bold text-emerald-900">
+                  <h4 className="text-sm font-bold text-[#252A30]">
                     Emergency Report Lodged Successfully
                   </h4>
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-white border border-[#377D65]/20 text-[#377D65]">
                     Incident: {successResult.incidentId}
                   </span>
-                  <span className="text-[11px] font-mono text-emerald-700">
+                  <span className="text-[11px] font-mono text-[#757B81]">
                     Report ID: {successResult.reportId}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 font-semibold text-emerald-800">
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-white border border-[#377D65]/20 font-semibold text-[#377D65]">
                     Priority Score: {successResult.priorityScore} / 100
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 font-semibold text-teal-800 uppercase tracking-wide">
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-[#EDF1F5] font-semibold text-[#536A82] border border-[#536A82]/20 uppercase tracking-wide">
                     Status: {successResult.verificationStatus}
                   </span>
                 </div>
@@ -86,14 +86,14 @@ export default function ReportPage() {
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#536A82] hover:bg-[#40566D] text-white transition-colors cursor-pointer shadow-2xs"
               >
                 <span>View On Map</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setSuccessResult(null)}
-                className="px-3 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-[#377D65] hover:bg-white transition-colors cursor-pointer"
               >
                 Dismiss
               </button>
@@ -101,17 +101,17 @@ export default function ReportPage() {
           </div>
 
           {/* Conditional Notice Flags: Incomplete information / Duplicate / Approximate Location */}
-          <div className="space-y-2 pt-2 border-t border-emerald-200/80">
+          <div className="space-y-2 pt-2 border-t border-[#377D65]/20">
             {/* 1. Missing fields or Needs Review */}
             {(successResult.needsReview || successResult.missingFields.length > 0) && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426] text-xs">
+                <AlertTriangle className="w-4 h-4 text-[#A87426] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">
                     Verification required: information is incomplete
                   </strong>
                   {successResult.missingFields.length > 0 && (
-                    <span className="text-amber-800">
+                    <span className="text-[#A87426]/90">
                       Missing fields:{' '}
                       {successResult.missingFields
                         .map((f) => fieldLabels[f] || f)
@@ -125,13 +125,13 @@ export default function ReportPage() {
 
             {/* 2. Possible Duplicate */}
             {successResult.possibleDuplicateOf && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 text-xs">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-[#EDF1F5] border border-[#536A82]/30 text-[#536A82] text-xs">
+                <Info className="w-4 h-4 text-[#536A82] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">
                     Possible duplicate flagged for review
                   </strong>
-                  <span className="text-blue-800">
+                  <span className="text-[#536A82]/90">
                     This submission matched an active nearby emergency. It has been linked to the existing incident and earlier report ({successResult.possibleDuplicateOf}) rather than creating a duplicate dispatch queue.
                   </span>
                 </div>
@@ -140,10 +140,10 @@ export default function ReportPage() {
 
             {/* 3. Approximate location when coordinates were not provided */}
             {!successResult.hasCoordinates && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-100 border border-slate-300 text-slate-800 text-xs">
-                <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] text-[#757B81] text-xs">
+                <Info className="w-4 h-4 text-[#757B81] shrink-0 mt-0.5" />
                 <span>
-                  <strong>Location is approximate and verification is required.</strong> No GPS coordinates were supplied; triage is mapped using the sector zone centroid.
+                  <strong className="text-[#252A30]">Location is approximate and verification is required.</strong> No GPS coordinates were supplied; triage is mapped using the sector zone centroid.
                 </span>
               </div>
             )}
@@ -165,17 +165,17 @@ export default function ReportPage() {
           <ReportGuidelinesCard />
 
           {/* Quick FAQ / Call Center Box */}
-          <div className="bg-[#0F172A] text-white rounded-2xl p-5 border border-slate-800 space-y-3">
-            <div className="flex items-center gap-2 text-[#14B8A6] text-xs font-bold uppercase tracking-wider">
-              <FileText className="w-4 h-4" />
+          <div className="bg-[#252A30] text-[#F7F6F2] rounded-2xl p-5 border border-[#343B43] space-y-3 shadow-sm">
+            <div className="flex items-center gap-2 text-[#EDF1F5] text-xs font-bold uppercase tracking-wider">
+              <FileText className="w-4 h-4 text-[#536A82]" />
               <span>Voice / SMS Relay Dispatch</span>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-[#92979D] leading-relaxed">
               For residents in low-connectivity areas unable to load web forms, volunteer teams can transcribe call records directly into this interface.
             </p>
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="pt-2 border-t border-[#343B43] flex items-center justify-between text-[11px] text-[#92979D]">
               <span>Karachi Relay Desk:</span>
-              <span className="font-mono text-slate-200 font-bold">1122 / +92 21 9920</span>
+              <span className="font-mono text-[#F7F6F2] font-bold">1122 / +92 21 9920</span>
             </div>
           </div>
         </div>

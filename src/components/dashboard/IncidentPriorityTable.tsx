@@ -82,18 +82,18 @@ export function IncidentPriorityTable({
       <div className="space-y-2 w-full min-w-0">
         {/* Full-width Search Input */}
         <div className="relative w-full min-w-0">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#92979D] pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search sector, ID, or caller note..."
-            className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:bg-white transition-all"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-1 focus:ring-[#536A82] focus:bg-white transition-all"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#92979D] hover:text-[#252A30] p-0.5"
               title="Clear search"
             >
               <X className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export function IncidentPriorityTable({
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] hover:bg-[#EDF1F5] focus:outline-none focus:ring-1 focus:ring-[#536A82] cursor-pointer truncate"
               title="Filter by priority tier"
             >
               <option value="all">Priority: All</option>
@@ -116,7 +116,7 @@ export function IncidentPriorityTable({
               <option value="high">High (60-79)</option>
               <option value="medium">Medium (40-59)</option>
             </select>
-            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#92979D] pointer-events-none" />
           </div>
 
           {/* Verification Filter */}
@@ -124,14 +124,14 @@ export function IncidentPriorityTable({
             <select
               value={verificationFilter}
               onChange={(e) => setVerificationFilter(e.target.value)}
-              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] hover:bg-[#EDF1F5] focus:outline-none focus:ring-1 focus:ring-[#536A82] cursor-pointer truncate"
               title="Filter by verification state"
             >
               <option value="all">Verify: All</option>
               <option value="verified">Verified</option>
               <option value="unverified">Unverified</option>
             </select>
-            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#92979D] pointer-events-none" />
           </div>
 
           {/* Status Filter */}
@@ -139,7 +139,7 @@ export function IncidentPriorityTable({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] cursor-pointer truncate"
+              className="w-full appearance-none pl-2 pr-5 py-1.5 text-[11px] font-semibold bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] hover:bg-[#EDF1F5] focus:outline-none focus:ring-1 focus:ring-[#536A82] cursor-pointer truncate"
               title="Filter by dispatch state"
             >
               <option value="all">State: All</option>
@@ -147,13 +147,13 @@ export function IncidentPriorityTable({
               <option value="assigned">Assigned</option>
               <option value="in_progress">In Progress</option>
             </select>
-            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#92979D] pointer-events-none" />
           </div>
         </div>
 
         {/* Filter status / active reset bar */}
         {hasActiveFilters && (
-          <div className="flex items-center justify-between text-[11px] text-slate-500 px-0.5">
+          <div className="flex items-center justify-between text-[11px] text-[#757B81] px-0.5">
             <span>{filteredIncidents.length} matching incidents</span>
             <button
               onClick={() => {
@@ -162,7 +162,7 @@ export function IncidentPriorityTable({
                 setVerificationFilter('all');
                 setStatusFilter('all');
               }}
-              className="text-red-600 hover:underline font-medium text-[11px]"
+              className="text-[#B74349] hover:underline font-medium text-[11px]"
             >
               Reset Filters
             </button>
@@ -173,22 +173,22 @@ export function IncidentPriorityTable({
       {/* Incident Data Table */}
       <DataTableWrapper
         footer={
-          <div className="flex items-center justify-between text-xs text-slate-500 px-1 py-0.5">
+          <div className="flex items-center justify-between text-xs text-[#757B81] px-1 py-0.5">
             <span>
               {filteredIncidents.length} of {incidents.length} emergency incidents
             </span>
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-[#92979D]">
               Sorted by: {sortField.replace('_', ' ')}
             </span>
           </div>
         }
       >
         <thead>
-          <tr className="border-b border-[#E2E8F0] bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <tr className="border-b border-[#E8E6E1] bg-[#F7F6F2] text-[11px] font-bold uppercase tracking-wider text-[#757B81]">
             <th className="py-2 px-2.5">Identifier</th>
             <th className="py-2 px-2.5">Sector</th>
             <th
-              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-[#252A30] transition-colors"
               onClick={() => handleSort('people_count')}
             >
               <div className="flex items-center gap-1">
@@ -197,16 +197,16 @@ export function IncidentPriorityTable({
               </div>
             </th>
             <th
-              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-[#252A30] transition-colors"
               onClick={() => handleSort('priority_score')}
             >
-              <div className="flex items-center gap-1 text-[#14B8A6]">
+              <div className="flex items-center gap-1 text-[#536A82]">
                 <span>Priority</span>
                 <ArrowUpDown className="w-3 h-3" />
               </div>
             </th>
             <th
-              className="py-2 px-2.5 cursor-pointer hover:text-slate-800 transition-colors"
+              className="py-2 px-2.5 cursor-pointer hover:text-[#252A30] transition-colors"
               onClick={() => handleSort('minutes_to_harm')}
             >
               <div className="flex items-center gap-1">
@@ -238,13 +238,13 @@ export function IncidentPriorityTable({
                   onClick={() => setActiveIncident(incident)}
                 >
                   {/* Clean Non-Truncated ID with Full Tooltip */}
-                  <td className="py-2 px-2.5 font-mono font-bold text-slate-900 whitespace-nowrap">
+                  <td className="py-2 px-2.5 font-mono font-bold text-[#252A30] whitespace-nowrap">
                     <span
                       title={`Full Database UUID: ${incident.id}`}
                       className="cursor-help inline-flex items-center gap-1.5"
                     >
                       {isCritical && (
-                        <span className="w-2 h-2 rounded-full bg-[#EF4444] shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-[#B74349] shrink-0" />
                       )}
                       <span>{formattedId}</span>
                     </span>
@@ -252,18 +252,18 @@ export function IncidentPriorityTable({
 
                   {/* Sector & Details */}
                   <td className="py-2 px-2.5 max-w-[130px] truncate">
-                    <strong className="text-slate-800 font-semibold block truncate">
+                    <strong className="text-[#252A30] font-semibold block truncate">
                       {incident.zone_name || 'Unassigned'}
                     </strong>
-                    <span className="text-[10px] text-slate-500 truncate block">
+                    <span className="text-[10px] text-[#757B81] truncate block">
                       {incident.details || 'No caller note'}
                     </span>
                   </td>
 
                   {/* People */}
-                  <td className="py-2 px-2.5 font-mono tabular-nums font-semibold text-slate-800 whitespace-nowrap">
+                  <td className="py-2 px-2.5 font-mono tabular-nums font-semibold text-[#252A30] whitespace-nowrap">
                     <div className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <Users className="w-3.5 h-3.5 text-[#92979D]" />
                       <span>{incident.people_count}</span>
                     </div>
                   </td>
@@ -279,15 +279,15 @@ export function IncidentPriorityTable({
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${
                           incident.minutes_to_harm <= 30
-                            ? 'bg-red-100 text-red-800 border border-red-200'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-[#FAE8E7] text-[#B74349] border border-[#B74349]/30'
+                            : 'bg-[#F7F6F2] text-[#252A30] border border-[#E8E6E1]'
                         }`}
                       >
                         <Clock className="w-3 h-3" />
                         <span>{incident.minutes_to_harm}m</span>
                       </span>
                     ) : (
-                      <span className="text-slate-400 font-mono text-[11px]">—</span>
+                      <span className="text-[#92979D] font-mono text-[11px]">—</span>
                     )}
                   </td>
 
@@ -308,7 +308,7 @@ export function IncidentPriorityTable({
                         e.stopPropagation();
                         setActiveIncident(incident);
                       }}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-[#14B8A6] hover:text-white text-slate-700 transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-[#EDF1F5] hover:bg-[#536A82] hover:text-white text-[#252A30] transition-colors shadow-2xs"
                     >
                       <span>View Details</span>
                       <ArrowRight className="w-3 h-3" />

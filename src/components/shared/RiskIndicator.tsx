@@ -25,11 +25,11 @@ export function RiskIndicator({
   const getIcon = () => {
     switch (level) {
       case 'critical':
-        return <ShieldAlert className="w-4 h-4 text-[#F16D70] animate-bounce" />;
+        return <ShieldAlert className="w-4 h-4 text-[#B74349]" />;
       case 'high':
-        return <AlertCircle className="w-4 h-4 text-[#F5B544]" />;
+        return <AlertCircle className="w-4 h-4 text-[#A87426]" />;
       default:
-        return <ShieldCheck className="w-4 h-4 text-emerald-600" />;
+        return <ShieldCheck className="w-4 h-4 text-[#377D65]" />;
     }
   };
 
@@ -43,36 +43,36 @@ export function RiskIndicator({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5 font-semibold text-[#0F172A]">
+        <div className="flex items-center gap-1.5 font-semibold text-[#252A30]">
           {getIcon()}
           <span className="capitalize">{level} Risk Profile</span>
         </div>
         {showLabels && waterDepthMeters !== undefined && (
-          <span className="font-mono tabular-nums text-slate-500 font-medium">
+          <span className="font-mono tabular-nums text-[#757B81] font-medium">
             ~{waterDepthMeters.toFixed(1)}m flood water
           </span>
         )}
       </div>
 
-      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-[#F7F6F2] rounded-full overflow-hidden border border-[#E8E6E1]">
         <div
           className={`h-full transition-all duration-300 rounded-full ${
             level === 'critical'
-              ? 'bg-[#F16D70]'
+              ? 'bg-[#B74349]'
               : level === 'high'
-              ? 'bg-[#F5B544]'
+              ? 'bg-[#A87426]'
               : level === 'medium'
-              ? 'bg-blue-500'
-              : 'bg-[#10B981]'
+              ? 'bg-[#536A82]'
+              : 'bg-[#377D65]'
           }`}
           style={{ width: `${percent}%` }}
         />
       </div>
 
       {showLabels && timeToHarmHours !== undefined && (
-        <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
+        <div className="flex justify-between text-[11px] text-[#757B81] pt-0.5">
           <span>Est. safety window:</span>
-          <span className={`font-semibold tabular-nums ${timeToHarmHours <= 1.5 ? 'text-red-600' : 'text-slate-700'}`}>
+          <span className={`font-semibold tabular-nums ${timeToHarmHours <= 1.5 ? 'text-[#B74349]' : 'text-[#252A30]'}`}>
             {timeToHarmHours <= 0 ? 'CRITICAL IMMINENT' : `${timeToHarmHours.toFixed(1)} hrs`}
           </span>
         </div>

@@ -364,14 +364,14 @@ export function EmergencyReportForm({
       <form onSubmit={handleReviewClick} className={`space-y-6 ${className}`}>
         {/* OFFLINE NOTICE BANNER (Rule 3: Saved on this device. NOT delivered yet.) */}
         {offlineNotice && (
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
+          <div className="p-4 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
-              <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0" />
+              <AlertTriangle className="w-5 h-5 text-[#A87426] shrink-0" />
               <div>
-                <h5 className="font-extrabold text-xs text-amber-900 tracking-tight">
+                <h5 className="font-semibold text-xs text-[#252A30] tracking-tight">
                   Saved on this device. NOT delivered yet.
                 </h5>
-                <p className="text-[11px] text-amber-800 mt-0.5">
+                <p className="text-[11px] text-[#757B81] mt-0.5">
                   Your emergency intake is securely stored in your browser's offline storage. It will be dispatched automatically as soon as internet connection is restored.
                 </p>
               </div>
@@ -379,7 +379,7 @@ export function EmergencyReportForm({
             <button
               type="button"
               onClick={() => setOfflineNotice(null)}
-              className="px-2.5 py-1 rounded-lg text-amber-800 hover:bg-amber-100 text-xs font-semibold shrink-0 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg text-[#A87426] hover:bg-[#A87426]/10 text-xs font-semibold shrink-0 cursor-pointer"
             >
               Dismiss
             </button>
@@ -389,16 +389,16 @@ export function EmergencyReportForm({
         {/* TOP LEVEL ERROR BANNER (429, 500, server error) */}
         {generalError && (
           <div
-            className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
+            className={`p-4 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
               generalError.includes('minute')
-                ? 'bg-amber-50 border-amber-300 text-amber-950'
-                : 'bg-red-50 border-red-300 text-red-950'
+                ? 'bg-[#FFF2DD] border-[#A87426]/30 text-[#A87426]'
+                : 'bg-[#FAE8E7] border-[#B74349]/30 text-[#B74349]'
             }`}
           >
             <div className="flex items-center gap-2.5">
               <AlertTriangle
                 className={`w-4 h-4 shrink-0 ${
-                  generalError.includes('minute') ? 'text-amber-600' : 'text-red-600'
+                  generalError.includes('minute') ? 'text-[#A87426]' : 'text-[#B74349]'
                 }`}
               />
               <span className="font-semibold">{generalError}</span>
@@ -410,7 +410,7 @@ export function EmergencyReportForm({
                 type="button"
                 onClick={executeSubmission}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shrink-0 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#B74349] hover:bg-[#96373C] text-white font-medium text-xs shrink-0 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
                 <span>{isSubmitting ? 'Retrying...' : 'Retry Submission'}</span>
@@ -420,16 +420,16 @@ export function EmergencyReportForm({
         )}
 
         {/* SECTION A: REPORTER INFORMATION */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
+        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
+            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
               1
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">
+              <h3 className="text-sm font-semibold text-[#252A30]">
                 Section A: Reporter Information
               </h3>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[#757B81]">
                 Who is submitting this incident notification?
               </p>
             </div>
@@ -437,15 +437,15 @@ export function EmergencyReportForm({
 
           {/* Radio toggle: Myself vs Someone Else */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-700 block">
-              Reporting Status <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold text-[#252A30] block">
+              Reporting Status <span className="text-[#B74349]">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3 max-w-md">
               <label
-                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
                   formData.reportingFor === 'myself'
-                    ? 'border-[#14B8A6] bg-teal-50/50 text-[#0F172A] ring-1 ring-[#14B8A6]'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'border-[#536A82] bg-[#EDF1F5] text-[#252A30] ring-1 ring-[#536A82]'
+                    : 'border-[#E8E6E1] text-[#757B81] hover:bg-[#F7F6F2]'
                 }`}
               >
                 <input
@@ -455,16 +455,16 @@ export function EmergencyReportForm({
                   onChange={() =>
                     setFormData((prev) => ({ ...prev, reportingFor: 'myself' }))
                   }
-                  className="accent-[#14B8A6]"
+                  className="accent-[#536A82]"
                 />
                 <span>Reporting for Myself / Family</span>
               </label>
 
               <label
-                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
                   formData.reportingFor === 'someone_else'
-                    ? 'border-[#14B8A6] bg-teal-50/50 text-[#0F172A] ring-1 ring-[#14B8A6]'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'border-[#536A82] bg-[#EDF1F5] text-[#252A30] ring-1 ring-[#536A82]'
+                    : 'border-[#E8E6E1] text-[#757B81] hover:bg-[#F7F6F2]'
                 }`}
               >
                 <input
@@ -474,24 +474,24 @@ export function EmergencyReportForm({
                   onChange={() =>
                     setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }))
                   }
-                  className="accent-[#14B8A6]"
+                  className="accent-[#536A82]"
                 />
                 <span>Reporting for Someone Else</span>
               </label>
             </div>
             {errors.reportingFor && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reportingFor}</p>
+              <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.reportingFor}</p>
             )}
           </div>
 
           {/* Reporter Name & Contact Number & Role */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Your Name <span className="text-slate-400 font-normal">(Optional)</span>
+              <label className="text-xs font-semibold text-[#252A30] block mb-1">
+                Your Name <span className="text-[#92979D] font-normal">(Optional)</span>
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-[#92979D] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={formData.reporterName}
@@ -499,20 +499,20 @@ export function EmergencyReportForm({
                     setFormData((prev) => ({ ...prev, reporterName: e.target.value }))
                   }
                   placeholder="e.g. Tariq Mehmood"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white"
                 />
               </div>
               {errors.reporterName && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterName}</p>
+                <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.reporterName}</p>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Callback Phone <span className="text-slate-400 font-normal">(Optional)</span>
+              <label className="text-xs font-semibold text-[#252A30] block mb-1">
+                Callback Phone <span className="text-[#92979D] font-normal">(Optional)</span>
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Phone className="w-4 h-4 text-[#92979D] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="tel"
                   value={formData.reporterPhone}
@@ -520,17 +520,17 @@ export function EmergencyReportForm({
                     setFormData((prev) => ({ ...prev, reporterPhone: e.target.value }))
                   }
                   placeholder="+92 300 1234567"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white"
                 />
               </div>
               {errors.reporterPhone && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterPhone}</p>
+                <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.reporterPhone}</p>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Reporter Relationship <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold text-[#252A30] block mb-1">
+                Reporter Relationship <span className="text-[#B74349]">*</span>
               </label>
               <select
                 value={formData.reporterRole}
@@ -540,7 +540,7 @@ export function EmergencyReportForm({
                     reporterRole: e.target.value as ReportFormData['reporterRole'],
                   }))
                 }
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+                className="w-full px-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white"
               >
                 <option value="resident">Affected Resident</option>
                 <option value="neighbor">Nearby Neighbor</option>
@@ -548,23 +548,23 @@ export function EmergencyReportForm({
                 <option value="other">Public Passerby / Relative</option>
               </select>
               {errors.reporterRole && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.reporterRole}</p>
+                <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.reporterRole}</p>
               )}
             </div>
           </div>
         </div>
 
         {/* SECTION B: EMERGENCY LOCATION */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
+        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
+            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
               2
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">
+              <h3 className="text-sm font-semibold text-[#252A30]">
                 Section B: Incident Location & Coordinates
               </h3>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[#757B81]">
                 Precise sector identification to dispatch nearest rescue unit.
               </p>
             </div>
@@ -572,15 +572,15 @@ export function EmergencyReportForm({
 
           {/* Zone loading error notice */}
           {zonesError && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-900 flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-xs text-[#B74349] flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0" />
                 <span>{zonesError}</span>
               </div>
               <button
                 type="button"
                 onClick={fetchZones}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-red-200 text-red-800 hover:bg-red-100 font-semibold text-[11px]"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#F7F6F2] font-semibold text-[11px]"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Retry</span>
@@ -590,8 +590,8 @@ export function EmergencyReportForm({
 
           {/* Zone Selector */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Select Sector / Zone <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold text-[#252A30] block mb-1">
+              Select Sector / Zone <span className="text-[#B74349]">*</span>
             </label>
             <select
               value={formData.zoneId}
@@ -599,8 +599,8 @@ export function EmergencyReportForm({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, zoneId: e.target.value }))
               }
-              className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white disabled:opacity-60 ${
-                errors.zoneId ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+              className={`w-full px-3 py-2 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white disabled:opacity-60 ${
+                errors.zoneId ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
               }`}
             >
               {zonesLoading ? (
@@ -616,14 +616,14 @@ export function EmergencyReportForm({
               )}
             </select>
             {errors.zoneId && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.zoneId}</p>
+              <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.zoneId}</p>
             )}
           </div>
 
           {/* Location Description & Landmarks */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Detailed Street Address & Landmark <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold text-[#252A30] block mb-1">
+              Detailed Street Address & Landmark <span className="text-[#B74349]">*</span>
             </label>
             <textarea
               rows={2}
@@ -632,26 +632,26 @@ export function EmergencyReportForm({
                 setFormData((prev) => ({ ...prev, locationDescription: e.target.value }))
               }
               placeholder="e.g. House 42-B, St 6, behind submerged Jamia Mosque. Yellow gate, 2nd floor balcony."
-              className={`w-full p-3 text-xs bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white ${
-                errors.locationDescription ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+              className={`w-full p-3 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white ${
+                errors.locationDescription ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
               }`}
             />
             {errors.locationDescription && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">
+              <p className="text-[11px] text-[#B74349] mt-1 font-medium">
                 {errors.locationDescription}
               </p>
             )}
           </div>
 
           {/* Coordinates Bar: "Use my location" button + optional manual lat/lng */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="p-4 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
-                <Compass className="w-4 h-4 text-[#14B8A6]" />
-                <span className="text-xs font-bold text-slate-800">
+                <Compass className="w-4 h-4 text-[#536A82]" />
+                <span className="text-xs font-semibold text-[#252A30]">
                   GPS Location Coordinates
                 </span>
-                <span className="text-[11px] text-slate-500 font-normal">
+                <span className="text-[11px] text-[#757B81] font-normal">
                   (Optional &bull; Enables precision mapping)
                 </span>
               </div>
@@ -661,10 +661,10 @@ export function EmergencyReportForm({
                   type="button"
                   onClick={handleUseMyLocation}
                   disabled={gpsLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-teal-200 text-[#0F766E] hover:bg-teal-50 text-xs font-bold shadow-xs transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E8E6E1] text-[#536A82] hover:bg-[#EDF1F5] text-xs font-semibold transition-colors disabled:opacity-60"
                 >
                   <Navigation
-                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-teal-600' : 'text-teal-600'}`}
+                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-[#536A82]' : 'text-[#536A82]'}`}
                   />
                   <span>{gpsLoading ? 'Acquiring GPS...' : 'Use My Location'}</span>
                 </button>
@@ -673,7 +673,7 @@ export function EmergencyReportForm({
                   <button
                     type="button"
                     onClick={handleClearCoordinates}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-[#E8E6E1] text-[#757B81] hover:bg-[#F7F6F2] text-xs font-medium"
                     title="Clear coordinates"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -684,14 +684,14 @@ export function EmergencyReportForm({
             </div>
 
             {gpsSuccess && (
-              <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1.5 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+              <p className="text-[11px] text-[#377D65] font-medium flex items-center gap-1.5 bg-[#E5EEE8] p-2 rounded-lg border border-[#377D65]/30">
                 <CheckCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>GPS coordinates acquired from your device.</span>
               </p>
             )}
 
             {gpsError && (
-              <p className="text-[11px] text-amber-700 font-medium flex items-center gap-1.5 bg-amber-50 p-2 rounded-lg border border-amber-200">
+              <p className="text-[11px] text-[#A87426] font-medium flex items-center gap-1.5 bg-[#FFF2DD] p-2 rounded-lg border border-[#A87426]/30">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                 <span>{gpsError}</span>
               </p>
@@ -700,7 +700,7 @@ export function EmergencyReportForm({
             {/* Manual Lat / Lng Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                <label className="text-[11px] font-medium text-[#757B81] block mb-1">
                   Latitude (Karachi: 24.6000 to 25.3000)
                 </label>
                 <input
@@ -715,17 +715,17 @@ export function EmergencyReportForm({
                       lat: val === '' ? null : parseFloat(val),
                     }));
                   }}
-                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] ${
-                    errors.lat ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
+                    errors.lat ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
                   }`}
                 />
                 {errors.lat && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lat}</p>
+                  <p className="text-[11px] text-[#B74349] mt-0.5 font-medium">{errors.lat}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                <label className="text-[11px] font-medium text-[#757B81] block mb-1">
                   Longitude (Karachi: 66.7000 to 67.5000)
                 </label>
                 <input
@@ -740,33 +740,33 @@ export function EmergencyReportForm({
                       lng: val === '' ? null : parseFloat(val),
                     }));
                   }}
-                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] ${
-                    errors.lng ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
+                    errors.lng ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
                   }`}
                 />
                 {errors.lng && (
-                  <p className="text-[11px] text-red-600 mt-0.5 font-medium">{errors.lng}</p>
+                  <p className="text-[11px] text-[#B74349] mt-0.5 font-medium">{errors.lng}</p>
                 )}
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 italic">
+            <p className="text-[11px] text-[#757B81] italic">
               Note: If coordinates are omitted, the report is saved with approximate zone location and flagged for coordinator verification.
             </p>
           </div>
         </div>
 
         {/* SECTION C: EMERGENCY DETAILS & TRI-STATE VULNERABILITY */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
+        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-5">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
+            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
               3
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">
+              <h3 className="text-sm font-semibold text-[#252A30]">
                 Section C: Emergency Urgency & Vulnerability Matrix
               </h3>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[#757B81]">
                 These indicators directly determine the algorithmic life-safety priority score.
               </p>
             </div>
@@ -775,8 +775,8 @@ export function EmergencyReportForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Flood Severity (0..3) */}
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Water Depth & Flood Severity <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold text-[#252A30] block mb-1">
+                Water Depth & Flood Severity <span className="text-[#B74349]">*</span>
               </label>
               <select
                 value={formData.floodSeverity}
@@ -786,7 +786,7 @@ export function EmergencyReportForm({
                     floodSeverity: parseInt(e.target.value, 10),
                   }))
                 }
-                className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                className="w-full px-3 py-2 text-xs font-medium bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
               >
                 <option value={3}>Level 3: Severe (Waist-to-neck level, rising fast)</option>
                 <option value={2}>Level 2: Moderate (Ground floor flooded, knee level)</option>
@@ -794,7 +794,7 @@ export function EmergencyReportForm({
                 <option value={0}>Level 0: Low (Precautionary evacuation notice)</option>
               </select>
               {errors.floodSeverity && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
+                <p className="text-[11px] text-[#B74349] mt-1 font-medium">
                   {errors.floodSeverity}
                 </p>
               )}
@@ -803,10 +803,10 @@ export function EmergencyReportForm({
             {/* People Count + Unknown option */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700 block">
+                <label className="text-xs font-semibold text-[#252A30] block">
                   People Needing Evacuation
                 </label>
-                <label className="flex items-center gap-1.5 text-[11px] text-amber-800 font-semibold cursor-pointer">
+                <label className="flex items-center gap-1.5 text-[11px] text-[#A87426] font-medium cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isPeopleCountUnknown}
@@ -818,16 +818,16 @@ export function EmergencyReportForm({
                         peopleCount: checked ? null : prev.peopleCount || 1,
                       }));
                     }}
-                    className="accent-amber-600 rounded"
+                    className="accent-[#A87426] rounded"
                   />
                   <span>Count Unknown</span>
                 </label>
               </div>
 
               {formData.isPeopleCountUnknown ? (
-                <div className="px-3 py-2 text-xs font-semibold bg-amber-50 border border-amber-200 rounded-lg text-amber-900 flex items-center justify-between">
+                <div className="px-3 py-2 text-xs font-medium bg-[#FFF2DD] border border-[#A87426]/30 rounded-lg text-[#A87426] flex items-center justify-between">
                   <span>Count Unknown (Sent as null)</span>
-                  <span className="text-[10px] text-amber-700 uppercase font-bold tracking-wider">
+                  <span className="text-[10px] text-[#A87426] uppercase font-bold tracking-wider">
                     Flagged for review
                   </span>
                 </div>
@@ -844,13 +844,13 @@ export function EmergencyReportForm({
                       peopleCount: isNaN(parsed) ? 1 : parsed,
                     }));
                   }}
-                  className={`w-full px-3 py-2 text-xs font-semibold bg-slate-50 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] ${
-                    errors.peopleCount ? 'border-red-400 bg-red-50/20' : 'border-slate-200'
+                  className={`w-full px-3 py-2 text-xs font-medium bg-[#F7F6F2] border rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
+                    errors.peopleCount ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
                   }`}
                 />
               )}
               {errors.peopleCount && (
-                <p className="text-[11px] text-red-600 mt-1 font-medium">
+                <p className="text-[11px] text-[#B74349] mt-1 font-medium">
                   {errors.peopleCount}
                 </p>
               )}
@@ -858,34 +858,34 @@ export function EmergencyReportForm({
           </div>
 
           {/* Tri-State Vulnerability Factors (Trapped, Medical, Mobility) */}
-          <div className="space-y-3 pt-2 border-t border-slate-100">
+          <div className="space-y-3 pt-2 border-t border-[#E8E6E1]">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-800 block">
+              <label className="text-xs font-semibold text-[#252A30] block">
                 Tri-State Vulnerability Indicators
               </label>
-              <span className="text-[11px] text-slate-500 italic">
+              <span className="text-[11px] text-[#757B81] italic">
                 Unknown is logged as unverified null, never as false
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Factor 1: Trapped */}
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
                   <span>Physically Trapped</span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-tight">
+                <p className="text-[11px] text-[#757B81] leading-tight">
                   Blocked exits, cutoff on upper roof, or rising water.
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                       formData.trapped === true
-                        ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#B74349] text-white border-[#B74349]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Yes
@@ -895,8 +895,8 @@ export function EmergencyReportForm({
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: false }))}
                     className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.trapped === false
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#377D65] text-white border-[#377D65]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     No
@@ -904,10 +904,10 @@ export function EmergencyReportForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, trapped: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.trapped === null
-                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#A87426] text-white border-[#A87426]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Unknown
@@ -916,22 +916,22 @@ export function EmergencyReportForm({
               </div>
 
               {/* Factor 2: Urgent Medical */}
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                  <HeartPulse className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
+                  <HeartPulse className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
                   <span>Urgent Medical Need</span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-tight">
+                <p className="text-[11px] text-[#757B81] leading-tight">
                   Oxygen, dialysis, insulin, injury, or critical illness.
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                       formData.medicalUrgent === true
-                        ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#B74349] text-white border-[#B74349]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Yes
@@ -941,8 +941,8 @@ export function EmergencyReportForm({
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: false }))}
                     className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.medicalUrgent === false
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#377D65] text-white border-[#377D65]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     No
@@ -950,10 +950,10 @@ export function EmergencyReportForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.medicalUrgent === null
-                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#A87426] text-white border-[#A87426]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Unknown
@@ -962,22 +962,22 @@ export function EmergencyReportForm({
               </div>
 
               {/* Factor 3: Mobility Assistance */}
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                  <PersonStanding className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
+                  <PersonStanding className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
                   <span>Mobility Assistance</span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-tight">
+                <p className="text-[11px] text-[#757B81] leading-tight">
                   Bedridden, wheelchair, infant, or elderly unable to wade.
                 </p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                       formData.mobilityHelp === true
-                        ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#B74349] text-white border-[#B74349]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Yes
@@ -987,8 +987,8 @@ export function EmergencyReportForm({
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: false }))}
                     className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.mobilityHelp === false
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#377D65] text-white border-[#377D65]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     No
@@ -996,10 +996,10 @@ export function EmergencyReportForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       formData.mobilityHelp === null
-                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#A87426] text-white border-[#A87426]'
+                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
                     }`}
                   >
                     Unknown
@@ -1011,8 +1011,8 @@ export function EmergencyReportForm({
 
           {/* Additional Medical or Rescue Notes */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Additional Medical or Rescue Notes <span className="text-slate-400 font-normal">(Optional)</span>
+            <label className="text-xs font-semibold text-[#252A30] block mb-1">
+              Additional Medical or Rescue Notes <span className="text-[#92979D] font-normal">(Optional)</span>
             </label>
             <textarea
               rows={2}
@@ -1021,33 +1021,33 @@ export function EmergencyReportForm({
                 setFormData((prev) => ({ ...prev, description: e.target.value }))
               }
               placeholder="e.g. Diabetic needing insulin cooling; power disconnected; two elderly residents on second floor."
-              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-white"
+              className="w-full p-3 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white"
             />
             {errors.description && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.description}</p>
+              <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.description}</p>
             )}
           </div>
         </div>
 
         {/* SECTION D: INFORMATION OBSERVATION TIMING */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-subtle p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center font-bold text-xs">
+        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
+            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
               4
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">
+              <h3 className="text-sm font-semibold text-[#252A30]">
                 Section D: Observation Timing
               </h3>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[#757B81]">
                 Help coordinators evaluate report freshness and decay rates.
               </p>
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1">
-              When did you observe this situation? <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold text-[#252A30] block mb-1">
+              When did you observe this situation? <span className="text-[#B74349]">*</span>
             </label>
             <select
               value={formData.observationOption}
@@ -1057,7 +1057,7 @@ export function EmergencyReportForm({
                   observationOption: e.target.value as ReportFormData['observationOption'],
                 }))
               }
-              className="w-full sm:w-80 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+              className="w-full sm:w-80 px-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
             >
               <option value="now">Observed just now / within last 5 minutes</option>
               <option value="15m">Observed about 15 minutes ago</option>
@@ -1067,22 +1067,22 @@ export function EmergencyReportForm({
               <option value="24h">Observed yesterday (~24 hours ago)</option>
             </select>
             {errors.observedAt && (
-              <p className="text-[11px] text-red-600 mt-1 font-medium">{errors.observedAt}</p>
+              <p className="text-[11px] text-[#B74349] mt-1 font-medium">{errors.observedAt}</p>
             )}
           </div>
         </div>
 
         {/* Form Submission Actions & Review Button */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <HelpCircle className="w-4 h-4 text-[#14B8A6] shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-[#757B81]">
+            <HelpCircle className="w-4 h-4 text-[#536A82] shrink-0" />
             <span>Reports are algorithmically ranked before dispatcher assignment.</span>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || zonesLoading || Boolean(zonesError)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white text-sm font-bold shadow-card transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#536A82] hover:bg-[#40566D] text-white text-sm font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
             <span>{isSubmitting ? 'Evaluating Triage...' : 'Review & Submit Report'}</span>
