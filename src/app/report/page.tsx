@@ -85,7 +85,9 @@ export default function ReportPage() {
 
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => {
+                  window.location.href = '/dashboard';
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors cursor-pointer"
               >
                 <span>View On Map</span>
