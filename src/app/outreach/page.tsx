@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppShell } from '@/components/shared/AppShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ReachabilityStats } from '@/components/outreach/ReachabilityStats';
@@ -8,106 +8,380 @@ import { SilenceEscalationTimeline } from '@/components/outreach/SilenceEscalati
 import { HouseholdOutreachList } from '@/components/outreach/HouseholdOutreachList';
 import { ShelterManagementGrid } from '@/components/outreach/ShelterManagementGrid';
 import { VolunteerTasksList } from '@/components/outreach/VolunteerTasksList';
-import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
-import { Household, OutreachMethod } from '@/lib/types';
-import { CheckCircle2, Radio, Footprints, MessageSquare } from 'lucide-react';
+import { AlertPlannerModal } from '@/components/outreach/AlertPlannerModal';
+import {
+  ContactStatusType,
+  HouseholdWithZone,
+  OutreachActionWithDetails,
+  OutreachStatusType,
+  ReachabilityOverviewMetrics,
+  ShelterWithZone,
+} from '@/lib/outreach/types';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Info,
+} from 'lucide-react';
 
 export default function OutreachPage() {
-  const [pendingOutreach, setPendingOutreach] = useState<{
-    household: Household;
-    method: OutreachMethod;
-  } | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // State
+  const [households, setHouseholds] = useState<HouseholdWithZone[]>([]);
+  const [shelters, setShelters] = useState<ShelterWithZone[]>([]);
+  const [volunteerTasks, setVolunteerTasks] = useState<OutreachActionWithDetails[]>([]);
+  const [metrics, setMetrics] = useState<ReachabilityOverviewMetrics>({
+    totalHouseholds: 0,
+    noPhoneCount: 0,
+    basicPhoneCount: 0,
+    smartphoneCount: 0,
+    unknownReachabilityCount: 0,
+    uncontactedCount: 0,
+    needsVisitCount: 0,
+    reachedCount: 0,
+    activeVolunteerTasks: 0,
+    totalShelterCapacity: 0,
+    totalShelterOccupied: 0,
+    totalFreeBeds: 0,
+    sheltersNearCapacityCount: 0,
+  });
 
-  const handleSimulateOutreachAction = (household: Household, method: OutreachMethod) => {
-    setPendingOutreach({ household, method });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEscalating, setIsEscalating] = useState(false);
+  const [toast, setToast] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
+
+  // Modal State
+  const [selectedHouseholdForAlert, setSelectedHouseholdForAlert] =
+    useState<HouseholdWithZone | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast((curr) => (curr?.message === message ? null : curr));
+    }, 4500);
+  }, []);
+
+  // Master Data Fetcher
+  const loadAllData = useCallback(async () => {
+    try {
+      const [hRes, sRes, tRes, mRes] = await Promise.all([
+        fetch('/api/households'),
+        fetch('/api/shelters'),
+        fetch('/api/outreach-actions?channel=volunteer_visit'),
+        fetch('/api/outreach-metrics'),
+      ]);
+
+      const [hData, sData, tData, mData] = await Promise.all([
+        hRes.json(),
+        sRes.json(),
+        tRes.json(),
+        mRes.json(),
+      ]);
+
+      if (hData.success) setHouseholds(hData.data);
+      if (sData.success) setShelters(sData.data);
+      if (tData.success) setVolunteerTasks(tData.data);
+      if (mData.success) setMetrics(mData.data);
+    } catch (err: unknown) {
+      console.error('[OutreachPage] Fetch error:', err);
+      showToast('Failed to synchronize with server. Using cached data.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function startFetch() {
+      if (!ignore) {
+        await loadAllData();
+      }
+    }
+    startFetch();
+    return () => {
+      ignore = true;
+    };
+  }, [loadAllData]);
+
+  // Handler 1: Update Household Contact Status
+  const handleUpdateHouseholdStatus = async (
+    householdId: string,
+    newStatus: ContactStatusType
+  ) => {
+    // Snapshot previous state for rollback
+    const prevHouseholds = [...households];
+
+    // Optimistic Update
+    setHouseholds((prev) =>
+      prev.map((h) =>
+        h.id === householdId
+          ? {
+              ...h,
+              contact_status: newStatus,
+              last_contact_at:
+                newStatus === 'reached' ? new Date().toISOString() : h.last_contact_at,
+            }
+          : h
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/households/${householdId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact_status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Server rejected contact status update');
+      }
+
+      showToast(`Household status updated to "${newStatus.replace('_', ' ')}".`);
+      // Refresh metrics silently
+      fetch('/api/outreach-metrics')
+        .then((r) => r.json())
+        .then((m) => m.success && setMetrics(m.data));
+    } catch (err: unknown) {
+      // Rollback on failure
+      setHouseholds(prevHouseholds);
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Error: ${msg}`, 'error');
+    }
   };
 
-  const handleConfirmOutreach = () => {
-    if (!pendingOutreach) return;
+  // Handler 2: Update Shelter Bed Occupancy
+  const handleUpdateShelterOccupancy = async (
+    shelterId: string,
+    newOccupied: number
+  ) => {
+    const prevShelters = [...shelters];
 
-    const { household, method } = pendingOutreach;
-    let label = 'Outreach action';
-    if (method === 'volunteer_visit') label = `Volunteer verification patrol tasked to ${household.referenceCode}`;
-    if (method === 'loudspeaker_alert') label = `Mosque minaret loudspeaker siren requested for ${household.zoneName}`;
-    if (method === 'sms_fallback') label = `Simulated low-bandwidth emergency SMS triggered for ${household.referenceCode}`;
+    // Optimistic Update
+    setShelters((prev) =>
+      prev.map((s) => {
+        if (s.id !== shelterId) return s;
+        const free_beds = Math.max(0, s.capacity - newOccupied);
+        const occupancy_pct =
+          s.capacity > 0 ? Math.min(100, Math.round((newOccupied / s.capacity) * 100)) : 0;
+        let status: 'available' | 'near_capacity' | 'full' = 'available';
+        if (newOccupied >= s.capacity) status = 'full';
+        else if (occupancy_pct >= 85) status = 'near_capacity';
 
-    setToastMessage(label);
-    setPendingOutreach(null);
-    setTimeout(() => setToastMessage(null), 4000);
+        return {
+          ...s,
+          occupied: newOccupied,
+          free_beds,
+          occupancy_pct,
+          status,
+        };
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/shelters/${shelterId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ occupied: newOccupied }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Capacity integrity update failed');
+      }
+
+      showToast(`Shelter occupancy successfully updated to ${newOccupied} beds.`);
+      // Refresh metrics
+      fetch('/api/outreach-metrics')
+        .then((r) => r.json())
+        .then((m) => m.success && setMetrics(m.data));
+    } catch (err: unknown) {
+      // Rollback
+      setShelters(prevShelters);
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Occupancy rejected: ${msg}`, 'error');
+      throw err;
+    }
+  };
+
+  // Handler 3: Update Volunteer Task Status
+  const handleUpdateVolunteerTask = async (
+    taskId: string,
+    newStatus: OutreachStatusType,
+    note?: string
+  ) => {
+    const prevTasks = [...volunteerTasks];
+
+    // Optimistic Update
+    setVolunteerTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+
+    try {
+      const res = await fetch(`/api/outreach-actions/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, note }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update volunteer task');
+      }
+
+      showToast(`Volunteer task marked as "${newStatus.replace('_', ' ')}".`);
+
+      // If safe confirmed, reload households to see the updated contact_status
+      if (newStatus === 'safe_confirmed') {
+        loadAllData();
+      } else {
+        fetch('/api/outreach-metrics')
+          .then((r) => r.json())
+          .then((m) => m.success && setMetrics(m.data));
+      }
+    } catch (err: unknown) {
+      setVolunteerTasks(prevTasks);
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Task update failed: ${msg}`, 'error');
+    }
+  };
+
+  // Handler 4: Run Safe No-Response Escalation Scan
+  const handleTriggerEscalation = async () => {
+    setIsEscalating(true);
+    try {
+      const res = await fetch('/api/outreach-actions/escalate', {
+        method: 'POST',
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Escalation scan failed');
+      }
+
+      showToast(
+        data.message || 'Escalation complete. Uncontacted households queued for ground scout verification.',
+        'success'
+      );
+      // Reload active data
+      await loadAllData();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Escalation error: ${msg}`, 'error');
+    } finally {
+      setIsEscalating(false);
+    }
+  };
+
+  // Handler 5: Open Simulator from Household List
+  const handleOpenSimulator = (household: HouseholdWithZone) => {
+    setSelectedHouseholdForAlert(household);
+    setIsAlertModalOpen(true);
   };
 
   return (
     <AppShell>
       {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2 text-xs animate-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#14B8A6]" />
-          <span>{toastMessage}</span>
+      {toast && (
+        <div
+          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
+            toast.type === 'error'
+              ? 'bg-rose-950 text-white border-rose-800'
+              : toast.type === 'info'
+              ? 'bg-slate-900 text-white border-slate-700'
+              : 'bg-slate-900 text-white border-slate-700'
+          }`}
+        >
+          {toast.type === 'error' ? (
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          ) : toast.type === 'info' ? (
+            <Info className="w-4 h-4 text-blue-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-[#0D9488] shrink-0" />
+          )}
+          <span className="font-medium">{toast.message}</span>
         </div>
       )}
 
       {/* Page Header */}
       <PageHeader
         title="Community Outreach & Shelter Coordination"
-        description="Reach vulnerable households, organize verification tasks, and monitor shelter availability before water levels crest."
+        description="Verify reachability across high-risk sectors, coordinate door-to-door volunteer welfare patrols, and monitor shelter bed intake."
         breadcrumbs={[{ label: 'Outreach & Shelters' }]}
+        actions={
+          <button
+            onClick={() => loadAllData()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-2xs transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+            <span>Sync Live Data</span>
+          </button>
+        }
       />
 
       <div className="space-y-6">
-        {/* Row 1: Key Reachability Stats */}
-        <ReachabilityStats />
+        {/* Row 1: Key Dynamic Metrics */}
+        <ReachabilityStats metrics={metrics} isLoading={isLoading} />
 
-        {/* Row 2: Silence Escalation Protocol Architecture */}
-        <SilenceEscalationTimeline />
+        {/* Row 2: Silence Escalation Architecture */}
+        <SilenceEscalationTimeline
+          onTriggerEscalation={handleTriggerEscalation}
+          isEscalating={isEscalating}
+        />
 
-        {/* Row 3: Household Reachability & Outreach Queue */}
+        {/* Row 3: Household Reachability Directory & Status Controls */}
         <div className="space-y-3">
           <div>
             <h2 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
               High-Risk Household Reachability Directory
             </h2>
             <p className="text-xs text-[#64748B]">
-              Track households with chronic silence, zero phone access, or vulnerable family members in inundation paths.
+              Track vulnerable families in inundation sectors, update verified contact statuses, and launch simulated outreach alerts.
             </p>
           </div>
 
           <HouseholdOutreachList
-            onSimulateOutreach={handleSimulateOutreachAction}
+            households={households}
+            isLoading={isLoading}
+            onSelectSimulateOutreach={handleOpenSimulator}
+            onUpdateStatus={handleUpdateHouseholdStatus}
           />
         </div>
 
         {/* Row 4: Grid with Shelters on Left, Volunteer Tasks on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ShelterManagementGrid />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <ShelterManagementGrid
+            shelters={shelters}
+            isLoading={isLoading}
+            onUpdateOccupancy={handleUpdateShelterOccupancy}
+          />
+
           <VolunteerTasksList
-            onCompleteTask={(taskId) => {
-              setToastMessage(`Volunteer verification task ${taskId} marked as completed in simulated state.`);
-              setTimeout(() => setToastMessage(null), 4000);
-            }}
+            tasks={volunteerTasks}
+            isLoading={isLoading}
+            onUpdateTaskStatus={handleUpdateVolunteerTask}
           />
         </div>
       </div>
 
-      {/* Outreach Action Confirmation Modal */}
-      <ConfirmationDialog
-        isOpen={Boolean(pendingOutreach)}
-        onClose={() => setPendingOutreach(null)}
-        onConfirm={handleConfirmOutreach}
-        title="Execute Simulated Community Outreach"
-        description={`Send targeted intervention for household ${pendingOutreach?.household.referenceCode} (${pendingOutreach?.household.headOfHousehold}) in ${pendingOutreach?.household.zoneName}.`}
-        confirmLabel="Simulate Action"
-        variant="teal"
-        isDemoAction={true}
-        details={
-          pendingOutreach && (
-            <div className="space-y-1">
-              <div><strong>Action Type:</strong> <span className="capitalize">{pendingOutreach.method.replace(/_/g, ' ')}</span></div>
-              <div><strong>Vulnerabilities:</strong> {pendingOutreach.household.vulnerabilityIndicators.join(', ')}</div>
-              <div><strong>Connectivity:</strong> {pendingOutreach.household.phoneReachability}</div>
-            </div>
-          )
-        }
+      {/* Simulated Alert Planner Modal */}
+      <AlertPlannerModal
+        isOpen={isAlertModalOpen}
+        onClose={() => {
+          setIsAlertModalOpen(false);
+          setSelectedHouseholdForAlert(null);
+        }}
+        targetHousehold={selectedHouseholdForAlert}
+        onActionComplete={(newAction) => {
+          showToast(
+            `[DEMO ONLY / SIMULATED] Outreach drill dispatched via ${newAction.channel.replace('_', ' ')}.`,
+            'success'
+          );
+          loadAllData();
+        }}
       />
     </AppShell>
   );
