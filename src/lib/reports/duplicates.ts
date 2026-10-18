@@ -14,6 +14,8 @@ export interface CandidateIncident {
   medical_urgent: boolean;
   mobility_help: boolean;
   verification_status: 'unverified' | 'verified' | 'conflicting';
+  priority_score?: number;
+  priority_reason?: string;
 }
 
 export interface DuplicateMatch {
