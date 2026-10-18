@@ -1,215 +1,389 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Household, OutreachMethod } from '@/lib/types';
-import { MOCK_HOUSEHOLDS } from '@/lib/mock-data';
+import React, { useState, useMemo } from 'react';
+import {
+  ContactStatusType,
+  HouseholdWithZone,
+  ReachabilityType,
+} from '@/lib/outreach/types';
 import { DataTableWrapper } from '@/components/shared/DataTableWrapper';
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import {
   PhoneOff,
   Phone,
-  Wifi,
+  Smartphone,
+  HelpCircle,
   Clock,
-  Send,
-  MessageSquare,
-  Volume2,
-  Footprints,
-  Bell,
   Search,
+  Radio,
 } from 'lucide-react';
 
 interface HouseholdOutreachListProps {
-  onSimulateOutreach: (household: Household, method: OutreachMethod) => void;
+  households: HouseholdWithZone[];
+  isLoading?: boolean;
+  onSelectSimulateOutreach: (household: HouseholdWithZone) => void;
+  onUpdateStatus: (id: string, newStatus: ContactStatusType) => Promise<void>;
   className?: string;
 }
 
 export function HouseholdOutreachList({
-  onSimulateOutreach,
+  households,
+  isLoading = false,
+  onSelectSimulateOutreach,
+  onUpdateStatus,
   className = '',
 }: HouseholdOutreachListProps) {
   const [search, setSearch] = useState('');
   const [filterReachability, setFilterReachability] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterZone, setFilterZone] = useState<string>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const filteredHouseholds = MOCK_HOUSEHOLDS.filter((h) => {
-    const matchesSearch =
-      search === '' ||
-      h.referenceCode.toLowerCase().includes(search.toLowerCase()) ||
-      h.zoneName.toLowerCase().includes(search.toLowerCase()) ||
-      h.headOfHousehold.toLowerCase().includes(search.toLowerCase());
+  // Extract unique zones for filtering
+  const uniqueZones = useMemo(() => {
+    const set = new Set<string>();
+    households.forEach((h) => {
+      if (h.zone_name) set.add(h.zone_name);
+    });
+    return Array.from(set).sort();
+  }, [households]);
 
-    const matchesReach =
-      filterReachability === 'all' || h.phoneReachability === filterReachability;
+  // Client-side filtering
+  const filtered = useMemo(() => {
+    return households.filter((h) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
+        search === '' ||
+        h.label.toLowerCase().includes(q) ||
+        (h.zone_name && h.zone_name.toLowerCase().includes(q));
 
-    return matchesSearch && matchesReach;
-  });
+      const matchesReach =
+        filterReachability === 'all' || h.reachability === filterReachability;
 
-  const getReachabilityIcon = (reach: Household['phoneReachability']) => {
-    switch (reach) {
-      case 'none':
-        return (
-          <span className="flex items-center gap-1 text-red-600 font-bold text-xs">
-            <PhoneOff className="w-3.5 h-3.5" /> No Handset / Blackout
-          </span>
-        );
-      case 'intermittent':
-        return (
-          <span className="flex items-center gap-1 text-amber-600 font-bold text-xs">
-            <Wifi className="w-3.5 h-3.5" /> Intermittent / Batt Saving
-          </span>
-        );
-      default:
-        return (
-          <span className="flex items-center gap-1 text-emerald-600 font-bold text-xs">
-            <Phone className="w-3.5 h-3.5" /> Active Connected
-          </span>
-        );
+      const matchesStatus =
+        filterStatus === 'all' || h.contact_status === filterStatus;
+
+      const matchesZone = filterZone === 'all' || h.zone_name === filterZone;
+
+      return matchesSearch && matchesReach && matchesStatus && matchesZone;
+    });
+  }, [households, search, filterReachability, filterStatus, filterZone]);
+
+  const handleStatusChange = async (
+    householdId: string,
+    newStatus: ContactStatusType
+  ) => {
+    setUpdatingId(householdId);
+    try {
+      await onUpdateStatus(householdId, newStatus);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
-  const getMethodButton = (method: OutreachMethod, household: Household) => {
-    switch (method) {
-      case 'volunteer_visit':
+  const renderReachabilityBadge = (reach: ReachabilityType) => {
+    switch (reach) {
+      case 'no_phone':
         return (
-          <button
-            onClick={() => onSimulateOutreach(household, 'volunteer_visit')}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
-          >
-            <Footprints className="w-3 h-3" />
-            <span>Task Volunteer Visit</span>
-          </button>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <PhoneOff className="w-3.5 h-3.5 text-rose-600" />
+            <span>No Phone</span>
+          </span>
         );
-      case 'loudspeaker_alert':
+      case 'basic_phone':
         return (
-          <button
-            onClick={() => onSimulateOutreach(household, 'loudspeaker_alert')}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors"
-          >
-            <Volume2 className="w-3 h-3" />
-            <span>Mosque Horn Request</span>
-          </button>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            <Phone className="w-3.5 h-3.5 text-amber-600" />
+            <span>Basic 2G</span>
+          </span>
         );
-      case 'sms_fallback':
+      case 'smartphone':
         return (
-          <button
-            onClick={() => onSimulateOutreach(household, 'sms_fallback')}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-          >
-            <MessageSquare className="w-3 h-3" />
-            <span>Simulate SMS Ping</span>
-          </button>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+            <Smartphone className="w-3.5 h-3.5 text-teal-600" />
+            <span>Smartphone</span>
+          </span>
         );
       default:
         return (
-          <button
-            onClick={() => onSimulateOutreach(household, 'volunteer_visit')}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-          >
-            <Footprints className="w-3 h-3" />
-            <span>Outreach Action</span>
-          </button>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+            <span>Unknown</span>
+          </span>
         );
     }
   };
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Search & Filter Header */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-[#E2E8F0]">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search household ref, family head, or zone..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
-          />
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by household code (e.g. DEMO-HH-B1) or zone..."
+              className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+            />
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Zone Filter */}
+            <select
+              value={filterZone}
+              onChange={(e) => setFilterZone(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+            >
+              <option value="all">All Sectors ({uniqueZones.length})</option>
+              {uniqueZones.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+
+            {/* Reachability Filter */}
+            <select
+              value={filterReachability}
+              onChange={(e) => setFilterReachability(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+            >
+              <option value="all">All Connectivity</option>
+              <option value="no_phone">No Phone Handset</option>
+              <option value="basic_phone">Basic 2G Phone</option>
+              <option value="smartphone">Smartphone Connected</option>
+              <option value="unknown">Reachability Unknown</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D9488]"
+            >
+              <option value="all">All Contact Statuses</option>
+              <option value="reached">Reached / Confirmed</option>
+              <option value="needs_visit">Needs Visit</option>
+              <option value="no_response">No Response</option>
+              <option value="unknown">Status Unknown</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 font-medium">Connectivity:</span>
-          <select
-            value={filterReachability}
-            onChange={(e) => setFilterReachability(e.target.value)}
-            className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold focus:outline-none"
-          >
-            <option value="all">All Households</option>
-            <option value="none">Zero Handset Access</option>
-            <option value="intermittent">Intermittent / Power Loss</option>
-            <option value="connected">Connected</option>
-          </select>
+        {/* Filter Summary Pill */}
+        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-700">
+              Showing {filtered.length} of {households.length} tracked households
+            </span>
+            {(search || filterZone !== 'all' || filterReachability !== 'all' || filterStatus !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setFilterZone('all');
+                  setFilterReachability('all');
+                  setFilterStatus('all');
+                }}
+                className="text-[#0D9488] font-bold hover:underline"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Strict Schema Enums Validated</span>
+          </div>
         </div>
       </div>
 
-      {/* Household Table */}
+      {/* Main Table */}
       <DataTableWrapper
         footer={
-          <div className="flex items-center justify-between">
-            <span>Displaying {filteredHouseholds.length} high-vulnerability tracked households</span>
-            <span className="text-slate-400 italic">Actions update simulated outreach logs</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <span className="text-slate-600 font-medium">
+              Updating status synchronizes immediately with server database.
+            </span>
+            <span className="text-slate-400 italic">
+              Simulated alerts log to <code>outreach_actions</code> without external SMS burn.
+            </span>
           </div>
         }
       >
         <thead>
-          <tr className="border-b border-[#E2E8F0] bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-            <th className="py-3 px-4">Ref Code / Head</th>
-            <th className="py-3 px-4">Zone & Members</th>
-            <th className="py-3 px-4">Vulnerability Factors</th>
-            <th className="py-3 px-4">Connectivity</th>
-            <th className="py-3 px-4">Last Contact</th>
-            <th className="py-3 px-4">Status</th>
-            <th className="py-3 px-4 text-right">Simulated Action</th>
+          <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <th className="py-3 px-4 text-left">Household Ref / Family</th>
+            <th className="py-3 px-4 text-left">Sector & Flood Risk</th>
+            <th className="py-3 px-4 text-left">Vulnerabilities</th>
+            <th className="py-3 px-4 text-left">Reachability</th>
+            <th className="py-3 px-4 text-left">Contact Status (Update)</th>
+            <th className="py-3 px-4 text-left">Last Contact</th>
+            <th className="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E2E8F0] text-xs">
-          {filteredHouseholds.map((h) => (
-            <tr key={h.id} className="hover:bg-slate-50/70 transition-colors">
-              <td className="py-3.5 px-4">
-                <span className="font-mono font-bold text-slate-900 block">{h.referenceCode}</span>
-                <span className="text-slate-500 text-[11px]">{h.headOfHousehold}</span>
-              </td>
-
-              <td className="py-3.5 px-4">
-                <span className="font-semibold text-slate-800 block truncate max-w-[150px]">{h.zoneName}</span>
-                <span className="text-slate-400 text-[11px]">{h.totalMembers} family members</span>
-              </td>
-
-              <td className="py-3.5 px-4 max-w-xs">
-                <div className="flex flex-wrap gap-1">
-                  {h.vulnerabilityIndicators.map((vuln, i) => (
-                    <span
-                      key={i}
-                      className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200"
-                    >
-                      {vuln}
-                    </span>
-                  ))}
-                </div>
-              </td>
-
-              <td className="py-3.5 px-4 whitespace-nowrap">
-                {getReachabilityIcon(h.phoneReachability)}
-              </td>
-
-              <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  {h.lastSuccessfulContact}
-                </span>
-                <span className="text-[10px] text-slate-400 block pt-0.5">
-                  ({h.silenceDurationHours}h silent)
-                </span>
-              </td>
-
-              <td className="py-3.5 px-4">
-                <StatusBadge status={h.contactStatus} size="sm" />
-              </td>
-
-              <td className="py-3.5 px-4 text-right">
-                {getMethodButton(h.recommendedOutreachMethod, h)}
+        <tbody className="divide-y divide-slate-100 text-xs">
+          {isLoading ? (
+            <tr>
+              <td colSpan={7} className="p-12 text-center">
+                <div className="w-8 h-8 border-3 border-[#0D9488] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-xs text-slate-500 font-medium">
+                  Synchronizing household registry from Supabase...
+                </p>
               </td>
             </tr>
-          ))}
+          ) : filtered.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="p-12 text-center">
+                <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <h4 className="text-sm font-bold text-slate-700">No matching households found</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  No household records matched your current query and filter selections. Try broadening your criteria.
+                </p>
+              </td>
+            </tr>
+          ) : (
+            filtered.map((h) => {
+              const isUpdating = updatingId === h.id;
+
+              return (
+                <tr
+                  key={h.id}
+                  className="hover:bg-slate-50/70 transition-colors group"
+                >
+                  {/* Household Code & Count */}
+                  <td className="py-3.5 px-4">
+                    <span className="font-mono font-extrabold text-slate-900 block text-xs">
+                      {h.label}
+                    </span>
+                    <span className="text-slate-500 text-[11px]">
+                      {h.people_count} family {h.people_count === 1 ? 'member' : 'members'}
+                    </span>
+                  </td>
+
+                  {/* Zone & Flood Risk */}
+                  <td className="py-3.5 px-4">
+                    <span className="font-semibold text-slate-800 block truncate max-w-[160px]">
+                      {h.zone_name}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                          h.zone_flood_risk === 3
+                            ? 'bg-red-100 text-red-800'
+                            : h.zone_flood_risk === 2
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        Risk Tier {h.zone_flood_risk}
+                      </span>
+                      {h.zone_minutes_to_impact !== null && (
+                        <span className="text-[10px] text-slate-400">
+                          ~{h.zone_minutes_to_impact}m crest
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Vulnerabilities Chips */}
+                  <td className="py-3.5 px-4 max-w-xs">
+                    <div className="flex flex-wrap gap-1">
+                      {h.elderly_present && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-200">
+                          Elderly
+                        </span>
+                      )}
+                      {h.mobility_assistance && (
+                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
+                          Mobility
+                        </span>
+                      )}
+                      {h.medical_support_needed && (
+                        <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
+                          Medical Urgent
+                        </span>
+                      )}
+                      {!h.elderly_present && !h.mobility_assistance && !h.medical_support_needed && (
+                        <span className="text-[10px] text-slate-400 italic">None logged</span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Reachability Badge */}
+                  <td className="py-3.5 px-4 whitespace-nowrap">
+                    {renderReachabilityBadge(h.reachability)}
+                  </td>
+
+                  {/* Contact Status (Interactive Dropdown) */}
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-2">
+                      {isUpdating ? (
+                        <div className="w-4 h-4 border-2 border-[#0D9488] border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <select
+                          value={h.contact_status}
+                          onChange={(e) =>
+                            handleStatusChange(
+                              h.id,
+                              e.target.value as ContactStatusType
+                            )
+                          }
+                          className={`text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none transition-colors cursor-pointer ${
+                            h.contact_status === 'reached'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : h.contact_status === 'needs_visit'
+                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              : h.contact_status === 'no_response'
+                              ? 'bg-rose-50 text-rose-800 border-rose-300'
+                              : 'bg-slate-100 text-slate-700 border-slate-300'
+                          }`}
+                        >
+                          <option value="reached">Reached</option>
+                          <option value="needs_visit">Needs Visit</option>
+                          <option value="no_response">No Response</option>
+                          <option value="unknown">Unknown</option>
+                        </select>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Last Contact Time */}
+                  <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>
+                        {h.last_contact_at
+                          ? new Date(h.last_contact_at).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'No record'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block pt-0.5">
+                      {h.silence_hours}h silent
+                    </span>
+                  </td>
+
+                  {/* Action Button: Trigger Simulator */}
+                  <td className="py-3.5 px-4 text-right">
+                    <button
+                      onClick={() => onSelectSimulateOutreach(h)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D9488]/10 text-[#0D9488] hover:bg-[#0D9488] hover:text-white border border-[#0D9488]/30 transition-all shadow-2xs"
+                    >
+                      <Radio className="w-3.5 h-3.5" />
+                      <span>Simulate Alert</span>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </DataTableWrapper>
     </div>

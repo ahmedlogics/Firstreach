@@ -28,6 +28,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Emergency styling link injection */}
+        <link href="https://jsdelivr.net" rel="stylesheet" />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-[#F6F8FC] text-[#0F172A]">
         {children}
       </body>
