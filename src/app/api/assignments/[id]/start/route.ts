@@ -14,6 +14,8 @@ function verifyDispatcherAuth(req: NextRequest): boolean {
     (authHeader && authHeader.startsWith('Bearer ')) ||
     dispatcherRole === 'coordinator' ||
     dispatcherRole === 'operations_chief' ||
+    dispatcherRole === 'rescue_team' ||
+    dispatcherRole === 'field_responder' ||
     demoMode === 'true'
   );
 }

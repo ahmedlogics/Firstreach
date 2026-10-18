@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ShelterWithZone } from '@/lib/outreach/types';
 import { CapacityProgress } from '@/components/shared/CapacityProgress';
 import {
@@ -9,8 +9,11 @@ import {
   AlertTriangle,
   Plus,
   Minus,
-  Users,
-  ShieldCheck,
+  Search,
+  Filter,
+  CheckCircle2,
+  X,
+  Bed,
 } from 'lucide-react';
 
 interface ShelterManagementGridProps {
@@ -34,10 +37,28 @@ export function ShelterManagementGrid({
     name: string;
   } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'near_capacity' | 'full'>('all');
 
   const totalCapacity = shelters.reduce((acc, s) => acc + s.capacity, 0);
   const totalOccupied = shelters.reduce((acc, s) => acc + s.occupied, 0);
   const totalFreeBeds = Math.max(0, totalCapacity - totalOccupied);
+  const totalOccupancyPct = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
+
+  // Filtered Shelters
+  const filteredShelters = useMemo(() => {
+    return shelters.filter((s) => {
+      const matchesSearch =
+        searchQuery === '' ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.zone_name ? s.zone_name.toLowerCase().includes(searchQuery.toLowerCase()) : false);
+
+      const matchesStatus =
+        statusFilter === 'all' || s.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [shelters, searchQuery, statusFilter]);
 
   const handleStepOccupancy = async (
     shelter: ShelterWithZone,
@@ -72,12 +93,12 @@ export function ShelterManagementGrid({
 
     const { shelterId, value, capacity } = editingOccupancy;
     if (value < 0) {
-      setActionError('Occupied beds cannot be negative.');
+      setActionError('Occupied spaces cannot be negative.');
       return;
     }
     if (value > capacity) {
       setActionError(
-        `Capacity integrity error: ${value} exceeds total shelter capacity of ${capacity} beds.`
+        `Integrity error: ${value} exceeds total shelter capacity of ${capacity} spaces.`
       );
       return;
     }
@@ -96,173 +117,245 @@ export function ShelterManagementGrid({
   };
 
   return (
-    <div className={`bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-5 ${className}`}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8E6E1]">
-        <div>
+    <div className={`space-y-4 ${className}`}>
+      {/* Top Controls & Filter Bar */}
+      <div className="bg-white rounded-xl border border-[#E4E8EC] p-4 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[#EDF1F5] text-[#536A82]">
+            <div className="p-1.5 rounded-lg bg-[#F0F4F8] text-[#375A6B]">
               <Home className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-semibold text-[#252A30]">
-              Designated Evacuation Shelters
-            </h3>
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/20">
-              Live Bed Telemetry
-            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-[#18232D]">
+                Designated Evacuation Shelters
+              </h3>
+              <p className="text-xs text-[#5F6B7A]">
+                Real-time bed availability ensuring safe intake without exceeding structural capacity.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-[#757B81] mt-0.5">
-            Real-time bed availability ensuring safe intake without exceeding structural capacity.
-          </p>
+
+          {/* Quick Fleet Health Badge */}
+          <div className="flex items-center gap-3 text-xs bg-[#F7F8FA] px-3 py-1.5 rounded-lg border border-[#E4E8EC] text-[#5F6B7A]">
+            <span>Total Fleet: <strong className="text-[#18232D] tabular-nums">{totalCapacity}</strong> beds</span>
+            <span className="text-[#E4E8EC]">•</span>
+            <span>Occupied: <strong className="text-[#18232D] tabular-nums">{totalOccupied}</strong> ({totalOccupancyPct}%)</span>
+            <span className="text-[#E4E8EC]">•</span>
+            <span className="text-[#258167] font-semibold tabular-nums">{totalFreeBeds} free</span>
+          </div>
         </div>
 
-        {/* Global Summary Badge */}
-        <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-medium bg-[#F7F6F2] px-3 py-1.5 rounded-lg border border-[#E8E6E1] text-[#757B81]">
-          <span>Total Fleet Capacity: <strong className="text-[#252A30]">{totalCapacity}</strong> beds</span>
-          <span className="text-[#E8E6E1]">•</span>
-          <span className="text-[#377D65] font-semibold">{totalFreeBeds} free</span>
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 border-t border-[#E4E8EC]">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6B7A]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search shelters by name or zone..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5F6B7A] hover:text-[#18232D]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter Buttons */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+            <span className="text-[11px] text-[#5F6B7A] font-medium mr-1 flex items-center gap-1 shrink-0">
+              <Filter className="w-3 h-3" /> Status:
+            </span>
+            {(['all', 'available', 'near_capacity', 'full'] as const).map((st) => {
+              const label =
+                st === 'all'
+                  ? 'All'
+                  : st === 'available'
+                  ? 'Available'
+                  : st === 'near_capacity'
+                  ? 'Near Capacity'
+                  : 'Full';
+              const isSelected = statusFilter === st;
+
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#18232D] text-white shadow-xs'
+                      : 'bg-[#F7F8FA] text-[#5F6B7A] hover:bg-[#E4E8EC]/60 hover:text-[#18232D] border border-[#E4E8EC]'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Global Error Banner */}
       {actionError && (
-        <div className="p-3 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-xs text-[#B74349] flex items-center justify-between gap-2 animate-in fade-in">
+        <div className="p-3 rounded-xl bg-[#FBECEE] border border-[#BC414A]/30 text-xs text-[#BC414A] flex items-center justify-between gap-2 animate-in fade-in">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0" />
-            <span>{actionError}</span>
+            <AlertTriangle className="w-4 h-4 text-[#BC414A] shrink-0" />
+            <span className="font-medium">{actionError}</span>
           </div>
           <button
+            type="button"
             onClick={() => setActionError(null)}
-            className="text-xs font-semibold text-[#B74349] hover:underline"
+            className="text-xs font-semibold text-[#BC414A] hover:underline cursor-pointer"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Coordinated Dispatch Notice */}
-      <div className="p-3 rounded-xl bg-[#EDF1F5] border border-[#536A82]/20 flex items-center gap-2.5 text-xs text-[#252A30]">
-        <ShieldCheck className="w-4 h-4 text-[#536A82] shrink-0" />
-        <span className="text-[11px] leading-relaxed">
-          <strong>Member 3 Coordination:</strong> Rescue dispatchers allocate evacuees based on live free beds. Over-capacity intake is strictly prevented at database level.
-        </span>
-      </div>
-
-      {/* Shelter Grid */}
+      {/* Shelter Cards Grid */}
       {isLoading ? (
-        <div className="p-8 text-center space-y-2">
-          <div className="w-6 h-6 border-2 border-[#536A82] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-[#757B81]">Loading shelter network telemetry...</p>
+        <div className="bg-white rounded-xl border border-[#E4E8EC] p-12 text-center space-y-2">
+          <div className="w-6 h-6 border-2 border-[#375A6B] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-[#5F6B7A]">Synchronizing shelter telemetry...</p>
         </div>
-      ) : shelters.length === 0 ? (
-        <div className="p-8 text-center text-[#92979D] text-xs">
-          No shelter complexes registered in current zone database.
+      ) : filteredShelters.length === 0 ? (
+        <div className="bg-white rounded-xl border border-[#E4E8EC] p-10 text-center space-y-1">
+          <Home className="w-6 h-6 text-[#5F6B7A] mx-auto opacity-50" />
+          <p className="text-xs font-medium text-[#18232D]">No shelters match query</p>
+          <p className="text-[11px] text-[#5F6B7A]">Try clearing filters or search keywords.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {shelters.map((s) => {
+          {filteredShelters.map((s) => {
             const isFull = s.status === 'full';
             const isNearCapacity = s.status === 'near_capacity';
             const isBusy = updatingShelterId === s.id;
+            const pct = s.capacity > 0 ? Math.round((s.occupied / s.capacity) * 100) : 0;
 
             return (
               <div
                 key={s.id}
                 className={`p-4 rounded-xl border transition-all ${
                   isFull
-                    ? 'border-[#B74349]/40 bg-[#FAE8E7]/30 shadow-xs'
+                    ? 'border-[#BC414A]/35 bg-[#FBECEE]/20 shadow-xs'
                     : isNearCapacity
-                    ? 'border-[#A87426]/40 bg-[#FFF2DD]/30 shadow-xs'
-                    : 'border-[#E8E6E1] bg-white hover:border-[#536A82]/30'
+                    ? 'border-[#A87528]/35 bg-[#FFF5E6]/20 shadow-xs'
+                    : 'border-[#E4E8EC] bg-white hover:border-[#375A6B]/30'
                 }`}
               >
-                {/* Title & Status Badge */}
-                <div className="flex items-start justify-between gap-2 mb-2">
+                {/* Header: Shelter Name, Zone, & Availability Badge */}
+                <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-[#252A30] truncate">
+                    <h4 className="text-sm font-semibold text-[#18232D] truncate">
                       {s.name}
                     </h4>
-                    <div className="flex items-center gap-1 text-[11px] text-[#757B81] mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#92979D] shrink-0" />
+                    <div className="flex items-center gap-1 text-[11px] text-[#5F6B7A] mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#5F6B7A] shrink-0" />
                       <span className="truncate">{s.zone_name}</span>
                     </div>
                   </div>
 
                   <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border shrink-0 ${
+                    className={`px-2 py-0.5 rounded-[6px] text-[10px] font-bold uppercase tracking-wider border shrink-0 ${
                       isFull
-                        ? 'bg-[#FAE8E7] text-[#B74349] border-[#B74349]/30'
+                        ? 'bg-[#FBECEE] text-[#BC414A] border-[#BC414A]/30'
                         : isNearCapacity
-                        ? 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/30'
-                        : 'bg-[#E5EEE8] text-[#377D65] border-[#377D65]/30'
+                        ? 'bg-[#FFF5E6] text-[#A87528] border-[#A87528]/30'
+                        : 'bg-[#EBF7F2] text-[#258167] border-[#258167]/30'
                     }`}
                   >
                     {isFull ? 'Full' : isNearCapacity ? 'Near Capacity' : 'Available'}
                   </span>
                 </div>
 
-                {/* Capacity Progress Bar */}
-                <div className="py-2">
+                {/* Primary Metric Strip */}
+                <div className="grid grid-cols-4 gap-2 p-2.5 bg-[#F7F8FA] rounded-lg border border-[#E4E8EC] mb-3 text-center">
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-[#5F6B7A] block">Occupied</span>
+                    <span className="text-xs font-bold text-[#18232D] tabular-nums">{s.occupied}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-[#5F6B7A] block">Free</span>
+                    <span
+                      className={`text-xs font-bold tabular-nums ${
+                        s.free_beds === 0
+                          ? 'text-[#BC414A]'
+                          : s.free_beds <= 5
+                          ? 'text-[#A87528]'
+                          : 'text-[#258167]'
+                      }`}
+                    >
+                      {s.free_beds}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-[#5F6B7A] block">Capacity</span>
+                    <span className="text-xs font-bold text-[#18232D] tabular-nums">{s.capacity}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-[#5F6B7A] block">Fill Rate</span>
+                    <span
+                      className={`text-xs font-bold tabular-nums ${
+                        isFull
+                          ? 'text-[#BC414A]'
+                          : isNearCapacity
+                          ? 'text-[#A87528]'
+                          : 'text-[#18232D]'
+                      }`}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Single Clear Progress Bar */}
+                <div className="mb-3">
                   <CapacityProgress
                     total={s.capacity}
                     occupied={s.occupied}
-                    label="Bed Occupancy"
+                    label="Current Occupancy"
+                    showLabels={false}
                   />
                 </div>
 
-                {/* Free Bed Count & Stats */}
-                <div className="flex items-center justify-between text-xs py-2 border-t border-[#E8E6E1] text-[#757B81]">
-                  <div className="flex items-center gap-1.5 font-semibold text-[#252A30]">
-                    <Users className="w-3.5 h-3.5 text-[#92979D]" />
-                    <span>Free Capacity:</span>
-                    <span
-                      className={`font-mono text-xs font-bold ${
-                        s.free_beds === 0
-                          ? 'text-[#B74349]'
-                          : s.free_beds <= 5
-                          ? 'text-[#A87426]'
-                          : 'text-[#377D65]'
-                      }`}
-                    >
-                      {s.free_beds} beds
-                    </span>
+                {/* Intake Adjustment Controls */}
+                <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-[#E4E8EC]">
+                  <div className="flex items-center gap-1 text-[11px] text-[#5F6B7A]">
+                    <Bed className="w-3.5 h-3.5 text-[#5F6B7A]" />
+                    <span>Intake Adjustment:</span>
                   </div>
 
-                  <span className="text-[11px] text-[#92979D]">
-                    {s.occupied} of {s.capacity} occupied
-                  </span>
-                </div>
-
-                {/* Intake Adjustment Controls */}
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#E8E6E1]">
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#92979D]">
-                    Intake Adjust
-                  </span>
-
                   <div className="flex items-center gap-1.5">
-                    {/* Quick Step -1 */}
+                    {/* Step -1 (Release Bed) */}
                     <button
                       type="button"
                       disabled={isBusy || s.occupied <= 0}
                       onClick={() => handleStepOccupancy(s, -1)}
-                      className="p-1 rounded-lg border border-[#E8E6E1] bg-[#F7F6F2] text-[#252A30] hover:bg-[#EDF1F5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] hover:bg-[#E4E8EC] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="Release 1 bed"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Quick Step +1 */}
+                    {/* Step +1 (Admit Person) */}
                     <button
                       type="button"
                       disabled={isBusy || s.occupied >= s.capacity}
                       onClick={() => handleStepOccupancy(s, 1)}
-                      className="p-1 rounded-lg border border-[#E8E6E1] bg-[#F7F6F2] text-[#252A30] hover:bg-[#EDF1F5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] hover:bg-[#E4E8EC] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="Admit 1 person"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Custom Update Button */}
+                    {/* Set Count (Direct Value) */}
                     <button
                       type="button"
                       disabled={isBusy}
@@ -274,7 +367,7 @@ export function ShelterManagementGrid({
                           name: s.name,
                         })
                       }
-                      className="px-2.5 py-1 text-[11px] font-semibold text-[#536A82] bg-[#EDF1F5] border border-[#536A82]/30 rounded-lg hover:bg-[#536A82] hover:text-white transition-colors cursor-pointer"
+                      className="px-2.5 py-1 text-xs font-semibold text-[#375A6B] bg-[#F0F4F8] border border-[#375A6B]/25 rounded-lg hover:bg-[#375A6B] hover:text-white transition-colors cursor-pointer"
                     >
                       Set Count
                     </button>
@@ -288,22 +381,34 @@ export function ShelterManagementGrid({
 
       {/* Custom Count Modal */}
       {editingOccupancy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#252A30]/50 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-lg border border-[#E8E6E1] space-y-4">
-            <div>
-              <h4 className="text-sm font-semibold text-[#252A30]">
-                Update Bed Occupancy
-              </h4>
-              <p className="text-xs text-[#757B81] mt-0.5">
-                {editingOccupancy.name} (Max Capacity: {editingOccupancy.capacity} beds)
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18232D]/50 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-sm bg-white rounded-xl p-5 shadow-lg border border-[#E4E8EC] space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-[#18232D]">
+                  Set Occupied Spaces
+                </h4>
+                <p className="text-xs text-[#5F6B7A] mt-0.5">
+                  {editingOccupancy.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingOccupancy(null)}
+                className="text-[#5F6B7A] hover:text-[#18232D] p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleCustomSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-[#252A30] block mb-1">
-                  Current Occupied Beds:
-                </label>
+                <div className="flex justify-between items-center text-xs font-medium text-[#18232D] mb-1">
+                  <span>Occupied Beds:</span>
+                  <span className="text-[#5F6B7A] tabular-nums">
+                    Max: {editingOccupancy.capacity}
+                  </span>
+                </div>
                 <input
                   type="number"
                   min={0}
@@ -315,28 +420,29 @@ export function ShelterManagementGrid({
                       value: parseInt(e.target.value) || 0,
                     })
                   }
-                  className="w-full p-2 text-sm bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg font-mono font-semibold text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
+                  className="w-full p-2.5 text-sm bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg font-mono font-bold text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
                   autoFocus
                 />
-                <p className="text-[10px] text-[#92979D] mt-1">
-                  Database constraint strictly enforces: 0 &le; occupied &le; {editingOccupancy.capacity}.
+                <p className="text-[11px] text-[#5F6B7A] mt-1.5 leading-snug">
+                  Structural safety validation: occupancy cannot be negative and cannot exceed shelter capacity ({editingOccupancy.capacity}).
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E4E8EC]">
                 <button
                   type="button"
                   onClick={() => setEditingOccupancy(null)}
-                  className="px-3 py-1.5 text-xs font-medium text-[#757B81] hover:bg-[#F7F6F2] rounded-lg cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium text-[#5F6B7A] hover:bg-[#F7F8FA] rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updatingShelterId === editingOccupancy.shelterId}
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-[#536A82] hover:bg-[#40566D] rounded-lg shadow-xs transition-colors cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#2C4855] rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  Save Occupancy
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Update Occupancy</span>
                 </button>
               </div>
             </form>

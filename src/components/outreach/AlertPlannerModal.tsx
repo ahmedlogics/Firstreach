@@ -51,35 +51,35 @@ export function AlertPlannerModal({
     {
       id: 'sms_demo',
       title: 'Simulated 2G SMS Ping',
-      description: 'Ultra-low-bandwidth text alert designed for basic and non-smart devices.',
+      description: 'Ultra-low-bandwidth text alert designed for basic cellular and non-smart devices.',
       icon: MessageSquare,
       tag: 'SIMULATED SMS',
     },
     {
       id: 'app_demo',
       title: 'Simulated Push Alert',
-      description: 'Interactive rich push alert with geo-pinned evacuation route.',
+      description: 'Interactive push alert simulation with evacuation route instructions.',
       icon: Smartphone,
       tag: 'SIMULATED PUSH',
     },
     {
       id: 'call_demo',
       title: 'Automated IVR Voice Call',
-      description: 'Synthesized Urdu/Sindhi automated voice hotline check-in call.',
+      description: 'Synthesized regional language automated voice check-in simulation.',
       icon: PhoneCall,
       tag: 'SIMULATED VOICE',
     },
     {
       id: 'volunteer_visit',
       title: 'Task Field Volunteer Patrol',
-      description: 'Generate physical door-to-door welfare check for neighborhood volunteers.',
+      description: 'Queue a physical door-to-door welfare check task for neighborhood volunteers.',
       icon: Footprints,
       tag: 'VOLUNTEER PATROL',
     },
     {
       id: 'broadcast_demo',
-      title: 'Mosque Horn / Siren Broadcast',
-      description: 'Coordinate localized acoustic siren alert through community minarets.',
+      title: 'Siren / Speaker Broadcast',
+      description: 'Coordinate localized siren drill announcement simulation.',
       icon: Volume2,
       tag: 'ACOUSTIC SIREN',
     },
@@ -96,7 +96,7 @@ export function AlertPlannerModal({
         zone_id: targetHousehold?.zone_id || targetZoneId || null,
         channel: selectedChannel,
         status: selectedChannel === 'volunteer_visit' ? 'planned' : 'sent_demo',
-        note: `[DEMO ONLY / SIMULATED] ${note.trim() || `Automated ${selectedChannel.replace('_', ' ')} triggered`}`,
+        note: `[SIMULATED] ${note.trim() || `Synthetic ${selectedChannel.replace('_', ' ')} drill action`}`,
         attempted_at: new Date().toISOString(),
       };
 
@@ -124,70 +124,70 @@ export function AlertPlannerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#252A30]/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-[#E8E6E1] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18232D]/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl border border-[#E4E8EC] overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-[#E8E6E1] flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-[#E4E8EC] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/20">
-              <Radio className="w-5 h-5 animate-pulse" />
+            <div className="p-2 rounded-lg bg-[#F0F4F8] text-[#375A6B] border border-[#375A6B]/20">
+              <Radio className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-[#252A30] tracking-tight">
-                Simulated Alert Planner
+              <h3 className="text-sm font-semibold text-[#18232D]">
+                Outreach Alert Simulation
               </h3>
-              <p className="text-xs text-[#757B81]">
-                Outbound community outreach testing module
+              <p className="text-xs text-[#5F6B7A]">
+                Synthetic communication and volunteer dispatch tool
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#92979D] hover:text-[#252A30] hover:bg-[#F7F6F2] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA] transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           {/* Explicit DEMO ONLY Banner */}
-          <div className="p-3.5 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 flex items-start gap-2.5 text-xs text-[#A87426]">
-            <AlertTriangle className="w-4 h-4 text-[#A87426] shrink-0 mt-0.5" />
-            <div className="space-y-1">
+          <div className="p-3 rounded-lg bg-[#FFF5E6] border border-[#A87528]/30 flex items-start gap-2.5 text-xs text-[#A87528]">
+            <AlertTriangle className="w-4 h-4 text-[#A87528] shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
               <div className="font-semibold flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 rounded bg-[#A87426]/20 text-[#A87426] font-mono text-[10px] uppercase tracking-wider font-bold">
-                  DEMO ONLY / SIMULATED
+                <span className="px-1.5 py-0.5 rounded bg-[#A87528]/20 text-[#A87528] font-mono text-[10px] uppercase tracking-wider font-bold">
+                  SIMULATION ONLY
                 </span>
-                <span className="text-[#252A30]">Training Drill Protocol</span>
+                <span className="text-[#18232D]">Drill Mode</span>
               </div>
-              <p className="text-[11px] text-[#757B81] leading-relaxed">
-                Actions executed here are synthetic simulations logged for evaluation.
-                No physical emergency SMS or live cellular broadcasts will be transmitted.
+              <p className="text-[11px] text-[#5F6B7A] leading-relaxed">
+                Actions executed here are operational simulations logged for readiness drills. No live cellular SMS broadcasts will be sent to civilian carriers.
               </p>
             </div>
           </div>
 
           {/* Target Summary */}
           {targetHousehold && (
-            <div className="p-3 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] flex items-center justify-between text-xs">
+            <div className="p-2.5 rounded-lg bg-[#F7F8FA] border border-[#E4E8EC] flex items-center justify-between text-xs">
               <div>
-                <span className="text-[#92979D] text-[10px] uppercase font-semibold block">
+                <span className="text-[#5F6B7A] text-[10px] uppercase font-semibold block">
                   Target Household
                 </span>
-                <span className="font-mono font-bold text-[#252A30]">
+                <span className="font-mono font-bold text-[#18232D]">
                   {targetHousehold.label}
                 </span>
-                <span className="text-[#757B81] ml-1.5">
+                <span className="text-[#5F6B7A] ml-1.5">
                   ({targetHousehold.zone_name})
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[#92979D] text-[10px] uppercase font-semibold block">
+                <span className="text-[#5F6B7A] text-[10px] uppercase font-semibold block">
                   Reachability
                 </span>
-                <span className="font-medium text-[#252A30] capitalize">
+                <span className="font-medium text-[#18232D] capitalize">
                   {targetHousehold.reachability.replace('_', ' ')}
                 </span>
               </div>
@@ -195,11 +195,11 @@ export function AlertPlannerModal({
           )}
 
           {/* Channel Selection Grid */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#252A30] block">
-              Select Simulated Outreach Channel:
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#18232D] block">
+              Select Outreach Channel:
             </label>
-            <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-1.5 max-h-52 overflow-y-auto pr-1">
               {channels.map((ch) => {
                 const Icon = ch.icon;
                 const isSelected = selectedChannel === ch.id;
@@ -209,31 +209,31 @@ export function AlertPlannerModal({
                     key={ch.id}
                     type="button"
                     onClick={() => setSelectedChannel(ch.id)}
-                    className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-[#536A82] bg-[#EDF1F5] ring-1 ring-[#536A82] shadow-xs'
-                        : 'border-[#E8E6E1] bg-white hover:border-[#536A82]/30 hover:bg-[#F7F6F2]'
+                        ? 'border-[#375A6B] bg-[#F0F4F8] ring-1 ring-[#375A6B] shadow-xs'
+                        : 'border-[#E4E8EC] bg-white hover:border-[#375A6B]/30 hover:bg-[#F7F8FA]'
                     }`}
                   >
                     <div
-                      className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                      className={`p-1.5 rounded-md shrink-0 mt-0.5 ${
                         isSelected
-                          ? 'bg-[#536A82] text-white'
-                          : 'bg-[#F7F6F2] text-[#757B81]'
+                          ? 'bg-[#375A6B] text-white'
+                          : 'bg-[#F7F8FA] text-[#5F6B7A]'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-xs font-semibold text-[#252A30] truncate">
+                        <span className="text-xs font-semibold text-[#18232D] truncate">
                           {ch.title}
                         </span>
-                        <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#F7F6F2] text-[#757B81]">
+                        <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#F7F8FA] text-[#5F6B7A] border border-[#E4E8EC]">
                           {ch.tag}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#757B81] mt-0.5 leading-snug">
+                      <p className="text-[11px] text-[#5F6B7A] mt-0.5 leading-snug">
                         {ch.description}
                       </p>
                     </div>
@@ -245,49 +245,49 @@ export function AlertPlannerModal({
 
           {/* Optional Note */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-[#252A30] block">
-              Simulation Note / Broadcast Context (Optional):
+            <label className="text-xs font-semibold text-[#18232D] block">
+              Drill Context / Message Content (Optional):
             </label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Flash flood warning drill; instructions to move to nearest designated shelter."
+              placeholder="e.g. Inundation advisory drill; proceed to nearest high-ground community shelter."
               rows={2}
-              className="w-full p-2.5 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
+              className="w-full p-2.5 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
             />
           </div>
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-xs text-[#B74349] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-[#B74349]" />
+            <div className="p-2.5 rounded-lg bg-[#FBECEE] border border-[#BC414A]/30 text-xs text-[#BC414A] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-[#BC414A]" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2.5">
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#E4E8EC]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-[#757B81] hover:text-[#252A30] hover:bg-[#F7F6F2] rounded-lg transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-medium text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA] rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 text-xs font-semibold text-white bg-[#536A82] hover:bg-[#40566D] disabled:bg-slate-300 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-1.5 text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#2C4855] disabled:bg-[#5F6B7A]/30 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Logging Drill...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Dispatch Simulated Action</span>
                 </>
               )}

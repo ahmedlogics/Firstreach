@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PublicShell } from '@/components/shared/PublicShell';
+import { RaabtaLogo } from '@/components/shared/RaabtaLogo';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { ROLE_LANDING_PAGES, StaffRole } from '@/lib/auth/types';
 import {
-  Shield,
   Lock,
   Mail,
   ArrowRight,
@@ -15,24 +17,56 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  KeyRound,
+  Radio,
+  LifeBuoy,
+  Users2,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
+  const { refreshUser } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [successRole, setSuccessRole] = useState<StaffRole | null>(null);
 
-  const DEMO_EMAIL = 'admin@firstreach.org';
-  const DEMO_PASSWORD = 'AdminPassword123!';
+  // Demo accounts for role testing
+  const DEMO_ACCOUNTS: { role: StaffRole; label: string; email: string; pass: string; desc: string; icon: any }[] = [
+    {
+      role: 'coordinator',
+      label: 'Coordinator',
+      email: 'admin@firstreach.org',
+      pass: 'AdminPassword123!',
+      desc: 'HQ command center, dispatch approval & telemetry',
+      icon: ShieldCheck,
+    },
+    {
+      role: 'rescue_team',
+      label: 'Rescue Team RT-02',
+      email: 'field@raabta.org',
+      pass: 'RescueTeam2026!',
+      desc: 'Field mission tracking, en-route status & evacuation',
+      icon: LifeBuoy,
+    },
+    {
+      role: 'volunteer',
+      label: 'Community Volunteer',
+      email: 'volunteer@raabta.org',
+      pass: 'Volunteer2026!',
+      desc: 'Ground verification visits & silent-zone checks',
+      icon: Users2,
+    },
+  ];
 
-  const handleFillDemo = () => {
-    setEmail(DEMO_EMAIL);
-    setPassword(DEMO_PASSWORD);
+  const handleSelectDemo = (acc: typeof DEMO_ACCOUNTS[0]) => {
+    setEmail(acc.email);
+    setPassword(acc.pass);
     setError(null);
   };
 
@@ -41,34 +75,46 @@ export default function LoginPage() {
     setError(null);
     setIsLoading(true);
 
+    const trimmedEmail = email.trim().toLowerCase();
+
     try {
-      // 1. Attempt authoritative Supabase authentication
+      // 1. Authoritative Supabase authentication
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
       });
 
+      let role: StaffRole = 'coordinator';
+
       if (authError) {
-        // Fallback check for resilience in offline/demo situations
-        if (email.trim().toLowerCase() === DEMO_EMAIL.toLowerCase() && password === DEMO_PASSWORD) {
-          setSuccess(true);
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 600);
-          return;
+        // Fallback for provisioned evaluation accounts if network or rate limit occurs
+        const matchedDemo = DEMO_ACCOUNTS.find(
+          (a) => a.email.toLowerCase() === trimmedEmail && a.pass === password
+        );
+
+        if (matchedDemo) {
+          role = matchedDemo.role;
+        } else {
+          throw new Error(authError.message || 'Invalid email or password.');
         }
-
-        throw new Error(authError.message || 'Invalid email or password.');
+      } else if (data?.user) {
+        // Determine role from email / user metadata
+        if (trimmedEmail.includes('field') || trimmedEmail.includes('rescue') || trimmedEmail.includes('rt02')) {
+          role = 'rescue_team';
+        } else if (trimmedEmail.includes('volunteer')) {
+          role = 'volunteer';
+        } else {
+          role = 'coordinator';
+        }
       }
 
-      if (data?.session || data?.user) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 600);
-      } else {
-        throw new Error('Authentication failed. Please verify credentials.');
-      }
+      setSuccessRole(role);
+      await refreshUser();
+
+      const targetPath = redirectTo || ROLE_LANDING_PAGES[role] || '/dashboard';
+      setTimeout(() => {
+        router.push(targetPath);
+      }, 500);
     } catch (err: any) {
       console.error('[Login Error]:', err);
       setError(err.message || 'Invalid email or password. Please try again.');
@@ -79,148 +125,154 @@ export default function LoginPage() {
 
   return (
     <PublicShell>
-      <div className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-md mx-auto">
-        <div className="bg-white rounded-2xl border border-[#E8E6E1] p-6 sm:p-8 shadow-xs space-y-6">
-          {/* Header */}
-          <div className="space-y-2.5 text-center">
-            <div className="w-12 h-12 rounded-xl bg-[#252A30] text-white flex items-center justify-center mx-auto shadow-xs">
-              <Shield className="w-6 h-6 text-[#F7F6F2]" />
+      <div className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-md mx-auto">
+        <div className="bg-white rounded-2xl border border-[#E4E8EC] p-6 sm:p-8 shadow-xs space-y-6">
+          {/* Brand Header */}
+          <div className="space-y-3 text-center">
+            <div className="flex justify-center">
+              <RaabtaLogo size="lg" showUrdu={true} showSubtitle={true} />
             </div>
-            <h1 className="text-2xl font-extrabold text-[#252A30] tracking-tight">
-              Coordinator Login
+            <h1 className="text-xl font-bold text-[#18232D] tracking-tight">
+              Operational Staff Login
             </h1>
-            <p className="text-xs text-[#757B81]">
-              Enter administrative credentials to access the Response Command Center.
+            <p className="text-xs text-[#5F6B7A] leading-relaxed">
+              Authorized access for response coordinators, field rescue units, and community scouts.
             </p>
           </div>
 
-          {/* Error Banner */}
+          {/* Error Notice */}
           {error && (
-            <div className="p-3 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-[#B74349] text-xs flex items-start gap-2 animate-in fade-in duration-150">
+            <div className="p-3.5 rounded-xl bg-[#FBECEE] border border-[#BC414A]/30 text-[#BC414A] text-xs flex items-start gap-2 animate-in fade-in duration-150">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Success Banner */}
-          {success && (
-            <div className="p-3 rounded-xl bg-[#E5EEE8] border border-[#377D65]/30 text-[#377D65] text-xs flex items-center gap-2 animate-in fade-in duration-150 font-medium">
+          {/* Success Notice */}
+          {successRole && (
+            <div className="p-3.5 rounded-xl bg-[#EBF7F2] border border-[#258167]/30 text-[#258167] text-xs flex items-center gap-2 animate-in fade-in duration-150">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>Authentication successful! Accessing Command Center...</span>
+              <span className="font-semibold">
+                Authorization confirmed. Loading {successRole.replace('_', ' ')} workspace...
+              </span>
             </div>
           )}
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold text-[#252A30]"
-              >
-                Email Address
+              <label className="text-xs font-semibold text-[#18232D] block">
+                Official Staff Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#92979D]" />
+                <Mail className="w-4 h-4 text-[#8B959E] absolute left-3 top-3 pointer-events-none" />
                 <input
-                  id="email"
                   type="email"
                   required
+                  placeholder="name@raabta.org"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@firstreach.org"
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-1 focus:ring-[#536A82] focus:bg-white transition-all"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] placeholder-[#8B959E] text-xs focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-[#252A30]"
-              >
+              <label className="text-xs font-semibold text-[#18232D] block">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#92979D]" />
+                <Lock className="w-4 h-4 text-[#8B959E] absolute left-3 top-3 pointer-events-none" />
                 <input
-                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-9 pr-10 py-2 text-xs rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] text-[#252A30] placeholder:text-[#92979D] focus:outline-none focus:ring-1 focus:ring-[#536A82] focus:bg-white transition-all"
+                  className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] placeholder-[#8B959E] text-xs focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#92979D] hover:text-[#252A30] transition-colors cursor-pointer"
-                  title={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-2.5 p-0.5 text-[#8B959E] hover:text-[#18232D] transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={isLoading || success}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#536A82] hover:bg-[#40566D] disabled:opacity-60 text-white shadow-xs transition-colors cursor-pointer"
+              disabled={isLoading || !!successRole}
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold bg-[#18232D] hover:bg-[#25323F] text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50 mt-2"
             >
               {isLoading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Signing In...</span>
+                  <span>Verifying Credentials...</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Sign In to Response System</span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Quick-Fill Admin Credentials Box */}
-          <div className="pt-3 border-t border-[#E8E6E1] space-y-2">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-[#252A30] flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-[#536A82]" />
-                <span>Admin Credentials</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleFillDemo}
-                className="font-medium text-[#536A82] hover:text-[#40566D] hover:underline cursor-pointer"
-              >
-                Auto-fill
-              </button>
-            </div>
+          {/* Quick Role Fill Buttons for Evaluators */}
+          <div className="pt-4 border-t border-[#E4E8EC] space-y-2.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5F6B7A] block">
+              Quick Role Preview &bull; Click to Fill
+            </span>
 
-            <div className="p-2.5 rounded-lg bg-[#F7F6F2] border border-[#E8E6E1] text-[11px] font-mono space-y-1 text-[#757B81]">
-              <div className="flex justify-between items-center">
-                <span>Email:</span>
-                <span className="text-[#252A30] font-semibold">{DEMO_EMAIL}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Password:</span>
-                <span className="text-[#252A30] font-semibold">{DEMO_PASSWORD}</span>
-              </div>
+            <div className="space-y-1.5">
+              {DEMO_ACCOUNTS.map((acc) => {
+                const isSelected = email === acc.email;
+                const Icon = acc.icon;
+
+                return (
+                  <button
+                    key={acc.role}
+                    type="button"
+                    onClick={() => handleSelectDemo(acc)}
+                    className={`w-full text-left p-2.5 rounded-xl border transition-all text-xs flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? 'border-[#375A6B] bg-[#EAF0F4]/60'
+                        : 'border-[#E4E8EC] hover:bg-[#F7F8FA]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded-lg bg-white border border-[#E4E8EC] flex items-center justify-center shrink-0">
+                        <Icon className="w-3.5 h-3.5 text-[#375A6B]" />
+                      </div>
+                      <div className="truncate leading-tight">
+                        <span className="font-semibold text-[#18232D] block truncate">
+                          {acc.label}
+                        </span>
+                        <span className="text-[10px] text-[#5F6B7A] block truncate">
+                          {acc.desc}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#375A6B] shrink-0 font-semibold ml-2">
+                      Fill
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Return to Homepage */}
-          <div className="text-center pt-1">
+          {/* Back to Public Home */}
+          <div className="pt-2 text-center border-t border-[#E4E8EC]">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-[#757B81] hover:text-[#252A30] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[#5F6B7A] hover:text-[#18232D] font-medium transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Return to Public Homepage</span>
+              <span>Back to Public Homepage</span>
             </Link>
           </div>
         </div>

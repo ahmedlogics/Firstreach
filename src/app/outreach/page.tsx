@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppShell } from '@/components/shared/AppShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ReachabilityStats } from '@/components/outreach/ReachabilityStats';
@@ -22,10 +22,18 @@ import {
   AlertTriangle,
   RefreshCw,
   Info,
+  Users,
+  Footprints,
+  Home,
 } from 'lucide-react';
 
+type OutreachTab = 'households' | 'tasks' | 'shelters';
+
 export default function OutreachPage() {
-  // State
+  // Navigation & Presentation State
+  const [activeTab, setActiveTab] = useState<OutreachTab>('households');
+
+  // Master Data State
   const [households, setHouseholds] = useState<HouseholdWithZone[]>([]);
   const [shelters, setShelters] = useState<ShelterWithZone[]>([]);
   const [volunteerTasks, setVolunteerTasks] = useState<OutreachActionWithDetails[]>([]);
@@ -46,13 +54,14 @@ export default function OutreachPage() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
   const [toast, setToast] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
 
-  // Modal State
+  // Modal State for Simulated Alert Planner
   const [selectedHouseholdForAlert, setSelectedHouseholdForAlert] =
     useState<HouseholdWithZone | null>(null);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -64,8 +73,9 @@ export default function OutreachPage() {
     }, 4500);
   }, []);
 
-  // Master Data Fetcher
-  const loadAllData = useCallback(async () => {
+  // Master Data Synchronizer
+  const loadAllData = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
     try {
       const [hRes, sRes, tRes, mRes] = await Promise.all([
         fetch('/api/households'),
@@ -85,11 +95,16 @@ export default function OutreachPage() {
       if (sData.success) setShelters(sData.data);
       if (tData.success) setVolunteerTasks(tData.data);
       if (mData.success) setMetrics(mData.data);
+
+      if (isManualRefresh) {
+        showToast('Outreach telemetry successfully synchronized with live database.', 'success');
+      }
     } catch (err: unknown) {
       console.error('[OutreachPage] Fetch error:', err);
       showToast('Failed to synchronize with server. Using cached data.', 'error');
     } finally {
       setIsLoading(false);
+      if (isManualRefresh) setIsRefreshing(false);
     }
   }, [showToast]);
 
@@ -111,7 +126,6 @@ export default function OutreachPage() {
     householdId: string,
     newStatus: ContactStatusType
   ) => {
-    // Snapshot previous state for rollback
     const prevHouseholds = [...households];
 
     // Optimistic Update
@@ -193,8 +207,8 @@ export default function OutreachPage() {
         throw new Error(data.error || 'Capacity integrity update failed');
       }
 
-      showToast(`Shelter occupancy successfully updated to ${newOccupied} beds.`);
-      // Refresh metrics
+      showToast(`Shelter occupancy successfully updated to ${newOccupied} spaces.`);
+      // Refresh metrics silently
       fetch('/api/outreach-metrics')
         .then((r) => r.json())
         .then((m) => m.success && setMetrics(m.data));
@@ -282,25 +296,32 @@ export default function OutreachPage() {
     setIsAlertModalOpen(true);
   };
 
+  // Active Volunteer Task Count for Tab Badge
+  const activeTaskCount = useMemo(() => {
+    return volunteerTasks.filter(
+      (t) => t.status === 'planned' || t.status === 'visit_assigned'
+    ).length;
+  }, [volunteerTasks]);
+
   return (
     <AppShell>
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-4 duration-200 ${
+          className={`fixed top-18 right-6 z-50 px-4 py-2.5 rounded-lg shadow-lg border flex items-center gap-2.5 text-xs animate-in slide-in-from-top-2 duration-150 ${
             toast.type === 'error'
-              ? 'bg-[#252A30] text-white border-[#B74349]'
+              ? 'bg-[#18232D] text-white border-[#BC414A]'
               : toast.type === 'info'
-              ? 'bg-[#252A30] text-white border-[#536A82]'
-              : 'bg-[#252A30] text-white border-[#377D65]'
+              ? 'bg-[#18232D] text-white border-[#375A6B]'
+              : 'bg-[#18232D] text-white border-[#258167]'
           }`}
         >
           {toast.type === 'error' ? (
-            <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-[#BC414A] shrink-0" />
           ) : toast.type === 'info' ? (
-            <Info className="w-4 h-4 text-[#536A82] shrink-0" />
+            <Info className="w-4 h-4 text-[#375A6B] shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-[#377D65] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#258167] shrink-0" />
           )}
           <span className="font-medium">{toast.message}</span>
         </div>
@@ -308,61 +329,135 @@ export default function OutreachPage() {
 
       {/* Page Header */}
       <PageHeader
-        title="Community Outreach & Shelter Coordination"
-        breadcrumbs={[{ label: 'Outreach & Shelters' }]}
+        title="Outreach & Shelters"
+        description="Verify high-risk vulnerable households, coordinate volunteer scout patrols, and balance live shelter bed occupancy."
         actions={
           <button
-            onClick={() => loadAllData()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#F7F6F2] text-xs font-semibold rounded-lg shadow-xs transition-colors"
+            type="button"
+            onClick={() => loadAllData(true)}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E4E8EC] text-[#18232D] hover:bg-[#F7F8FA] text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#757B81]" />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#5F6B7A] ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Sync Live Data</span>
           </button>
         }
       />
 
-      <div className="space-y-6">
-        {/* Row 1: Key Dynamic Metrics */}
+      <div className="space-y-4">
+        {/* Compact Operational Summary Strip */}
         <ReachabilityStats metrics={metrics} isLoading={isLoading} />
 
-        {/* Row 2: Silence Escalation Architecture */}
-        <SilenceEscalationTimeline
-          onTriggerEscalation={handleTriggerEscalation}
-          isEscalating={isEscalating}
-        />
+        {/* Prominent Tab Navigation Bar */}
+        <div className="flex items-center justify-between gap-2 border-b border-[#E4E8EC] pb-1">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            {/* Tab 1: Households */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('households')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'households'
+                  ? 'bg-white text-[#18232D] border border-[#E4E8EC] shadow-xs'
+                  : 'text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA]'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-[#375A6B]" />
+              <span>Households</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-[#F0F4F8] text-[#375A6B] tabular-nums font-bold">
+                {households.length}
+              </span>
+            </button>
 
-        {/* Row 3: Household Reachability Directory & Status Controls */}
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-base font-semibold text-[#252A30] tracking-tight">
-              High-Risk Household Reachability Directory
-            </h2>
-            <p className="text-xs text-[#757B81]">
-              Track vulnerable families in inundation sectors, update verified contact statuses, and launch simulated outreach alerts.
-            </p>
+            {/* Tab 2: Volunteer Tasks */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('tasks')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'tasks'
+                  ? 'bg-white text-[#18232D] border border-[#E4E8EC] shadow-xs'
+                  : 'text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA]'
+              }`}
+            >
+              <Footprints className="w-3.5 h-3.5 text-[#375A6B]" />
+              <span>Volunteer Tasks</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono tabular-nums font-bold ${
+                  activeTaskCount > 0
+                    ? 'bg-[#FFF5E6] text-[#A87528]'
+                    : 'bg-[#F0F4F8] text-[#375A6B]'
+                }`}
+              >
+                {activeTaskCount}
+              </span>
+            </button>
+
+            {/* Tab 3: Shelters */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('shelters')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'shelters'
+                  ? 'bg-white text-[#18232D] border border-[#E4E8EC] shadow-xs'
+                  : 'text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA]'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5 text-[#375A6B]" />
+              <span>Shelters</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-[#F0F4F8] text-[#375A6B] tabular-nums font-bold">
+                {shelters.length}
+              </span>
+            </button>
+          </nav>
+
+          {/* Context Helper indicator */}
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-[#5F6B7A]">
+            <span className="w-2 h-2 rounded-full bg-[#258167]" />
+            <span>Community Response Workspace</span>
           </div>
-
-          <HouseholdOutreachList
-            households={households}
-            isLoading={isLoading}
-            onSelectSimulateOutreach={handleOpenSimulator}
-            onUpdateStatus={handleUpdateHouseholdStatus}
-          />
         </div>
 
-        {/* Row 4: Grid with Shelters on Left, Volunteer Tasks on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          <ShelterManagementGrid
-            shelters={shelters}
-            isLoading={isLoading}
-            onUpdateOccupancy={handleUpdateShelterOccupancy}
-          />
+        {/* Tab Content Display (Rendering only selected interface) */}
+        <div>
+          {/* TAB 1: HOUSEHOLDS */}
+          {activeTab === 'households' && (
+            <div className="space-y-3 animate-in fade-in duration-150">
+              {/* Compact Silence Escalation Workflow Panel */}
+              <SilenceEscalationTimeline
+                onTriggerEscalation={handleTriggerEscalation}
+                isEscalating={isEscalating}
+              />
 
-          <VolunteerTasksList
-            tasks={volunteerTasks}
-            isLoading={isLoading}
-            onUpdateTaskStatus={handleUpdateVolunteerTask}
-          />
+              {/* Accessible, Clean Household Directory */}
+              <HouseholdOutreachList
+                households={households}
+                isLoading={isLoading}
+                onSelectSimulateOutreach={handleOpenSimulator}
+                onUpdateStatus={handleUpdateHouseholdStatus}
+              />
+            </div>
+          )}
+
+          {/* TAB 2: VOLUNTEER TASKS */}
+          {activeTab === 'tasks' && (
+            <div className="animate-in fade-in duration-150">
+              <VolunteerTasksList
+                tasks={volunteerTasks}
+                isLoading={isLoading}
+                onUpdateTaskStatus={handleUpdateVolunteerTask}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: SHELTERS */}
+          {activeTab === 'shelters' && (
+            <div className="animate-in fade-in duration-150">
+              <ShelterManagementGrid
+                shelters={shelters}
+                isLoading={isLoading}
+                onUpdateOccupancy={handleUpdateShelterOccupancy}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -376,7 +471,7 @@ export default function OutreachPage() {
         targetHousehold={selectedHouseholdForAlert}
         onActionComplete={(newAction) => {
           showToast(
-            `[DEMO ONLY / SIMULATED] Outreach drill dispatched via ${newAction.channel.replace('_', ' ')}.`,
+            `[SIMULATED] Drill outreach logged via ${newAction.channel.replace('_', ' ')}.`,
             'success'
           );
           loadAllData();

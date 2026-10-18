@@ -7,7 +7,7 @@ import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
 
 const DisasterMapClient = dynamic(() => import('./DisasterMapClient'), {
   ssr: false,
-  loading: () => <LoadingSkeleton variant="map" className="h-[380px] sm:h-[440px] lg:h-[480px]" />,
+  loading: () => <LoadingSkeleton variant="map" className="h-[320px] sm:h-[350px] lg:h-[380px]" />,
 });
 
 interface DisasterMapProps {
@@ -18,6 +18,8 @@ interface DisasterMapProps {
   simulationMinutes: number;
   onSelectIncident?: (incident: DbIncident) => void;
   className?: string;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 interface ErrorBoundaryState {
@@ -52,12 +54,12 @@ class MapErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="relative w-full h-[380px] sm:h-[440px] lg:h-[480px] bg-[#252A30] rounded-xl overflow-hidden border border-[#E8E6E1] shadow-subtle flex flex-col items-center justify-center p-6 text-center space-y-3">
-          <p className="text-xs text-[#92979D]">Map view re-initializing...</p>
+        <div className="relative w-full h-[320px] sm:h-[350px] lg:h-[380px] bg-[#18232D] rounded-xl overflow-hidden border border-[#E4E8EC] shadow-xs flex flex-col items-center justify-center p-6 text-center space-y-3">
+          <p className="text-xs text-[#5F6B7A]">Map view re-initializing...</p>
           <button
             type="button"
             onClick={this.handleReset}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#536A82] text-white hover:bg-[#40566D] transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#375A6B] text-white hover:bg-[#2C4855] transition-colors cursor-pointer"
           >
             Reload Map Canvas
           </button>

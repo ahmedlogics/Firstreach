@@ -4,46 +4,51 @@
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 
-  /* Ivory & Graphite Minimal Core Palette */
-  --app-bg: #F7F6F2;
+  /* Clean Operational Minimalism Palette */
+  --canvas-bg: #F7F8FA;
   --surface-white: #FFFFFF;
-  --brand-sidebar: #252A30;
-  --brand-sidebar-hover: #343B43;
-  --text-primary: #252A30;
-  --text-secondary: #757B81;
-  --text-muted: #92979D;
-  --border-color: #E8E6E1;
-  --border-subtle: #F0EEE9;
+  --nav-dark: #18232D;
+  --nav-hover: #273642;
+  --text-primary: #18232D;
+  --text-secondary: #6B7782;
+  --text-muted: #8B959E;
+  --border-color: #E4E8EC;
+  --border-subtle: #ECEEF1;
 
-  /* Primary Interactive Accent */
-  --accent-primary: #536A82;
-  --accent-hover: #40566D;
-  --accent-subtle: #EDF1F5;
+  /* Primary Interactive Action */
+  --action-primary: #375A6B;
+  --action-hover: #294858;
+  --action-subtle: #EAF0F4;
 
   /* Semantic Operational Status Colors */
-  --status-critical: #B74349;
-  --status-critical-bg: #FAE8E7;
-  --status-critical-border: #F5D3D2;
-  --status-warning: #A87426;
-  --status-warning-bg: #FFF2DD;
-  --status-warning-border: #F9E2BE;
-  --status-success: #377D65;
-  --status-success-bg: #E5EEE8;
-  --status-success-border: #CDDFD4;
-  --status-neutral: #667085;
-  --status-neutral-bg: #F0F2F5;
-  --status-neutral-border: #D0D5DD;
+  --status-critical: #BC414A;
+  --status-critical-bg: #FBECEE;
+  --status-critical-border: #F5CCD0;
+  --status-warning: #A87528;
+  --status-warning-bg: #FFF4E3;
+  --status-warning-border: #F5DEC0;
+  --status-success: #258167;
+  --status-success-bg: #E9F3EF;
+  --status-success-border: #C8E2D7;
+
+  /* Backwards-compatibility aliases */
+  --app-bg: var(--canvas-bg);
+  --brand-sidebar: var(--nav-dark);
+  --brand-sidebar-hover: var(--nav-hover);
+  --accent-primary: var(--action-primary);
+  --accent-hover: var(--action-hover);
+  --accent-subtle: var(--action-subtle);
 }
 
 body {
-  background-color: var(--app-bg);
+  background-color: var(--canvas-bg);
   color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbars for data tables and sidebars */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -59,23 +64,33 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #92979D;
+  background: #8B959E;
 }
 
-/* Utility classes for tabular figures in stats */
+/* Tabular numbers for clean stats and metrics */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Subtle elevation shadow */
+/* Clean operational subtle borders and shadows */
 .shadow-subtle {
-  box-shadow: 0 1px 3px 0 rgba(37, 42, 48, 0.04), 0 1px 2px -1px rgba(37, 42, 48, 0.02);
+  box-shadow: 0 1px 2px 0 rgba(24, 35, 45, 0.03);
 }
 
 .shadow-card {
-  box-shadow: 0 4px 6px -1px rgba(37, 42, 48, 0.04), 0 2px 4px -2px rgba(37, 42, 48, 0.02);
+  box-shadow: 0 2px 4px 0 rgba(24, 35, 45, 0.04);
 }
 
 .shadow-card-hover {
-  box-shadow: 0 10px 15px -3px rgba(37, 42, 48, 0.06), 0 4px 6px -4px rgba(37, 42, 48, 0.03);
+  box-shadow: 0 4px 8px 0 rgba(24, 35, 45, 0.06);
+}
+
+/* Respect user's reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

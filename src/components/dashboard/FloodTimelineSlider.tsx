@@ -8,9 +8,7 @@ import {
   RotateCcw,
   Play,
   Pause,
-  AlertTriangle,
   Sparkles,
-  Info,
   ChevronDown,
 } from 'lucide-react';
 
@@ -43,7 +41,7 @@ export function FloodTimelineSlider({
     return () => clearInterval(interval);
   }, [isPlaying, simulationMinutes, onSimulationChange]);
 
-  // Derived zone impacts at current simulation offset (preserves calculation logic)
+  // Derived zone impacts at current simulation offset
   const zoneImpacts = zones.map((z) => {
     const remaining = getSimulatedMinutesToImpact(z.minutes_to_impact, simulationMinutes);
     return {
@@ -68,19 +66,22 @@ export function FloodTimelineSlider({
   ];
 
   return (
-    <div className={`bg-white rounded-xl border border-[#E8E6E1] shadow-subtle p-3.5 sm:p-4 space-y-3 ${className}`}>
-      {/* Header bar: Title + Time Badge + Controls */}
+    <div className={`bg-white rounded-xl border border-[#E4E8EC] shadow-xs p-3.5 space-y-2.5 ${className}`}>
+      {/* Header bar: Title + Simulation Flag + Controls */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[#EDF1F5] text-[#536A82] border border-[#E8E6E1] shrink-0">
-            <Waves className="w-4 h-4" />
+          <div className="p-1.5 rounded-lg bg-[#F0F4F8] text-[#375A6B] border border-[#E4E8EC] shrink-0">
+            <Waves className="w-3.5 h-3.5" />
           </div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-[#252A30] tracking-tight">
+            <h3 className="text-xs font-bold text-[#18232D] tracking-tight">
               Flood Simulation
             </h3>
-            <span className="font-mono text-xs font-bold text-[#536A82] bg-[#EDF1F5] px-2 py-0.5 rounded-md border border-[#536A82]/30">
+            <span className="font-mono text-[11px] font-bold text-[#375A6B] bg-[#F0F4F8] px-2 py-0.5 rounded-md border border-[#375A6B]/20">
               +{simulationMinutes}m
+            </span>
+            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#FFF5E6] text-[#A87528] border border-[#A87528]/25 font-bold hidden sm:inline">
+              Forecast Model
             </span>
           </div>
         </div>
@@ -88,11 +89,12 @@ export function FloodTimelineSlider({
         {/* Player Controls */}
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={() => setIsPlaying(!isPlaying)}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
               isPlaying
-                ? 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/40'
-                : 'bg-[#F7F6F2] text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
+                ? 'bg-[#FFF5E6] text-[#A87528] border-[#A87528]/40 shadow-xs'
+                : 'bg-[#F7F8FA] text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
             }`}
           >
             {isPlaying ? (
@@ -109,13 +111,14 @@ export function FloodTimelineSlider({
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setIsPlaying(false);
               onReset();
             }}
             disabled={simulationMinutes === 0}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white border border-[#E8E6E1] text-[#757B81] hover:text-[#B74349] hover:border-[#B74349]/30 hover:bg-[#FAE8E7] transition-colors disabled:opacity-40 disabled:hover:text-[#757B81] disabled:hover:bg-white"
-            title="Reset simulation to T+0m"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-white border border-[#E4E8EC] text-[#5F6B7A] hover:text-[#BC414A] hover:border-[#BC414A]/30 hover:bg-[#FBECEE] transition-colors disabled:opacity-40 disabled:hover:text-[#5F6B7A] disabled:hover:bg-white cursor-pointer"
+            title="Reset simulation to baseline T+0m"
           >
             <RotateCcw className="w-3 h-3" />
             <span className="hidden sm:inline">Reset</span>
@@ -136,29 +139,30 @@ export function FloodTimelineSlider({
               setIsPlaying(false);
               onSimulationChange(parseInt(e.target.value, 10));
             }}
-            className="w-full h-2 bg-[#E8E6E1] rounded-lg appearance-none cursor-pointer accent-[#536A82] focus:outline-none focus:ring-1 focus:ring-[#536A82]"
+            className="w-full h-1.5 bg-[#E4E8EC] rounded-lg appearance-none cursor-pointer accent-[#375A6B] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
           />
         </div>
 
         {/* Compact preset step buttons */}
-        <div className="grid grid-cols-5 gap-1 pt-0.5">
+        <div className="grid grid-cols-5 gap-1">
           {presetSteps.map((step) => {
             const isCurrent = Math.abs(simulationMinutes - step.minutes) < 15;
             return (
               <button
                 key={step.minutes}
+                type="button"
                 onClick={() => {
                   setIsPlaying(false);
                   onSimulationChange(step.minutes);
                 }}
-                className={`py-1 px-1.5 rounded-lg text-center border transition-all text-[11px] ${
+                className={`py-1 px-1 rounded-md text-center border transition-all text-[10px] cursor-pointer ${
                   isCurrent
-                    ? 'border-[#536A82] bg-[#EDF1F5] text-[#252A30] font-bold ring-1 ring-[#536A82]'
-                    : 'border-[#E8E6E1] bg-[#F7F6F2] hover:bg-[#EDF1F5] text-[#757B81] font-medium'
+                    ? 'border-[#375A6B] bg-[#F0F4F8] text-[#18232D] font-bold shadow-xs'
+                    : 'border-[#E4E8EC] bg-[#F7F8FA] hover:bg-[#F0F4F8] text-[#5F6B7A] font-medium'
                 }`}
               >
                 <span className="font-mono block">{step.label}</span>
-                <span className="text-[9px] text-[#92979D] block truncate">{step.desc}</span>
+                <span className="text-[9px] text-[#5F6B7A] block truncate hidden sm:block">{step.desc}</span>
               </button>
             );
           })}
@@ -166,10 +170,10 @@ export function FloodTimelineSlider({
       </div>
 
       {/* Compact Zone Countdown Chips & Inline Recommendation */}
-      <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-[#E8E6E1] text-xs">
+      <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-t border-[#E4E8EC] text-xs">
         {/* Zone countdown chips */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-semibold text-[#757B81]">Zone ETA:</span>
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-[10px] font-semibold text-[#5F6B7A]">Surge ETA:</span>
           {zoneImpacts.map((zone) => {
             const isImpacted = zone.isImpacted;
             const isUrgent = zone.remainingMinutes !== null && zone.remainingMinutes <= 30;
@@ -177,12 +181,12 @@ export function FloodTimelineSlider({
             return (
               <span
                 key={zone.id}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold border ${
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold border ${
                   isImpacted
-                    ? 'bg-[#FAE8E7] text-[#B74349] border-[#B74349]/30'
+                    ? 'bg-[#FBECEE] text-[#BC414A] border-[#BC414A]/30'
                     : isUrgent
-                    ? 'bg-[#FFF2DD] text-[#A87426] border-[#A87426]/30'
-                    : 'bg-[#F7F6F2] text-[#252A30] border-[#E8E6E1]'
+                    ? 'bg-[#FFF5E6] text-[#A87528] border-[#A87528]/30'
+                    : 'bg-[#F7F8FA] text-[#18232D] border-[#E4E8EC]'
                 }`}
                 title={`Zone ${zone.name}: Risk Tier ${zone.flood_risk}`}
               >
@@ -199,32 +203,33 @@ export function FloodTimelineSlider({
           })}
         </div>
 
-        {/* Compact early intervention trigger */}
+        {/* Compact operational advisory trigger */}
         <button
+          type="button"
           onClick={() => setShowAdviceDetails(!showAdviceDetails)}
-          className="inline-flex items-center gap-1 text-[11px] font-medium text-[#757B81] hover:text-[#252A30] transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5F6B7A] hover:text-[#18232D] transition-colors self-start sm:self-auto cursor-pointer"
         >
-          <Sparkles className="w-3 h-3 text-[#536A82]" />
+          <Sparkles className="w-3 h-3 text-[#375A6B]" />
           <span>Operational Advisory</span>
           <ChevronDown className={`w-3 h-3 transition-transform ${showAdviceDetails ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
-      {/* Expandable Advisory Drawer / Notice */}
+      {/* Expandable Advisory Drawer */}
       {showAdviceDetails && (
-        <div className="p-3 rounded-lg bg-[#252A30] text-white text-xs space-y-1 animate-in fade-in duration-150 border border-[#343B43]">
-          <div className="flex items-center justify-between font-semibold text-[#EDF1F5]">
-            <span>Intervention Advisory (T+{simulationMinutes}m)</span>
-            <span className="text-[10px] text-[#92979D] font-normal">Forecast Only</span>
+        <div className="p-2.5 rounded-lg bg-[#18232D] text-white text-xs space-y-1 animate-in fade-in duration-150 border border-[#273642]">
+          <div className="flex items-center justify-between font-semibold text-[#F0F4F8]">
+            <span className="text-[11px]">Intervention Advisory (T+{simulationMinutes}m)</span>
+            <span className="text-[9px] text-[#5F6B7A] font-mono uppercase">Simulation Drill Only</span>
           </div>
           <p className="text-slate-300 leading-relaxed text-[11px]">
             {impactedZones.length > 0 ? (
               <>
-                <strong className="text-[#B74349]">{impactedZones.map((z) => z.name).join(', ')}</strong> has reached surge inundation. Ensure all deployed land vehicles reroute to high ground.
+                <strong className="text-[#BC414A]">{impactedZones.map((z) => z.name).join(', ')}</strong> has reached surge inundation. Ensure all land craft redirect to high-ground evacuation points.
               </>
             ) : nextImpactZone ? (
               <>
-                Water surge projected to reach <strong className="text-[#EDF1F5]">{nextImpactZone.name}</strong> in <strong className="text-[#A87426] font-mono">{nextImpactZone.remainingMinutes} min</strong>. Prioritize preventive evacuation for elderly and mobility-impaired residents.
+                Water surge projected to reach <strong className="text-white">{nextImpactZone.name}</strong> in <strong className="text-[#A87528] font-mono">{nextImpactZone.remainingMinutes} min</strong>. Prioritize door-to-door welfare checks for offline homes.
               </>
             ) : (
               'All monitored sectors are operating within baseline threshold limits.'

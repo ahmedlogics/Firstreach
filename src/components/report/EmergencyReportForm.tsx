@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { emergencyReportSchema } from '@/lib/reports/schema';
 import { ReportFormData, ReportSuccessResult, ZoneItem } from './types';
-import { ReportConfirmationModal } from './ReportConfirmationModal';
 import { offlineReportQueue } from '@/lib/reports/offlineQueue';
 import {
   User,
@@ -19,6 +18,14 @@ import {
   X,
   Navigation,
   Map,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  MapPin,
+  Waves,
+  Clock,
+  ShieldCheck,
+  Edit2,
 } from 'lucide-react';
 
 import { Language, TRANSLATIONS } from '@/lib/reports/i18n';
@@ -29,6 +36,8 @@ interface EmergencyReportFormProps {
   className?: string;
   language?: Language;
 }
+
+type IntakeStep = 1 | 2 | 3 | 4;
 
 const DEFAULT_FORM_DATA = (initialKey: string): ReportFormData => ({
   zoneId: '',
@@ -58,10 +67,14 @@ export function EmergencyReportForm({
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const isRtl = language === 'ur' || language === 'sd';
 
-  // 1. Idempotency Key State
+  // 1. Guided Intake Step State (1: Reporter, 2: Location, 3: Emergency, 4: Review & Submit)
+  const [currentStep, setCurrentStep] = useState<IntakeStep>(1);
+  const [maxStepVisited, setMaxStepVisited] = useState<number>(1);
+
+  // 2. Idempotency Key State
   const [idempotencyKey, setIdempotencyKey] = useState<string>('');
 
-  // 2. Form state
+  // 3. Form state (State is strictly preserved across all steps)
   const [formData, setFormData] = useState<ReportFormData>(() =>
     DEFAULT_FORM_DATA('')
   );
@@ -73,7 +86,7 @@ export function EmergencyReportForm({
     setFormData((prev) => ({ ...prev, idempotencyKey: key }));
   }, []);
 
-  // 3. Zone loading state
+  // 4. Zone loading state
   const [zones, setZones] = useState<ZoneItem[]>([]);
   const [zonesLoading, setZonesLoading] = useState<boolean>(true);
   const [zonesError, setZonesError] = useState<string | null>(null);
@@ -114,7 +127,7 @@ export function EmergencyReportForm({
     fetchZones();
   }, [fetchZones]);
 
-  // 4. Geolocation state
+  // 5. Geolocation state
   const [gpsLoading, setGpsLoading] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsSuccess, setGpsSuccess] = useState<boolean>(false);
@@ -184,6 +197,7 @@ export function EmergencyReportForm({
 
   // Interactive Map & Pin-drop state
   const [isMapOpen, setIsMapOpen] = useState<boolean>(false);
+  const [showManualCoords, setShowManualCoords] = useState<boolean>(false);
 
   const handleMapLocationSelect = (newLat: number | null, newLng: number | null, areaName?: string) => {
     setFormData((prev) => {
@@ -224,12 +238,11 @@ export function EmergencyReportForm({
     }
   };
 
-  // 5. Validation, submission error, and offline state
+  // 6. Validation, submission error, and offline state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [offlineNotice, setOfflineNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
 
   // Helper to resolve ISO timestamp from timing option
   const computeObservedAt = (option: ReportFormData['observationOption']): string => {
@@ -251,7 +264,7 @@ export function EmergencyReportForm({
     }
   };
 
-  // Build the clean payload for Zod validation and API submission
+  // Build clean payload for Zod validation and API submission
   const buildPayload = () => {
     const observedAt = computeObservedAt(formData.observationOption);
     const peopleCount = formData.isPeopleCountUnknown ? null : formData.peopleCount;
@@ -276,17 +289,115 @@ export function EmergencyReportForm({
     };
   };
 
-  // Helper to retrieve localized field validation message
   const getFieldError = (field: string) => {
     if (!errors[field]) return null;
     return (t.validationErrors as Record<string, string>)?.[field] || errors[field];
   };
 
-  // Client-side validation using shared Zod schema
-  const validateForm = () => {
+  // Step-specific validation before advancing
+  const validateStep = (stepNumber: IntakeStep): boolean => {
+    const newErrors: Record<string, string> = { ...errors };
+
+    if (stepNumber === 1) {
+      // Step 1: Reporter
+      // Role is required, defaulted to 'resident'. Phone is optional but if provided, validate.
+      if (formData.reporterPhone.trim()) {
+        const phoneRegex = /^[\d\s+\-()]{7,20}$/;
+        if (!phoneRegex.test(formData.reporterPhone.trim())) {
+          newErrors.reporterPhone =
+            language === 'ur'
+              ? 'براہ کرم درست فون نمبر درج کریں۔'
+              : language === 'sd'
+              ? 'مهرباني ڪري صحيح فون نمبر لکو.'
+              : 'Please enter a valid phone number format.';
+          setErrors(newErrors);
+          return false;
+        }
+      }
+      delete newErrors.reporterPhone;
+      setErrors(newErrors);
+      return true;
+    }
+
+    if (stepNumber === 2) {
+      // Step 2: Location
+      let valid = true;
+      if (!formData.zoneId) {
+        newErrors.zoneId = t.validationErrors?.zoneId || 'Please select an emergency response zone.';
+        valid = false;
+      } else {
+        delete newErrors.zoneId;
+      }
+
+      if (!formData.locationDescription.trim()) {
+        newErrors.locationDescription =
+          t.validationErrors?.locationDescription || 'Please specify the street address or nearby landmark.';
+        valid = false;
+      } else {
+        delete newErrors.locationDescription;
+      }
+
+      setErrors(newErrors);
+      return valid;
+    }
+
+    if (stepNumber === 3) {
+      // Step 3: Emergency
+      let valid = true;
+      if (!formData.isPeopleCountUnknown && (formData.peopleCount === null || formData.peopleCount < 1)) {
+        newErrors.peopleCount =
+          language === 'ur'
+            ? 'افراد کی تعداد کم از کم 1 ہونی چاہیے یا غیر معلوم پر نشان لگائیں۔'
+            : language === 'sd'
+            ? 'ماڻهن جو انگ گهٽ ۾ گهٽ 1 هجڻ گهرجي يا اڻڄاتل چونڊيو.'
+            : 'People count must be at least 1, or check unknown.';
+        valid = false;
+      } else {
+        delete newErrors.peopleCount;
+      }
+      setErrors(newErrors);
+      return valid;
+    }
+
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      const nextStep = (currentStep + 1) as IntakeStep;
+      setCurrentStep(nextStep);
+      setMaxStepVisited((prev) => Math.max(prev, nextStep));
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 120, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep((currentStep - 1) as IntakeStep);
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 120, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleJumpToStep = (targetStep: IntakeStep) => {
+    if (targetStep < currentStep || targetStep <= maxStepVisited) {
+      setCurrentStep(targetStep);
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 120, behavior: 'smooth' });
+      }
+    }
+  };
+
+  // Execute the real API submission (Reuses idempotencyKey on retry)
+  const executeSubmission = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    // Full client-side Zod validation prior to submission
     const payload = buildPayload();
     const result = emergencyReportSchema.safeParse(payload);
-
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of result.error.issues) {
@@ -297,41 +408,16 @@ export function EmergencyReportForm({
         }
       }
       setErrors(fieldErrors);
-      return false;
-    }
-
-    setErrors({});
-    return true;
-  };
-
-  // Initiates review modal
-  const handleReviewClick = (e: React.FormEvent) => {
-    e.preventDefault();
-    setGeneralError(null);
-    setOfflineNotice(null);
-
-    if (zonesError) {
+      setGeneralError(t.validationErrors?.generalCorrection || 'Please check the highlighted fields.');
       return;
     }
 
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsConfirmationOpen(true);
-  };
-
-  // Execute the real API submission (reuses the same idempotencyKey on retry)
-  const executeSubmission = async () => {
     setIsSubmitting(true);
     setGeneralError(null);
     setOfflineNotice(null);
 
-    const payload = buildPayload();
-
     // Check if device is offline prior to dispatch
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      setIsConfirmationOpen(false);
       setIsSubmitting(false);
       await offlineReportQueue.enqueue(payload);
       setOfflineNotice('Saved on this device. NOT delivered yet.');
@@ -340,6 +426,7 @@ export function EmergencyReportForm({
       setFormData(DEFAULT_FORM_DATA(nextKey));
       setGpsSuccess(false);
       setGpsError(null);
+      setCurrentStep(1);
       return;
     }
 
@@ -354,15 +441,13 @@ export function EmergencyReportForm({
 
       // Handle HTTP 429: Rate Limit
       if (res.status === 429) {
-        setIsConfirmationOpen(false);
         setIsSubmitting(false);
-        setGeneralError(t.validationErrors?.rateLimit || 'Too many reports, please wait a minute');
+        setGeneralError(t.validationErrors?.rateLimit || 'Too many reports, please wait a minute.');
         return;
       }
 
       // Handle HTTP 400: Validation error with field details
       if (res.status === 400) {
-        setIsConfirmationOpen(false);
         setIsSubmitting(false);
         const errData = await res.json().catch(() => ({}));
         if (errData.details && Array.isArray(errData.details)) {
@@ -384,7 +469,6 @@ export function EmergencyReportForm({
 
       // Handle HTTP 500 or any non-OK status
       if (res.status === 500 || !res.ok) {
-        setIsConfirmationOpen(false);
         setIsSubmitting(false);
         setGeneralError(t.validationErrors?.serverError || 'Could not save report. Please try again.');
         return;
@@ -393,20 +477,18 @@ export function EmergencyReportForm({
       const data = await res.json();
 
       if (!data.ok) {
-        setIsConfirmationOpen(false);
         setIsSubmitting(false);
         setGeneralError(t.validationErrors?.serverError || data.error || 'Could not save report. Please try again.');
         return;
       }
 
       // SUCCESS!
-      setIsConfirmationOpen(false);
       setIsSubmitting(false);
       setErrors({});
       setGeneralError(null);
       setOfflineNotice(null);
 
-      // Notify parent page with verified response and coordinate flag
+      // Notify parent page with verified response
       onSubmitSuccess({
         ok: true,
         reportId: data.reportId,
@@ -425,9 +507,9 @@ export function EmergencyReportForm({
       setFormData(DEFAULT_FORM_DATA(nextKey));
       setGpsSuccess(false);
       setGpsError(null);
+      setCurrentStep(1);
     } catch {
-      // Network failure / connection lost: save report locally with status 'local_only'
-      setIsConfirmationOpen(false);
+      // Network failure / connection lost: save report locally
       setIsSubmitting(false);
       await offlineReportQueue.enqueue(payload);
       setOfflineNotice('Saved on this device. NOT delivered yet.');
@@ -436,812 +518,1055 @@ export function EmergencyReportForm({
       setFormData(DEFAULT_FORM_DATA(nextKey));
       setGpsSuccess(false);
       setGpsError(null);
+      setCurrentStep(1);
     }
   };
 
   const selectedZone = zones.find((z) => z.id === formData.zoneId);
 
+  // Step Labels for Multilingual Stepper
+  const stepsConfig = [
+    {
+      id: 1 as IntakeStep,
+      title: language === 'ur' ? 'رپورٹر' : language === 'sd' ? 'رپورٽر' : 'Reporter',
+      shortDesc: language === 'ur' ? 'شناخت' : language === 'sd' ? 'سڃاڻپ' : 'Identity',
+    },
+    {
+      id: 2 as IntakeStep,
+      title: language === 'ur' ? 'مقام' : language === 'sd' ? 'هنڌ' : 'Location',
+      shortDesc: language === 'ur' ? 'پتہ و زون' : language === 'sd' ? 'علائقو' : 'Sector',
+    },
+    {
+      id: 3 as IntakeStep,
+      title: language === 'ur' ? 'ایمرجنسی' : language === 'sd' ? 'هنگامي حالت' : 'Emergency',
+      shortDesc: language === 'ur' ? 'صورتحال' : language === 'sd' ? 'حالت' : 'Urgency',
+    },
+    {
+      id: 4 as IntakeStep,
+      title: language === 'ur' ? 'جائزہ اور ارسال' : language === 'sd' ? 'جائزو ۽ موڪليو' : 'Review & Submit',
+      shortDesc: language === 'ur' ? 'توثیق' : language === 'sd' ? 'تصديق' : 'Verify',
+    },
+  ];
+
+  const severityTitles: Record<number, string> = {
+    3: t.sectionC.floodLevels[3].title,
+    2: t.sectionC.floodLevels[2].title,
+    1: t.sectionC.floodLevels[1].title,
+    0: t.sectionC.floodLevels[0].title,
+  };
+
+  const triLabels = {
+    yes: t.sectionC.triState.yes,
+    no: t.sectionC.triState.no,
+    unknown: t.sectionC.triState.unknown,
+  };
+
   return (
-    <>
-      <form dir={isRtl ? 'rtl' : 'ltr'} onSubmit={handleReviewClick} className={`space-y-6 ${className}`}>
-        {/* OFFLINE NOTICE BANNER */}
-        {offlineNotice && (
-          <div className="p-4 rounded-xl bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5">
-              <AlertTriangle className="w-5 h-5 text-[#A87426] shrink-0" />
-              <div>
-                <h5 className="font-semibold text-xs text-[#252A30] tracking-tight">
-                  {language === 'ur' ? 'اس ڈیوائس پر محفوظ ہو گیا۔ ابھی ارسال نہیں ہوا۔' : language === 'sd' ? 'هن ڊوائيس تي محفوظ ٿي ويو. اڃا تائين ناهي پهتو.' : 'Saved on this device. NOT delivered yet.'}
-                </h5>
-                <p className="text-[11px] text-[#757B81] mt-0.5">
-                  {language === 'ur' ? 'آپ کی رپورٹ براؤزر کے محفوظ اسٹوریج میں رکھی گئی ہے۔ انٹرنیٹ بحال ہوتے ہی خودکار طور پر روانہ ہو جائے گی۔' : language === 'sd' ? 'اوهان جي رپورٽ برائوزر ۾ محفوظ آهي. انٽرنيٽ هلڻ سان پاڻمرادو ريسڪيو ڏانهن موڪلي ويندي.' : 'Your emergency intake is securely stored in your browser offline storage. It will be dispatched automatically as soon as internet connection is restored.'}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setOfflineNotice(null)}
-              className="px-2.5 py-1 rounded-lg text-[#A87426] hover:bg-[#A87426]/10 text-xs font-semibold shrink-0 cursor-pointer"
-            >
-              {language === 'ur' ? 'بند کریں' : language === 'sd' ? 'بند ڪريو' : 'Dismiss'}
-            </button>
-          </div>
-        )}
+    <div className={`space-y-4 ${className}`}>
+      {/* COMPACT PROGRESS STEPPER */}
+      <div className="bg-white rounded-xl border border-[#E4E8EC] p-3 sm:p-4 shadow-xs">
+        <div className="flex items-center justify-between">
+          {stepsConfig.map((s, idx) => {
+            const isCurrent = currentStep === s.id;
+            const isCompleted = currentStep > s.id;
+            const isClickable = s.id <= maxStepVisited || s.id < currentStep;
 
-        {/* TOP LEVEL ERROR BANNER (429, 500, server error) */}
-        {generalError && (
-          <div
-            className={`p-4 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
-              generalError === t.validationErrors?.rateLimit || generalError.includes('minute')
-                ? 'bg-[#FFF2DD] border-[#A87426]/30 text-[#A87426]'
-                : 'bg-[#FAE8E7] border-[#B74349]/30 text-[#B74349]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <AlertTriangle
-                className={`w-4 h-4 shrink-0 ${
-                  generalError === t.validationErrors?.rateLimit || generalError.includes('minute')
-                    ? 'text-[#A87426]'
-                    : 'text-[#B74349]'
-                }`}
-              />
-              <span className="font-semibold">{generalError}</span>
-            </div>
+            return (
+              <React.Fragment key={s.id}>
+                <button
+                  type="button"
+                  disabled={!isClickable}
+                  onClick={() => handleJumpToStep(s.id)}
+                  className={`flex items-center gap-2 group transition-all text-left ${
+                    isClickable ? 'cursor-pointer' : 'cursor-default opacity-60'
+                  }`}
+                >
+                  <span
+                    className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                      isCurrent
+                        ? 'bg-[#375A6B] text-white ring-2 ring-[#375A6B]/20 shadow-xs'
+                        : isCompleted
+                        ? 'bg-[#258167] text-white'
+                        : 'bg-[#F7F8FA] border border-[#E4E8EC] text-[#5F6B7A]'
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : s.id}
+                  </span>
+                  <div className="hidden sm:block">
+                    <span
+                      className={`text-xs font-semibold block leading-tight ${
+                        isCurrent ? 'text-[#18232D]' : 'text-[#5F6B7A]'
+                      }`}
+                    >
+                      {s.title}
+                    </span>
+                    <span className="text-[10px] text-[#5F6B7A] block">
+                      {s.shortDesc}
+                    </span>
+                  </div>
+                </button>
 
-            {/* Offer Retry button for 500 */}
-            {generalError !== t.validationErrors?.rateLimit &&
-              !generalError.includes('minute') &&
-              generalError !== t.validationErrors?.generalCorrection &&
-              !generalError.includes('Needs correction') && (
-              <button
-                type="button"
-                onClick={executeSubmission}
-                disabled={isSubmitting}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#B74349] hover:bg-[#96373C] text-white font-medium text-xs shrink-0 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
-                <span>{isSubmitting ? (language === 'ur' ? 'کوشش جاری...' : language === 'sd' ? 'ڪوشش جاري...' : 'Retrying...') : (language === 'ur' ? 'دوبارہ کوشش کریں' : language === 'sd' ? 'ٻيهر ڪوشش ڪريو' : 'Retry Submission')}</span>
-              </button>
-            )}
-          </div>
-        )}
+                {/* Separator line between steps */}
+                {idx < stepsConfig.length - 1 && (
+                  <div
+                    className={`flex-1 h-0.5 mx-2 sm:mx-3 transition-colors ${
+                      currentStep > s.id ? 'bg-[#258167]' : 'bg-[#E4E8EC]'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* SECTION A: REPORTER INFORMATION */}
-        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-2xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
-            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
-              {t.sectionA.num}
-            </div>
+      {/* OFFLINE NOTICE BANNER */}
+      {offlineNotice && (
+        <div className="p-3.5 rounded-xl bg-[#FFF5E6] border border-[#A87528]/30 text-[#A87528] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#A87528] shrink-0" />
             <div>
-              <h3 className="text-sm font-semibold text-[#252A30]">
+              <strong className="block font-semibold">
+                {language === 'ur' ? 'اس ڈیوائس پر محفوظ ہو گیا۔ ابھی ارسال نہیں ہوا۔' : language === 'sd' ? 'هن ڊوائيس تي محفوظ ٿي ويو. اڃا ناهي پهتو.' : 'Saved on this device. NOT delivered yet.'}
+              </strong>
+              <span className="text-[11px] text-[#5F6B7A]">
+                {language === 'ur' ? 'انٹرنیٹ بحال ہوتے ہی رپورٹ خودکار طور پر روانہ ہو جائے گی۔' : language === 'sd' ? 'انٽرنيٽ هلڻ سان رپورٽ موڪلي ويندي.' : 'Report will transmit automatically as soon as connectivity restores.'}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOfflineNotice(null)}
+            className="px-2.5 py-1 text-xs font-semibold text-[#A87528] hover:bg-[#A87528]/10 rounded-lg cursor-pointer shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* TOP LEVEL ERROR BANNER */}
+      {generalError && (
+        <div className="p-3.5 rounded-xl bg-[#FBECEE] border border-[#BC414A]/30 text-[#BC414A] text-xs flex items-center justify-between gap-2.5 animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#BC414A] shrink-0" />
+            <span className="font-semibold">{generalError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGeneralError(null)}
+            className="text-xs font-semibold hover:underline cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* FORM BODY CONTAINER */}
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+        {/* ================= STEP 1: REPORTER ================= */}
+        {currentStep === 1 && (
+          <div className="bg-white rounded-xl border border-[#E4E8EC] shadow-xs p-5 sm:p-6 space-y-4 animate-in fade-in duration-150">
+            <div className="pb-3 border-b border-[#E4E8EC]">
+              <h3 className="text-sm font-bold text-[#18232D]">
                 {t.sectionA.title}
               </h3>
-              <p className="text-xs text-[#757B81]">
+              <p className="text-xs text-[#5F6B7A] mt-0.5">
                 {t.sectionA.subtitle}
               </p>
             </div>
-          </div>
 
-          {/* Radio toggle: Myself vs Someone Else */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#252A30] block">
-              {t.sectionA.reportingForLabel} <span className="text-[#B74349]">*</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
-              <label
-                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
-                  formData.reportingFor === 'myself'
-                    ? 'border-[#536A82] bg-[#EDF1F5] text-[#252A30] ring-1 ring-[#536A82]'
-                    : 'border-[#E8E6E1] text-[#757B81] hover:bg-[#F7F6F2]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="reportingFor"
-                  checked={formData.reportingFor === 'myself'}
-                  onChange={() =>
-                    setFormData((prev) => ({ ...prev, reportingFor: 'myself' }))
+            {/* Reporting For: Myself vs Someone Else */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[#18232D] block">
+                {t.sectionA.reportingForLabel} <span className="text-[#BC414A]">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
+                    formData.reportingFor === 'myself'
+                      ? 'border-[#375A6B] bg-[#F0F4F8] text-[#18232D] ring-1 ring-[#375A6B] shadow-xs'
+                      : 'border-[#E4E8EC] bg-white text-[#5F6B7A] hover:bg-[#F7F8FA]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reportingFor"
+                    checked={formData.reportingFor === 'myself'}
+                    onChange={() =>
+                      setFormData((prev) => ({ ...prev, reportingFor: 'myself' }))
+                    }
+                    className="accent-[#375A6B]"
+                  />
+                  <span>{t.sectionA.reportingForMyself}</span>
+                </label>
+
+                <label
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
+                    formData.reportingFor === 'someone_else'
+                      ? 'border-[#375A6B] bg-[#F0F4F8] text-[#18232D] ring-1 ring-[#375A6B] shadow-xs'
+                      : 'border-[#E4E8EC] bg-white text-[#5F6B7A] hover:bg-[#F7F8FA]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reportingFor"
+                    checked={formData.reportingFor === 'someone_else'}
+                    onChange={() => {
+                      setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }));
+                      setIsMapOpen(true);
+                    }}
+                    className="accent-[#375A6B]"
+                  />
+                  <span>{t.sectionA.reportingForSomeoneElse}</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Reporter Role & Contact Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              {/* Role */}
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionA.reporterRoleLabel} <span className="text-[#BC414A]">*</span>
+                </label>
+                <select
+                  value={formData.reporterRole}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      reporterRole: e.target.value as ReportFormData['reporterRole'],
+                    }))
                   }
-                  className="accent-[#536A82]"
-                />
-                <span>{t.sectionA.reportingForMyself}</span>
-              </label>
-
-              <label
-                className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-medium transition-all ${
-                  formData.reportingFor === 'someone_else'
-                    ? 'border-[#536A82] bg-[#EDF1F5] text-[#252A30] ring-1 ring-[#536A82]'
-                    : 'border-[#E8E6E1] text-[#757B81] hover:bg-[#F7F6F2]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="reportingFor"
-                  checked={formData.reportingFor === 'someone_else'}
-                  onChange={() => {
-                    setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }));
-                    setIsMapOpen(true);
-                  }}
-                  className="accent-[#536A82]"
-                />
-                <span>{t.sectionA.reportingForSomeoneElse}</span>
-              </label>
-            </div>
-            {errors.reportingFor && (
-              <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reportingFor')}</p>
-            )}
-          </div>
-
-          {/* Reporter Name & Contact Number & Role */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-            <div>
-              <label className="text-xs font-semibold text-[#252A30] block mb-1">
-                {t.sectionA.reporterNameLabel} <span className="text-[#757B81] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
-              </label>
-              <div className="relative">
-                <User className={`w-4 h-4 text-[#757B81] absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
-                <input
-                  type="text"
-                  value={formData.reporterName}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData((prev) => ({ ...prev, reporterName: val }));
-                    if (errors.reporterName) {
-                      setErrors((prev) => {
-                        const copy = { ...prev };
-                        delete copy.reporterName;
-                        return copy;
-                      });
-                    }
-                  }}
-                  placeholder={t.sectionA.reporterNamePlaceholder}
-                  className={`w-full ${isRtl ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3'} py-2 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white ${
-                    errors.reporterName ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-                  }`}
-                />
+                  className="w-full px-3 py-2 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white"
+                >
+                  <option value="resident">{t.sectionA.roles.resident}</option>
+                  <option value="neighbor">{t.sectionA.roles.neighbor}</option>
+                  <option value="volunteer">{t.sectionA.roles.volunteer}</option>
+                  <option value="other">{t.sectionA.roles.other}</option>
+                </select>
               </div>
-              {errors.reporterName && (
-                <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterName')}</p>
-              )}
-            </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#252A30] block mb-1">
-                {t.sectionA.reporterPhoneLabel} <span className="text-[#757B81] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
-              </label>
-              <div className="relative">
-                <Phone className={`w-4 h-4 text-[#757B81] absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
-                <input
-                  type="tel"
-                  dir="ltr"
-                  value={formData.reporterPhone}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData((prev) => ({ ...prev, reporterPhone: val }));
-                    if (errors.reporterPhone) {
-                      setErrors((prev) => {
-                        const copy = { ...prev };
-                        delete copy.reporterPhone;
-                        return copy;
-                      });
+              {/* Full Name (Optional) */}
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionA.reporterNameLabel} <span className="text-[#5F6B7A] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
+                </label>
+                <div className="relative">
+                  <User className={`w-3.5 h-3.5 text-[#5F6B7A] absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
+                  <input
+                    type="text"
+                    value={formData.reporterName}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, reporterName: e.target.value }))
                     }
-                  }}
-                  placeholder={t.sectionA.reporterPhonePlaceholder}
-                  className={`w-full ${isRtl ? 'pr-9 pl-3' : 'pl-9 pr-3'} py-2 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white ${
-                    errors.reporterPhone ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-                  }`}
-                />
+                    placeholder={t.sectionA.reporterNamePlaceholder}
+                    className={`w-full ${isRtl ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white`}
+                  />
+                </div>
               </div>
-              {errors.reporterPhone && (
-                <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterPhone')}</p>
-              )}
+
+              {/* Contact Phone (Optional) */}
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionA.reporterPhoneLabel} <span className="text-[#5F6B7A] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
+                </label>
+                <div className="relative">
+                  <Phone className={`w-3.5 h-3.5 text-[#5F6B7A] absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    value={formData.reporterPhone}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({ ...prev, reporterPhone: val }));
+                      if (errors.reporterPhone) {
+                        setErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.reporterPhone;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder={t.sectionA.reporterPhonePlaceholder}
+                    className={`w-full ${isRtl ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2 text-xs bg-[#F7F8FA] border rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white ${
+                      errors.reporterPhone ? 'border-[#BC414A] bg-[#FBECEE]' : 'border-[#E4E8EC]'
+                    }`}
+                  />
+                </div>
+                {errors.reporterPhone && (
+                  <p className="text-[11px] text-[#BC414A] mt-1 font-medium">{errors.reporterPhone}</p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#252A30] block mb-1">
-                {t.sectionA.reporterRoleLabel} <span className="text-[#B74349]">*</span>
-              </label>
-              <select
-                value={formData.reporterRole}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    reporterRole: e.target.value as ReportFormData['reporterRole'],
-                  }))
-                }
-                className="w-full px-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white"
+            {/* Step Navigation Bar */}
+            <div className="flex items-center justify-end pt-4 border-t border-[#E4E8EC]">
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#2C4855] rounded-lg shadow-xs transition-colors cursor-pointer"
               >
-                <option value="resident">{t.sectionA.roles.resident}</option>
-                <option value="neighbor">{t.sectionA.roles.neighbor}</option>
-                <option value="volunteer">{t.sectionA.roles.volunteer}</option>
-                <option value="other">{t.sectionA.roles.other}</option>
-              </select>
-              {errors.reporterRole && (
-                <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('reporterRole')}</p>
-              )}
+                <span>{language === 'ur' ? 'اگلا: مقام درج کریں' : language === 'sd' ? 'اڳيون: هنڌ لکو' : 'Next: Location Details'}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* SECTION B: EMERGENCY LOCATION */}
-        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-2xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
-            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
-              {t.sectionB.num}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#252A30]">
+        {/* ================= STEP 2: LOCATION ================= */}
+        {currentStep === 2 && (
+          <div className="bg-white rounded-xl border border-[#E4E8EC] shadow-xs p-5 sm:p-6 space-y-4 animate-in fade-in duration-150">
+            <div className="pb-3 border-b border-[#E4E8EC]">
+              <h3 className="text-sm font-bold text-[#18232D]">
                 {t.sectionB.title}
               </h3>
-              <p className="text-xs text-[#757B81]">
+              <p className="text-xs text-[#5F6B7A] mt-0.5">
                 {t.sectionB.subtitle}
               </p>
             </div>
-          </div>
 
-          {/* Zone loading error notice */}
-          {zonesError && (
-            <div className="p-3.5 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-xs text-[#B74349] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0" />
-                <span>{zonesError}</span>
-              </div>
-              <button
-                type="button"
-                onClick={fetchZones}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-[#E8E6E1] text-[#252A30] hover:bg-[#F7F6F2] font-semibold text-[11px] cursor-pointer"
+            {/* Zone Selector */}
+            <div>
+              <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                {t.sectionB.zoneLabel} <span className="text-[#BC414A]">*</span>
+              </label>
+              <select
+                value={formData.zoneId}
+                disabled={zonesLoading || Boolean(zonesError)}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, zoneId: e.target.value }));
+                  if (errors.zoneId) {
+                    setErrors((prev) => {
+                      const copy = { ...prev };
+                      delete copy.zoneId;
+                      return copy;
+                    });
+                  }
+                }}
+                className={`w-full px-3 py-2 text-xs bg-[#F7F8FA] border rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white disabled:opacity-60 ${
+                  errors.zoneId ? 'border-[#BC414A] bg-[#FBECEE]' : 'border-[#E4E8EC]'
+                }`}
               >
-                <RefreshCw className="w-3 h-3" />
-                <span>{language === 'ur' ? 'دوبارہ کوشش کریں' : language === 'sd' ? 'ٻيهر ڪوشش ڪريو' : 'Retry'}</span>
-              </button>
-            </div>
-          )}
-
-          {/* Zone Selector */}
-          <div>
-            <label className="text-xs font-semibold text-[#252A30] block mb-1">
-              {t.sectionB.zoneLabel} <span className="text-[#B74349]">*</span>
-            </label>
-            <select
-              value={formData.zoneId}
-              disabled={zonesLoading || Boolean(zonesError)}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, zoneId: e.target.value }))
-              }
-              className={`w-full px-3 py-2 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white disabled:opacity-60 ${
-                errors.zoneId ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-              }`}
-            >
-              {zonesLoading ? (
-                <option value="">{t.sectionB.zoneLoading}</option>
-              ) : zones.length === 0 ? (
-                <option value="">{t.sectionB.zoneEmpty}</option>
-              ) : (
-                zones.map((z) => (
-                  <option key={z.id} value={z.id}>
-                    {z.name} {z.flood_risk ? `(${language === 'ur' ? 'خطرہ' : language === 'sd' ? 'خطرو' : 'Risk'}: ${z.flood_risk})` : ''}
-                  </option>
-                ))
+                {zonesLoading ? (
+                  <option value="">{t.sectionB.zoneLoading}</option>
+                ) : zones.length === 0 ? (
+                  <option value="">{t.sectionB.zoneEmpty}</option>
+                ) : (
+                  zones.map((z) => (
+                    <option key={z.id} value={z.id}>
+                      {z.name} {z.flood_risk ? `(${language === 'ur' ? 'خطرہ' : language === 'sd' ? 'خطرو' : 'Risk Tier'} ${z.flood_risk})` : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+              {errors.zoneId && (
+                <p className="text-[11px] text-[#BC414A] mt-1 font-medium">{getFieldError('zoneId')}</p>
               )}
-            </select>
-            {errors.zoneId && (
-              <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('zoneId')}</p>
-            )}
-          </div>
+            </div>
 
-          {/* Location Description & Landmarks */}
-          <div>
-            <label className="text-xs font-semibold text-[#252A30] block mb-1">
-              {t.sectionB.locationDescLabel} <span className="text-[#B74349]">*</span>
-            </label>
-            <textarea
-              rows={2}
-              value={formData.locationDescription}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, locationDescription: e.target.value }))
-              }
-              placeholder={t.sectionB.locationDescPlaceholder}
-              className={`w-full p-3 text-xs bg-[#F7F6F2] border rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white ${
-                errors.locationDescription ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-              } ${isRtl ? 'text-right' : ''}`}
-            />
-            {errors.locationDescription && (
-              <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
-                {getFieldError('locationDescription')}
-              </p>
-            )}
-          </div>
+            {/* Address / Landmark Description */}
+            <div>
+              <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                {t.sectionB.locationDescLabel} <span className="text-[#BC414A]">*</span>
+              </label>
+              <textarea
+                rows={2}
+                value={formData.locationDescription}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, locationDescription: e.target.value }));
+                  if (errors.locationDescription) {
+                    setErrors((prev) => {
+                      const copy = { ...prev };
+                      delete copy.locationDescription;
+                      return copy;
+                    });
+                  }
+                }}
+                placeholder={t.sectionB.locationDescPlaceholder}
+                className={`w-full p-3 text-xs bg-[#F7F8FA] border rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white ${
+                  errors.locationDescription ? 'border-[#BC414A] bg-[#FBECEE]' : 'border-[#E4E8EC]'
+                } ${isRtl ? 'text-right' : ''}`}
+              />
+              {errors.locationDescription && (
+                <p className="text-[11px] text-[#BC414A] mt-1 font-medium">{getFieldError('locationDescription')}</p>
+              )}
+            </div>
 
-          {/* Coordinates Bar: "Use my location" button + optional manual lat/lng */}
-          <div className="p-4 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2">
-                <Compass className="w-4 h-4 text-[#536A82]" />
-                <span className="text-xs font-semibold text-[#252A30]">
-                  {t.sectionB.gpsTitle}
-                </span>
-                <span className="text-[11px] text-[#757B81] font-normal">
-                  {t.sectionB.gpsSubtitle}
-                </span>
-              </div>
+            {/* Coordinates / Map Pin Bar */}
+            <div className="p-3.5 rounded-xl bg-[#F7F8FA] border border-[#E4E8EC] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-[#375A6B]" />
+                  <span className="text-xs font-semibold text-[#18232D]">
+                    {t.sectionB.gpsTitle}
+                  </span>
+                  <span className="text-[11px] text-[#5F6B7A]">
+                    {t.sectionB.gpsSubtitle}
+                  </span>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Pick on Map button */}
-                <button
-                  type="button"
-                  onClick={() => setIsMapOpen((prev) => !prev)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-2xs transition-colors cursor-pointer ${
-                    isMapOpen
-                      ? 'bg-[#536A82] text-white border-[#536A82] hover:bg-[#40566D]'
-                      : 'bg-white border-[#536A82]/40 text-[#536A82] hover:bg-[#EDF1F5]'
-                  }`}
-                >
-                  <Map className="w-3.5 h-3.5" />
-                  <span>{isMapOpen ? t.sectionB.toggleMapButtonClose : t.sectionB.toggleMapButtonOpen}</span>
-                </button>
-
-                {/* Use My Location button */}
-                <button
-                  type="button"
-                  onClick={handleUseMyLocation}
-                  disabled={gpsLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E8E6E1] text-[#536A82] hover:bg-[#EDF1F5] text-xs font-semibold transition-colors disabled:opacity-60 cursor-pointer"
-                >
-                  <Navigation
-                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-[#536A82]' : 'text-[#536A82]'}`}
-                  />
-                  <span>{gpsLoading ? t.sectionB.acquiringGps : t.sectionB.useGpsButton}</span>
-                </button>
-
-                {(formData.lat !== null || formData.lng !== null) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Toggle Map Picker */}
                   <button
                     type="button"
-                    onClick={handleClearCoordinates}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-[#E8E6E1] text-[#757B81] hover:bg-[#EDF1F5] text-xs font-medium cursor-pointer"
-                    title="Clear coordinates"
+                    onClick={() => setIsMapOpen((prev) => !prev)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                      isMapOpen
+                        ? 'bg-[#375A6B] text-white border-[#375A6B]'
+                        : 'bg-white border-[#375A6B]/40 text-[#375A6B] hover:bg-[#F0F4F8]'
+                    }`}
                   >
-                    <X className="w-3.5 h-3.5" />
-                    <span>{t.sectionB.clearGps}</span>
+                    <Map className="w-3.5 h-3.5" />
+                    <span>{isMapOpen ? t.sectionB.toggleMapButtonClose : t.sectionB.toggleMapButtonOpen}</span>
                   </button>
+
+                  {/* Use Device GPS */}
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    disabled={gpsLoading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E4E8EC] text-[#375A6B] hover:bg-[#F0F4F8] text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <Navigation className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin' : ''}`} />
+                    <span>{gpsLoading ? t.sectionB.acquiringGps : t.sectionB.useGpsButton}</span>
+                  </button>
+
+                  {(formData.lat !== null || formData.lng !== null) && (
+                    <button
+                      type="button"
+                      onClick={handleClearCoordinates}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-[#E4E8EC] text-[#5F6B7A] hover:bg-[#F7F8FA] text-xs cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>{t.sectionB.clearGps}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Interactive Map Picker */}
+              {isMapOpen && (
+                <LocationMapPicker
+                  lat={formData.lat}
+                  lng={formData.lng}
+                  zones={zones}
+                  selectedZoneId={formData.zoneId}
+                  onLocationSelect={handleMapLocationSelect}
+                  onZoneSelect={handleMapZoneSelect}
+                  language={language}
+                  t={t}
+                />
+              )}
+
+              {gpsSuccess && (
+                <p className="text-[11px] text-[#258167] font-medium flex items-center gap-1.5 bg-[#EBF7F2] p-2 rounded-lg border border-[#258167]/30">
+                  <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{language === 'ur' ? 'جی پی ایس کوآرڈینیٹس کامیابی سے حاصل کر لیے گئے۔' : language === 'sd' ? 'جي پي ايس ڪوآرڊينيٽس حاصل ٿي ويا.' : 'GPS coordinates acquired from your device.'}</span>
+                </p>
+              )}
+
+              {gpsError && (
+                <p className="text-[11px] text-[#A87528] font-medium flex items-center gap-1.5 bg-[#FFF5E6] p-2 rounded-lg border border-[#A87528]/30">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{gpsError}</span>
+                </p>
+              )}
+
+              {/* Optional Advanced Coordinates Toggle */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowManualCoords(!showManualCoords)}
+                  className="text-[11px] font-semibold text-[#5F6B7A] hover:text-[#18232D] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>
+                    {showManualCoords
+                      ? (language === 'ur' ? '− جی پی ایس کوآرڈینیٹس چھپائیں' : '− Hide manual GPS coordinates')
+                      : (language === 'ur' ? '+ اختیاری: دستی جی پی ایس کوآرڈینیٹس درج کریں' : '+ Optional: Enter precise GPS coordinates')}
+                  </span>
+                </button>
+
+                {showManualCoords && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#5F6B7A] block mb-1">
+                        {t.sectionB.latLabel}
+                      </label>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        step="0.00001"
+                        placeholder={t.sectionB.latPlaceholder}
+                        value={formData.lat ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value.trim();
+                          setFormData((prev) => ({
+                            ...prev,
+                            lat: val === '' ? null : parseFloat(val),
+                          }));
+                        }}
+                        className="w-full px-3 py-1.5 text-xs font-mono bg-white border border-[#E4E8EC] rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#5F6B7A] block mb-1">
+                        {t.sectionB.lngLabel}
+                      </label>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        step="0.00001"
+                        placeholder={t.sectionB.lngPlaceholder}
+                        value={formData.lng ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value.trim();
+                          setFormData((prev) => ({
+                            ...prev,
+                            lng: val === '' ? null : parseFloat(val),
+                          }));
+                        }}
+                        className="w-full px-3 py-1.5 text-xs font-mono bg-white border border-[#E4E8EC] rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
+
+              <p className="text-[11px] text-[#5F6B7A] italic">
+                {language === 'ur' ? 'اگر کوآرڈینیٹس نہ ہوں تو متعلقہ زون کے مرکز کا اندازہ لگایا جائے گا۔' : language === 'sd' ? 'ڪوآرڊينيٽس کانسواءِ علائقي جي مرڪز جو اندازو لڳايو ويندو.' : 'If coordinates are omitted, the report is mapped to the sector centroid and verified by scouts.'}
+              </p>
             </div>
 
-            {/* Inline Interactive Map with Search & Pin-Drop */}
-            {isMapOpen && (
-              <LocationMapPicker
-                lat={formData.lat}
-                lng={formData.lng}
-                zones={zones}
-                selectedZoneId={formData.zoneId}
-                onLocationSelect={handleMapLocationSelect}
-                onZoneSelect={handleMapZoneSelect}
-                language={language}
-                t={t}
-              />
-            )}
+            {/* Step Navigation Bar */}
+            <div className="flex items-center justify-between pt-4 border-t border-[#E4E8EC]">
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA] rounded-lg transition-colors cursor-pointer"
+              >
+                <ArrowLeft className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+                <span>{language === 'ur' ? 'پیچھے: رپورٹر' : language === 'sd' ? 'پوئتي: رپورٽر' : 'Back: Reporter'}</span>
+              </button>
 
-            {gpsSuccess && (
-              <p className="text-[11px] text-[#377D65] font-medium flex items-center gap-1.5 bg-[#E5EEE8] p-2 rounded-lg border border-[#377D65]/30">
-                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{language === 'ur' ? 'جی پی ایس کوآرڈینیٹس کامیابی سے حاصل کر لیے گئے۔' : language === 'sd' ? 'جي پي ايس ڪوآرڊينيٽس حاصل ٿي ويا.' : 'GPS coordinates acquired from your device.'}</span>
-              </p>
-            )}
-
-            {gpsError && (
-              <p className="text-[11px] text-[#A87426] font-medium flex items-center gap-1.5 bg-[#FFF2DD] p-2 rounded-lg border border-[#A87426]/30">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                <span>{gpsError}</span>
-              </p>
-            )}
-
-            {/* Manual Lat / Lng Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="text-[11px] font-semibold text-[#757B81] block mb-1">
-                  {t.sectionB.latLabel}
-                </label>
-                <input
-                  type="number"
-                  dir="ltr"
-                  step="0.00001"
-                  placeholder={t.sectionB.latPlaceholder}
-                  value={formData.lat ?? ''}
-                  onChange={(e) => {
-                    const val = e.target.value.trim();
-                    setFormData((prev) => ({
-                      ...prev,
-                      lat: val === '' ? null : parseFloat(val),
-                    }));
-                  }}
-                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
-                    errors.lat ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-                  }`}
-                />
-                {errors.lat && (
-                  <p className={`text-[11px] text-[#B74349] mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lat')}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-[#757B81] block mb-1">
-                  {t.sectionB.lngLabel}
-                </label>
-                <input
-                  type="number"
-                  dir="ltr"
-                  step="0.00001"
-                  placeholder={t.sectionB.lngPlaceholder}
-                  value={formData.lng ?? ''}
-                  onChange={(e) => {
-                    const val = e.target.value.trim();
-                    setFormData((prev) => ({
-                      ...prev,
-                      lng: val === '' ? null : parseFloat(val),
-                    }));
-                  }}
-                  className={`w-full px-3 py-1.5 text-xs font-mono bg-white border rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
-                    errors.lng ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
-                  }`}
-                />
-                {errors.lng && (
-                  <p className={`text-[11px] text-[#B74349] mt-0.5 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('lng')}</p>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#2C4855] rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                <span>{language === 'ur' ? 'اگلا: ایمرجنسی تفصیلات' : language === 'sd' ? 'اڳيون: هنگامي حالت' : 'Next: Emergency Details'}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+              </button>
             </div>
-
-            <p className="text-[11px] text-[#757B81] italic">
-              {language === 'ur' ? 'نوٹ: کوآرڈینیٹس نہ ہونے کی صورت میں رپورٹ قریبی زون کے تخمینے کے ساتھ محفوظ کی جاتی ہے۔' : language === 'sd' ? 'نوٽ: ڪوآرڊينيٽس کانسواءِ رپورٽ ويجهي علائقي جي اندازي سان محفوظ ڪئي ويندي.' : 'Note: If coordinates are omitted, the report is saved with approximate zone location and flagged for coordinator verification.'}
-            </p>
           </div>
-        </div>
+        )}
 
-        {/* SECTION C: EMERGENCY DETAILS & TRI-STATE VULNERABILITY */}
-        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-2xs p-5 sm:p-6 space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
-            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
-              {t.sectionC.num}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#252A30]">
+        {/* ================= STEP 3: EMERGENCY ================= */}
+        {currentStep === 3 && (
+          <div className="bg-white rounded-xl border border-[#E4E8EC] shadow-xs p-5 sm:p-6 space-y-4 animate-in fade-in duration-150">
+            <div className="pb-3 border-b border-[#E4E8EC]">
+              <h3 className="text-sm font-bold text-[#18232D]">
                 {t.sectionC.title}
               </h3>
-              <p className="text-xs text-[#757B81]">
+              <p className="text-xs text-[#5F6B7A] mt-0.5">
                 {t.sectionC.subtitle}
               </p>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Flood Severity (0..3) */}
-            <div>
-              <label className="text-xs font-semibold text-[#252A30] block mb-1">
-                {t.sectionC.floodSeverityLabel} <span className="text-[#B74349]">*</span>
-              </label>
-              <select
-                value={formData.floodSeverity}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    floodSeverity: parseInt(e.target.value, 10),
-                  }))
-                }
-                className="w-full px-3 py-2 text-xs font-medium bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
-              >
-                <option value={3}>{t.sectionC.floodLevels[3].title} — {t.sectionC.floodLevels[3].desc}</option>
-                <option value={2}>{t.sectionC.floodLevels[2].title} — {t.sectionC.floodLevels[2].desc}</option>
-                <option value={1}>{t.sectionC.floodLevels[1].title} — {t.sectionC.floodLevels[1].desc}</option>
-                <option value={0}>{t.sectionC.floodLevels[0].title} — {t.sectionC.floodLevels[0].desc}</option>
-              </select>
-              {errors.floodSeverity && (
-                <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
-                  {getFieldError('floodSeverity')}
-                </p>
-              )}
-            </div>
-
-            {/* People Count + Unknown option */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-[#252A30] block">
-                  {t.sectionC.peopleCountLabel}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Flood Severity (0..3) */}
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionC.floodSeverityLabel} <span className="text-[#BC414A]">*</span>
                 </label>
-                <label className="flex items-center gap-1.5 text-[11px] text-[#A87426] font-medium cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isPeopleCountUnknown}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setFormData((prev) => ({
-                        ...prev,
-                        isPeopleCountUnknown: checked,
-                        peopleCount: checked ? null : prev.peopleCount || 1,
-                      }));
-                    }}
-                    className="accent-[#A87426] rounded"
-                  />
-                  <span>{t.sectionC.unknownPeopleCheckbox}</span>
-                </label>
-              </div>
-
-              {formData.isPeopleCountUnknown ? (
-                <div className="px-3 py-2 text-xs font-semibold bg-[#FFF2DD] border border-[#A87426]/30 rounded-lg text-[#A87426] flex items-center justify-between">
-                  <span>{t.sectionC.triState.unknown} (null)</span>
-                  <span className="text-[10px] text-[#A87426] uppercase font-bold tracking-wider">
-                    {language === 'ur' ? 'جائزہ کیلئے نشان زد' : language === 'sd' ? 'جائزي لاءِ نشان لڳل' : 'Flagged for review'}
-                  </span>
-                </div>
-              ) : (
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={formData.peopleCount ?? 1}
-                  onChange={(e) => {
-                    const parsed = parseInt(e.target.value, 10);
+                <select
+                  value={formData.floodSeverity}
+                  onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      peopleCount: isNaN(parsed) ? 1 : parsed,
-                    }));
-                  }}
-                  className={`w-full px-3 py-2 text-xs font-medium bg-[#F7F6F2] border rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82] ${
-                    errors.peopleCount ? 'border-[#B74349] bg-[#FAE8E7]' : 'border-[#E8E6E1]'
+                      floodSeverity: parseInt(e.target.value, 10),
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs font-medium bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+                >
+                  <option value={3}>{t.sectionC.floodLevels[3].title} — {t.sectionC.floodLevels[3].desc}</option>
+                  <option value={2}>{t.sectionC.floodLevels[2].title} — {t.sectionC.floodLevels[2].desc}</option>
+                  <option value={1}>{t.sectionC.floodLevels[1].title} — {t.sectionC.floodLevels[1].desc}</option>
+                  <option value={0}>{t.sectionC.floodLevels[0].title} — {t.sectionC.floodLevels[0].desc}</option>
+                </select>
+              </div>
+
+              {/* People Count + Unknown Checkbox */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-[#18232D] block">
+                    {t.sectionC.peopleCountLabel}
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-[#A87528] font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isPeopleCountUnknown}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData((prev) => ({
+                          ...prev,
+                          isPeopleCountUnknown: checked,
+                          peopleCount: checked ? null : prev.peopleCount || 1,
+                        }));
+                      }}
+                      className="accent-[#A87528] rounded"
+                    />
+                    <span>{t.sectionC.unknownPeopleCheckbox}</span>
+                  </label>
+                </div>
+
+                {formData.isPeopleCountUnknown ? (
+                  <div className="px-3 py-2 text-xs font-semibold bg-[#FFF5E6] border border-[#A87528]/30 rounded-lg text-[#A87528] flex items-center justify-between">
+                    <span>{t.sectionC.triState.unknown}</span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider">
+                      {language === 'ur' ? 'جائزہ کیلئے نشان زد' : language === 'sd' ? 'جائزي لاءِ نشان' : 'Flagged for review'}
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={formData.peopleCount ?? 1}
+                    onChange={(e) => {
+                      const parsed = parseInt(e.target.value, 10);
+                      setFormData((prev) => ({
+                        ...prev,
+                        peopleCount: isNaN(parsed) ? 1 : parsed,
+                      }));
+                    }}
+                    className={`w-full px-3 py-2 text-xs font-medium bg-[#F7F8FA] border rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B] ${
+                      errors.peopleCount ? 'border-[#BC414A] bg-[#FBECEE]' : 'border-[#E4E8EC]'
+                    }`}
+                  />
+                )}
+                {errors.peopleCount && (
+                  <p className="text-[11px] text-[#BC414A] mt-1 font-medium">{getFieldError('peopleCount')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Tri-State Vulnerability Factors (Trapped, Medical, Mobility) */}
+            <div className="space-y-3 pt-2 border-t border-[#E4E8EC]">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#18232D] block">
+                  {language === 'ur' ? 'تین رخی خطرے کی علامات' : language === 'sd' ? 'ٽي رخا خطري جا نشان' : 'Tri-State Vulnerability Indicators'}
+                </label>
+                <span className="text-[11px] text-[#5F6B7A] italic">
+                  {language === 'ur' ? 'معلوم نہیں کو غیر تصدیق شدہ رکھا جائے گا' : language === 'sd' ? 'اڻڄاتل کي اڻ تصديق ٿيل رکيو ويندو' : 'Unknown is preserved as unverified null'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* 1. Trapped */}
+                <div className="p-3 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#18232D]">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#BC414A] shrink-0" />
+                    <span>{t.sectionC.trappedLabel}</span>
+                  </div>
+                  <p className="text-[11px] text-[#5F6B7A] leading-tight">
+                    {t.sectionC.trappedDesc}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, trapped: true }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.trapped === true
+                          ? 'bg-[#BC414A] text-white border-[#BC414A] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.yes}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, trapped: false }))}
+                      className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        formData.trapped === false
+                          ? 'bg-[#258167] text-white border-[#258167] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.no}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, trapped: null }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.trapped === null
+                          ? 'bg-[#A87528] text-white border-[#A87528] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.unknown}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Medical Urgent */}
+                <div className="p-3 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#18232D]">
+                    <HeartPulse className="w-3.5 h-3.5 text-[#BC414A] shrink-0" />
+                    <span>{t.sectionC.medicalLabel}</span>
+                  </div>
+                  <p className="text-[11px] text-[#5F6B7A] leading-tight">
+                    {t.sectionC.medicalDesc}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: true }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.medicalUrgent === true
+                          ? 'bg-[#BC414A] text-white border-[#BC414A] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.yes}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: false }))}
+                      className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        formData.medicalUrgent === false
+                          ? 'bg-[#258167] text-white border-[#258167] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.no}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: null }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.medicalUrgent === null
+                          ? 'bg-[#A87528] text-white border-[#A87528] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.unknown}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Mobility Help */}
+                <div className="p-3 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#18232D]">
+                    <PersonStanding className="w-3.5 h-3.5 text-[#BC414A] shrink-0" />
+                    <span>{t.sectionC.mobilityLabel}</span>
+                  </div>
+                  <p className="text-[11px] text-[#5F6B7A] leading-tight">
+                    {t.sectionC.mobilityDesc}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: true }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.mobilityHelp === true
+                          ? 'bg-[#BC414A] text-white border-[#BC414A] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.yes}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: false }))}
+                      className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        formData.mobilityHelp === false
+                          ? 'bg-[#258167] text-white border-[#258167] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.no}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: null }))}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        formData.mobilityHelp === null
+                          ? 'bg-[#A87528] text-white border-[#A87528] shadow-xs'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F0F4F8]'
+                      }`}
+                    >
+                      {t.sectionC.triState.unknown}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Observation Timing & Situation Notes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#E4E8EC]">
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionD.timingLabel} <span className="text-[#BC414A]">*</span>
+                </label>
+                <select
+                  value={formData.observationOption}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      observationOption: e.target.value as ReportFormData['observationOption'],
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+                >
+                  <option value="now">{t.sectionD.options.now}</option>
+                  <option value="15m">{t.sectionD.options['15m']}</option>
+                  <option value="1h">{t.sectionD.options['1h']}</option>
+                  <option value="3h">{t.sectionD.options['3h']}</option>
+                  <option value="12h">{t.sectionD.options['12h']}</option>
+                  <option value="24h">{t.sectionD.options['24h']}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#18232D] block mb-1">
+                  {t.sectionC.notesLabel} <span className="text-[#5F6B7A] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder={t.sectionC.notesPlaceholder}
+                  className={`w-full p-2.5 text-xs bg-[#F7F8FA] border border-[#E4E8EC] rounded-lg text-[#18232D] placeholder:text-[#5F6B7A] focus:outline-none focus:ring-1 focus:ring-[#375A6B] focus:bg-white ${
+                    isRtl ? 'text-right' : ''
                   }`}
                 />
-              )}
-              {errors.peopleCount && (
-                <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>
-                  {getFieldError('peopleCount')}
-                </p>
-              )}
+              </div>
+            </div>
+
+            {/* Step Navigation Bar */}
+            <div className="flex items-center justify-between pt-4 border-t border-[#E4E8EC]">
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA] rounded-lg transition-colors cursor-pointer"
+              >
+                <ArrowLeft className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+                <span>{language === 'ur' ? 'پیچھے: مقام' : language === 'sd' ? 'پوئتي: هنڌ' : 'Back: Location'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#2C4855] rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                <span>{language === 'ur' ? 'اگلا: جائزہ اور تصدیق' : language === 'sd' ? 'اڳيون: جائزو ۽ تصديق' : 'Next: Review & Submit'}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           </div>
+        )}
 
-          {/* Tri-State Vulnerability Factors (Trapped, Medical, Mobility) */}
-          <div className="space-y-3 pt-2 border-t border-[#E8E6E1]">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-[#252A30] block">
-                {language === 'ur' ? 'تین رخی خطرے کی علامات' : language === 'sd' ? 'ٽي رخا خطري جا نشان' : 'Tri-State Vulnerability Indicators'}
-              </label>
-              <span className="text-[11px] text-[#757B81] italic">
-                {language === 'ur' ? 'معلوم نہیں کا مطلب خطرہ موجود سمجھا جائے گا' : language === 'sd' ? 'اڻڄاتل جو مطلب خطرو موجود سمجهيو ويندو' : 'Unknown is logged as unverified null, never as false'}
+        {/* ================= STEP 4: REVIEW & SUBMIT ================= */}
+        {currentStep === 4 && (
+          <div className="bg-white rounded-xl border border-[#E4E8EC] shadow-xs p-5 sm:p-6 space-y-4 animate-in fade-in duration-150">
+            <div className="pb-3 border-b border-[#E4E8EC] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-[#18232D]">
+                  {language === 'ur' ? 'رپورٹ کا حتمی جائزہ' : language === 'sd' ? 'رپورٽ جو حتمي جائزو' : 'Review & Confirmation'}
+                </h3>
+                <p className="text-xs text-[#5F6B7A] mt-0.5">
+                  {language === 'ur' ? 'ارسال کرنے سے پہلے تفصیلات کی جانچ کریں' : language === 'sd' ? 'موڪلڻ کان اڳ تفصيل پڙهو' : 'Verify details before transmitting to emergency coordinators'}
+                </p>
+              </div>
+
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F0F4F8] text-[#375A6B] border border-[#375A6B]/25 uppercase">
+                Step 4 of 4
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Factor 1: Trapped */}
-              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
-                  <span>{t.sectionC.trappedLabel}</span>
+            {/* Structured Summary Grid */}
+            <div className="rounded-xl bg-[#F7F8FA] border border-[#E4E8EC] p-4 space-y-3 text-xs">
+              {/* Row 1: Location & Sector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#E4E8EC]">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">
+                    {language === 'ur' ? 'سیکٹر اور زون' : language === 'sd' ? 'علائقو ۽ زون' : 'Target Sector & Zone'}
+                  </span>
+                  <span className="font-bold text-[#18232D] text-sm">
+                    {selectedZone?.name || formData.zoneId}
+                  </span>
+                  {selectedZone?.flood_risk && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FBECEE] text-[#BC414A] border border-[#BC414A]/25">
+                      Risk Tier {selectedZone.flood_risk}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-[#757B81] leading-tight">
-                  {t.sectionC.trappedDesc}
-                </p>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, trapped: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.trapped === true
-                        ? 'bg-[#B74349] text-white border-[#B74349]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.yes}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, trapped: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                      formData.trapped === false
-                        ? 'bg-[#377D65] text-white border-[#377D65]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.no}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, trapped: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.trapped === null
-                        ? 'bg-[#A87426] text-white border-[#A87426]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.unknown}
-                  </button>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">
+                    {language === 'ur' ? 'کوآرڈینیٹس' : language === 'sd' ? 'ڪوآرڊينيٽس' : 'GPS Coordinates'}
+                  </span>
+                  <span className={`font-mono text-xs font-semibold ${formData.lat !== null ? 'text-[#258167]' : 'text-[#A87528]'}`}>
+                    {formData.lat !== null && formData.lng !== null
+                      ? `${formData.lat}, ${formData.lng} (Exact)`
+                      : 'Approximate Zone Centroid'}
+                  </span>
                 </div>
               </div>
 
-              {/* Factor 2: Urgent Medical */}
-              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
-                  <HeartPulse className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
-                  <span>{t.sectionC.medicalLabel}</span>
-                </div>
-                <p className="text-[11px] text-[#757B81] leading-tight">
-                  {t.sectionC.medicalDesc}
+              {/* Row 2: Address Landmark */}
+              <div className="pb-2.5 border-b border-[#E4E8EC]">
+                <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">
+                  {language === 'ur' ? 'پتہ اور نشانی' : language === 'sd' ? 'پتو ۽ نشان' : 'Landmark / Address'}
+                </span>
+                <p className="font-medium text-[#18232D] mt-0.5">
+                  {formData.locationDescription}
                 </p>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.medicalUrgent === true
-                        ? 'bg-[#B74349] text-white border-[#B74349]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.yes}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                      formData.medicalUrgent === false
-                        ? 'bg-[#377D65] text-white border-[#377D65]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.no}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, medicalUrgent: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.medicalUrgent === null
-                        ? 'bg-[#A87426] text-white border-[#A87426]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.unknown}
-                  </button>
+              </div>
+
+              {/* Row 3: People & Flood Severity */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pb-2.5 border-b border-[#E4E8EC]">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">People</span>
+                  <span className="font-bold text-[#18232D] text-sm tabular-nums">
+                    {formData.peopleCount !== null ? (
+                      `${formData.peopleCount} ${language === 'ur' ? 'افراد' : language === 'sd' ? 'ماڻهو' : 'people'}`
+                    ) : (
+                      <span className="text-[#A87528] italic">Unknown (Flagged)</span>
+                    )}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">Flood Surge</span>
+                  <span className="font-bold text-[#18232D] text-xs">
+                    {severityTitles[formData.floodSeverity]}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">Observed</span>
+                  <span className="font-medium text-[#18232D] text-xs">
+                    {t.sectionD.options[formData.observationOption] || formData.observationOption}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">Reporter</span>
+                  <span className="font-medium text-[#18232D] text-xs capitalize">
+                    {formData.reportingFor === 'myself' ? 'Self / Household' : 'Someone else'} ({formData.reporterRole})
+                  </span>
                 </div>
               </div>
 
-              {/* Factor 3: Mobility Assistance */}
-              <div className="p-3 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2] space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#252A30]">
-                  <PersonStanding className="w-3.5 h-3.5 text-[#B74349] shrink-0" />
-                  <span>{t.sectionC.mobilityLabel}</span>
-                </div>
-                <p className="text-[11px] text-[#757B81] leading-tight">
-                  {t.sectionC.mobilityDesc}
-                </p>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: true }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.mobilityHelp === true
-                        ? 'bg-[#B74349] text-white border-[#B74349]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.yes}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: false }))}
-                    className={`py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                      formData.mobilityHelp === false
-                        ? 'bg-[#377D65] text-white border-[#377D65]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.no}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, mobilityHelp: null }))}
-                    className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      formData.mobilityHelp === null
-                        ? 'bg-[#A87426] text-white border-[#A87426]'
-                        : 'bg-white text-[#252A30] border-[#E8E6E1] hover:bg-[#EDF1F5]'
-                    }`}
-                  >
-                    {t.sectionC.triState.unknown}
-                  </button>
+              {/* Row 4: Vulnerabilities Indicators */}
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block mb-1.5">
+                  Critical Vulnerabilities
+                </span>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  {/* Trapped Badge */}
+                  <div className="p-2 rounded-lg bg-white border border-[#E4E8EC]">
+                    <span className="text-[10px] text-[#5F6B7A] block">Trapped</span>
+                    <span
+                      className={`font-bold ${
+                        formData.trapped === true
+                          ? 'text-[#BC414A]'
+                          : formData.trapped === false
+                          ? 'text-[#258167]'
+                          : 'text-[#A87528]'
+                      }`}
+                    >
+                      {formData.trapped === true ? 'YES' : formData.trapped === false ? 'NO' : 'UNKNOWN'}
+                    </span>
+                  </div>
+
+                  {/* Medical Badge */}
+                  <div className="p-2 rounded-lg bg-white border border-[#E4E8EC]">
+                    <span className="text-[10px] text-[#5F6B7A] block">Urgent Medical</span>
+                    <span
+                      className={`font-bold ${
+                        formData.medicalUrgent === true
+                          ? 'text-[#BC414A]'
+                          : formData.medicalUrgent === false
+                          ? 'text-[#258167]'
+                          : 'text-[#A87528]'
+                      }`}
+                    >
+                      {formData.medicalUrgent === true ? 'YES' : formData.medicalUrgent === false ? 'NO' : 'UNKNOWN'}
+                    </span>
+                  </div>
+
+                  {/* Mobility Badge */}
+                  <div className="p-2 rounded-lg bg-white border border-[#E4E8EC]">
+                    <span className="text-[10px] text-[#5F6B7A] block">Mobility Help</span>
+                    <span
+                      className={`font-bold ${
+                        formData.mobilityHelp === true
+                          ? 'text-[#BC414A]'
+                          : formData.mobilityHelp === false
+                          ? 'text-[#258167]'
+                          : 'text-[#A87528]'
+                      }`}
+                    >
+                      {formData.mobilityHelp === true ? 'YES' : formData.mobilityHelp === false ? 'NO' : 'UNKNOWN'}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Situation Notes (if any) */}
+              {formData.description.trim() && (
+                <div className="pt-2 border-t border-[#E4E8EC]">
+                  <span className="text-[10px] uppercase font-bold text-[#5F6B7A] block">Notes:</span>
+                  <p className="text-[#18232D] italic mt-0.5">{formData.description}</p>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Additional Medical or Rescue Notes */}
-          <div>
-            <label className="text-xs font-semibold text-[#252A30] block mb-1">
-              {t.sectionC.notesLabel} <span className="text-[#757B81] font-normal">({language === 'ur' ? 'اختیاری' : language === 'sd' ? 'اختياري' : 'Optional'})</span>
-            </label>
-            <textarea
-              rows={2}
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, description: e.target.value }))
-              }
-              placeholder={t.sectionC.notesPlaceholder}
-              className={`w-full p-3 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] placeholder:text-[#757B81] focus:outline-none focus:ring-2 focus:ring-[#536A82] focus:bg-white ${
-                isRtl ? 'text-right' : ''
-              }`}
-            />
-            {errors.description && (
-              <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('description')}</p>
-            )}
-          </div>
-        </div>
-
-        {/* SECTION D: INFORMATION OBSERVATION TIMING */}
-        <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-2xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E6E1]">
-            <div className="w-7 h-7 rounded-lg bg-[#EDF1F5] text-[#536A82] flex items-center justify-center font-bold text-xs">
-              {t.sectionD.num}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#252A30]">
-                {t.sectionD.title}
-              </h3>
-              <p className="text-xs text-[#757B81]">
-                {t.sectionD.subtitle}
+            {/* Official Dispatch Disclaimer */}
+            <div className="p-3 bg-[#F0F4F8] border border-[#375A6B]/25 rounded-lg text-xs text-[#18232D] flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-[#375A6B] shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#5F6B7A] leading-relaxed">
+                {t.actions.algorithmNotice}
               </p>
             </div>
-          </div>
 
-          <div>
-            <label className="text-xs font-semibold text-[#252A30] block mb-1">
-              {t.sectionD.timingLabel} <span className="text-[#B74349]">*</span>
-            </label>
-            <select
-              value={formData.observationOption}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  observationOption: e.target.value as ReportFormData['observationOption'],
-                }))
-              }
-              className="w-full sm:w-80 px-3 py-2 text-xs bg-[#F7F6F2] border border-[#E8E6E1] rounded-lg text-[#252A30] focus:outline-none focus:ring-2 focus:ring-[#536A82]"
-            >
-              <option value="now">{t.sectionD.options.now}</option>
-              <option value="15m">{t.sectionD.options['15m']}</option>
-              <option value="1h">{t.sectionD.options['1h']}</option>
-              <option value="3h">{t.sectionD.options['3h']}</option>
-              <option value="12h">{t.sectionD.options['12h']}</option>
-              <option value="24h">{t.sectionD.options['24h']}</option>
-            </select>
-            {errors.observedAt && (
-              <p className={`text-[11px] text-[#B74349] mt-1 font-medium ${isRtl ? 'text-right' : ''}`}>{getFieldError('observedAt')}</p>
-            )}
-          </div>
-        </div>
+            {/* Submission & Edit Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[#E4E8EC]">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(3)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#F7F8FA] rounded-lg transition-colors cursor-pointer w-full sm:w-auto justify-center"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                <span>{language === 'ur' ? 'تفصیلات میں ترمیم کریں' : language === 'sd' ? 'تفصيل تبديل ڪريو' : 'Edit Details'}</span>
+              </button>
 
-        {/* Form Submission Actions & Review Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-2 text-xs text-[#757B81]">
-            <HelpCircle className="w-4 h-4 text-[#536A82] shrink-0" />
-            <span>{t.actions.algorithmNotice}</span>
+              <button
+                type="button"
+                disabled={isSubmitting || zonesLoading || Boolean(zonesError)}
+                onClick={executeSubmission}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-[#BC414A] hover:bg-[#A3343C] disabled:bg-[#5F6B7A]/40 rounded-lg shadow-xs transition-colors cursor-pointer w-full sm:w-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{language === 'ur' ? 'ارسال کیا جا رہا ہے...' : language === 'sd' ? 'موڪليو پيو وڃي...' : 'Transmitting Report...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{language === 'ur' ? 'ایمرجنسی رپورٹ ارسال کریں' : language === 'sd' ? 'هنگامي رپورٽ موڪليو' : 'Submit Emergency Report'}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || zonesLoading || Boolean(zonesError)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#536A82] hover:bg-[#40566D] text-white text-sm font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-          >
-            <Send className="w-4 h-4" />
-            <span>{isSubmitting ? t.actions.submittingButton : t.actions.submitButton}</span>
-          </button>
-        </div>
+        )}
       </form>
-
-      {/* Confirmation & Review Modal */}
-      <ReportConfirmationModal
-        isOpen={isConfirmationOpen}
-        formData={formData}
-        zoneName={selectedZone?.name || formData.zoneId}
-        onClose={() => setIsConfirmationOpen(false)}
-        onConfirm={executeSubmission}
-        isSubmitting={isSubmitting}
-        language={language}
-      />
-    </>
+    </div>
   );
 }

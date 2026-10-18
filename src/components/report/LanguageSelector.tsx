@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Language, TRANSLATIONS } from '@/lib/reports/i18n';
+import { Language } from '@/lib/reports/i18n';
 import { Globe } from 'lucide-react';
 
 interface LanguageSelectorProps {
@@ -23,18 +23,18 @@ export function LanguageSelector({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200/80 shadow-xs ${className}`}
+      className={`inline-flex items-center gap-1 p-1 rounded-lg bg-[#F7F8FA] border border-[#E4E8EC] shadow-2xs ${className}`}
       role="group"
       aria-label="Language Selector"
     >
-      <div className="flex items-center gap-1 pl-2 pr-1 text-slate-400 select-none">
-        <Globe className="w-3.5 h-3.5 text-teal-600" />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hidden sm:inline">
+      <div className="flex items-center gap-1 pl-1.5 pr-1 text-[#5F6B7A] select-none">
+        <Globe className="w-3.5 h-3.5 text-[#375A6B]" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5F6B7A] hidden sm:inline">
           Language
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {languages.map((lang) => {
           const isActive = currentLanguage === lang.code;
           return (
@@ -42,10 +42,10 @@ export function LanguageSelector({
               key={lang.code}
               type="button"
               onClick={() => onLanguageChange(lang.code)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#14B8A6] text-white shadow-xs scale-102'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-[#18232D] text-white shadow-xs'
+                  : 'text-[#5F6B7A] hover:text-[#18232D] hover:bg-[#E4E8EC]/60'
               }`}
               title={`Switch to ${lang.label} (${lang.native})`}
             >

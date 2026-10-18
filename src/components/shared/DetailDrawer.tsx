@@ -56,21 +56,21 @@ export function DetailDrawer({
 
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
         <div
-          className={`w-screen ${widthClass} bg-white shadow-2xl border-l border-[#E8E6E1] flex flex-col transform transition-transform animate-in slide-in-from-right duration-200`}
+          className={`w-screen ${widthClass} bg-white shadow-2xl border-l border-[#E4E8EC] flex flex-col transform transition-transform animate-in slide-in-from-right duration-200`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-[#E8E6E1] flex items-start justify-between bg-[#F7F6F2]">
+          <div className="px-6 py-5 border-b border-[#E4E8EC] flex items-start justify-between bg-[#F7F8FA]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-[#252A30] tracking-tight">{title}</h3>
+                <h3 className="text-lg font-semibold text-[#18232D] tracking-tight">{title}</h3>
                 {badge}
               </div>
-              {subtitle && <p className="text-xs text-[#757B81]">{subtitle}</p>}
+              {subtitle && <p className="text-xs text-[#6B7782]">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[#92979D] hover:text-[#252A30] hover:bg-[#EDF1F5] transition-colors"
+              className="p-1.5 rounded-[8px] text-[#8B959E] hover:text-[#18232D] hover:bg-[#EAF0F4] transition-colors"
               title="Close drawer"
             >
               <X className="w-5 h-5" />
@@ -84,7 +84,7 @@ export function DetailDrawer({
 
           {/* Optional Footer */}
           {footer && (
-            <div className="p-5 border-t border-[#E8E6E1] bg-[#F7F6F2] flex items-center justify-end gap-3">
+            <div className="p-5 border-t border-[#E4E8EC] bg-[#F7F8FA] flex items-center justify-end gap-3">
               {footer}
             </div>
           )}

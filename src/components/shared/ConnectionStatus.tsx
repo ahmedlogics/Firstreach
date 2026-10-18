@@ -16,34 +16,34 @@ export function ConnectionStatus({
 }: ConnectionStatusProps) {
   const config = {
     connected: {
-      color: 'bg-[#377D65]',
+      color: 'bg-[#258167]',
       text: 'Telemetry Active',
       subtext: 'Supabase Engine Online',
-      textColor: 'text-[#377D65]',
-      bgColor: 'bg-[#E5EEE8]',
-      borderColor: 'border-[#377D65]/30',
+      textColor: 'text-[#258167]',
+      bgColor: 'bg-[#E9F3EF]',
+      borderColor: 'border-[#258167]/25',
     },
     syncing: {
-      color: 'bg-[#A87426]',
+      color: 'bg-[#A87528]',
       text: 'Syncing Simulation',
       subtext: 'Re-calculating crest models',
-      textColor: 'text-[#A87426]',
-      bgColor: 'bg-[#FFF2DD]',
-      borderColor: 'border-[#A87426]/30',
+      textColor: 'text-[#A87528]',
+      bgColor: 'bg-[#FFF4E3]',
+      borderColor: 'border-[#A87528]/25',
     },
     offline: {
-      color: 'bg-[#B74349]',
+      color: 'bg-[#BC414A]',
       text: 'Simulation Disconnected',
       subtext: 'Cached state active',
-      textColor: 'text-[#B74349]',
-      bgColor: 'bg-[#FAE8E7]',
-      borderColor: 'border-[#B74349]/30',
+      textColor: 'text-[#BC414A]',
+      bgColor: 'bg-[#FBECEE]',
+      borderColor: 'border-[#BC414A]/25',
     },
   }[status];
 
   return (
     <div
-      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border ${config.bgColor} ${config.borderColor} ${className}`}
+      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-[6px] text-xs font-medium border ${config.bgColor} ${config.borderColor} ${className}`}
       title="System operational telemetry and database connection status"
     >
       <span className="relative flex h-2 w-2">
@@ -53,7 +53,7 @@ export function ConnectionStatus({
       <Wifi className={`w-3.5 h-3.5 ${config.textColor}`} />
       <span className={config.textColor}>{config.text}</span>
       {showDetails && (
-        <span className="text-slate-400 text-[11px] border-l border-slate-200 pl-1.5 ml-0.5">
+        <span className="text-[#8B959E] text-[11px] border-l border-[#E4E8EC] pl-1.5 ml-0.5">
           {config.subtext}
         </span>
       )}

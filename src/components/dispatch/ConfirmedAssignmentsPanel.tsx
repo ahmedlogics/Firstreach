@@ -15,7 +15,6 @@ import {
   Coins,
   FileText,
   Navigation,
-  Info,
   Radio,
   Play,
   Check,
@@ -25,7 +24,6 @@ import {
   X,
   ShieldCheck,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 
 interface ConfirmedAssignmentsPanelProps {
@@ -176,7 +174,6 @@ export function ConfirmedAssignmentsPanel({
     }
   };
 
-  // Calculate target shelter for modal
   const targetIncident = completingAssignment ? incidentsMap[completingAssignment.incident_id] : null;
   const targetTeam = completingAssignment ? teamsMap[completingAssignment.team_id] : null;
   const totalIncidentPeople = targetIncident?.people_count ?? 1;
@@ -184,62 +181,61 @@ export function ConfirmedAssignmentsPanel({
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E8E6E1] shadow-sm p-5 sm:p-6 space-y-4 ${className}`}
+      className={`bg-white rounded-xl border border-[#E4E8EC] shadow-subtle p-4 sm:p-5 space-y-4 ${className}`}
     >
-      {/* Top Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8E6E1]">
+      {/* Top Header & Sub-Tab Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E8EC]">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-[#EDF1F5] text-[#536A82] border border-[#E8E6E1] shadow-2xs">
+          <div className="p-2 rounded-[8px] bg-[#EAF0F4] text-[#375A6B] border border-[#375A6B]/20">
             <Navigation className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#252A30] tracking-tight">
-                Rescue Operations & Deployment Lifecycle
-              </h3>
-            </div>
-            <p className="text-xs text-[#757B81]">
-              Track operational dispatch status, transition craft en route, and release units upon verified extraction.
+            <h3 className="text-base font-semibold text-[#18232D] tracking-tight">
+              Active Rescue Operations
+            </h3>
+            <p className="text-xs text-[#6B7782] mt-0.5">
+              Live craft execution lifecycle, route tracking, and verified mission debriefing.
             </p>
           </div>
         </div>
 
-        {/* Tab Switcher & Total Committed Metric */}
+        {/* View Switcher & Committed Resource Metric */}
         <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-          <div className="flex items-center p-0.5 bg-[#F7F6F2] rounded-lg border border-[#E8E6E1] text-xs">
+          <div className="flex items-center p-1 bg-[#F7F8FA] rounded-[10px] border border-[#E4E8EC] text-xs font-medium">
             <button
               onClick={() => setActiveTab('active')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] transition-colors cursor-pointer ${
                 activeTab === 'active'
-                  ? 'bg-white text-[#252A30] shadow-2xs'
-                  : 'text-[#757B81] hover:text-[#252A30]'
+                  ? 'bg-white text-[#18232D] font-semibold shadow-subtle'
+                  : 'text-[#6B7782] hover:text-[#18232D]'
               }`}
             >
-              <span>Active Operations</span>
+              <span>Active</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono tabular-nums ${
                   activeTab === 'active'
-                    ? 'bg-[#EDF1F5] text-[#536A82] font-bold'
-                    : 'bg-[#E8E6E1] text-[#757B81]'
+                    ? 'bg-[#EAF0F4] text-[#375A6B] font-bold'
+                    : 'bg-[#E4E8EC] text-[#6B7782]'
                 }`}
               >
                 {activeAssignments.length}
               </span>
             </button>
+
             <button
               onClick={() => setActiveTab('completed')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] transition-colors cursor-pointer ${
                 activeTab === 'completed'
-                  ? 'bg-white text-[#252A30] shadow-2xs'
-                  : 'text-[#757B81] hover:text-[#252A30]'
+                  ? 'bg-white text-[#18232D] font-semibold shadow-subtle'
+                  : 'text-[#6B7782] hover:text-[#18232D]'
               }`}
             >
               <span>Completed</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono tabular-nums ${
                   activeTab === 'completed'
-                    ? 'bg-[#E5EEE8] text-[#377D65] font-bold'
-                    : 'bg-[#E8E6E1] text-[#757B81]'
+                    ? 'bg-[#E9F3EF] text-[#258167] font-bold'
+                    : 'bg-[#E4E8EC] text-[#6B7782]'
                 }`}
               >
                 {completedAssignments.length}
@@ -247,8 +243,8 @@ export function ConfirmedAssignmentsPanel({
             </button>
           </div>
 
-          <div className="hidden lg:block bg-[#F7F6F2] border border-[#E8E6E1] px-2.5 py-1.5 rounded-lg font-mono text-[11px] text-[#757B81]">
-            Committed: <strong className="text-[#252A30]">{formatPkr(totalCommittedCost)}</strong>
+          <div className="hidden lg:block bg-[#F7F8FA] border border-[#E4E8EC] px-3 py-1.5 rounded-[10px] font-mono text-[11px] text-[#6B7782] tabular-nums">
+            Committed: <strong className="text-[#18232D]">{formatPkr(totalCommittedCost)}</strong>
           </div>
         </div>
       </div>
@@ -257,15 +253,15 @@ export function ConfirmedAssignmentsPanel({
       {activeTab === 'active' && (
         <div className="space-y-3">
           {activeAssignments.length === 0 ? (
-            <div className="p-8 text-center rounded-xl bg-[#F7F6F2]/70 border border-dashed border-[#E8E6E1]">
-              <ShieldCheck className="w-8 h-8 text-[#92979D] mx-auto mb-2" />
-              <p className="text-sm font-semibold text-[#252A30]">No active rescue missions currently in the field.</p>
-              <p className="text-xs text-[#757B81] max-w-md mx-auto mt-1">
-                Select an emergency from the Ranked Emergency Queue above and authorize a capable craft to deploy.
+            <div className="p-8 text-center rounded-xl bg-[#F7F8FA] border border-dashed border-[#E4E8EC]">
+              <ShieldCheck className="w-8 h-8 text-[#8B959E] mx-auto mb-2" />
+              <p className="text-sm font-semibold text-[#18232D]">No active rescue missions currently in the field.</p>
+              <p className="text-xs text-[#6B7782] max-w-md mx-auto mt-1 leading-relaxed">
+                Switch to the Allocate tab to select an emergency and authorize a capable craft to deploy.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[500px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {activeAssignments.map((assignment) => {
                 const incident = incidentsMap[assignment.incident_id];
                 const team = teamsMap[assignment.team_id];
@@ -275,56 +271,84 @@ export function ConfirmedAssignmentsPanel({
                 return (
                   <div
                     key={assignment.id}
-                    className={`p-4 rounded-xl border transition-all space-y-3 text-xs ${
+                    className={`p-4 rounded-xl border transition-colors space-y-3 text-xs bg-white ${
                       isEnRoute
-                        ? 'border-[#536A82]/30 bg-[#EDF1F5]/30 shadow-2xs'
-                        : 'border-[#E8E6E1] bg-white hover:border-[#D5D2CA]'
+                        ? 'border-[#375A6B]/30 shadow-subtle ring-1 ring-[#375A6B]/20'
+                        : 'border-[#E4E8EC] hover:border-[#CBD5E1]'
                     }`}
                   >
                     {/* Header: ID, Unit, Status */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#536A82] bg-[#EDF1F5] px-2 py-0.5 rounded-md border border-[#536A82]/20">
+                        <span className="font-mono text-xs font-semibold text-[#375A6B] bg-[#EAF0F4] px-2 py-0.5 rounded-[6px] border border-[#375A6B]/20">
                           MISSION-{assignment.id.slice(0, 8)}
                         </span>
-                        <span className="text-[#92979D]">•</span>
-                        <span className="font-bold text-[#252A30]">
+                        <span className="text-[#8B959E]">•</span>
+                        <span className="font-semibold text-[#18232D]">
                           {team ? team.name : `Unit ${assignment.team_id.slice(0, 8)}`}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <StatusBadge status={assignment.status} size="sm" />
-                      </div>
+                      <StatusBadge status={assignment.status} size="sm" />
                     </div>
 
                     {/* Target Incident & Location Details */}
-                    <div className="flex items-center gap-1.5 text-[#757B81] bg-[#F7F6F2] p-2 rounded-lg border border-[#E8E6E1]">
-                      <Radio className="w-3.5 h-3.5 text-[#536A82] shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[#6B7782] bg-[#F7F8FA] p-2.5 rounded-[8px] border border-[#E4E8EC]">
+                      <Radio className="w-3.5 h-3.5 text-[#375A6B] shrink-0" />
                       <span className="truncate">
-                        Target Emergency: <strong className="text-[#252A30] font-mono">{assignment.incident_id.slice(0, 8)}</strong>
-                        {incident ? ` (${incident.people_count} pax requiring extraction)` : ''}
+                        Target Emergency: <strong className="text-[#18232D] font-mono">{assignment.incident_id.slice(0, 8)}</strong>
+                        {incident ? ` (${incident.people_count ?? 1} pax requiring rescue)` : ''}
                       </span>
                     </div>
 
+                    {/* Mission Lifecycle Stage Indicator */}
+                    <div className="flex items-center justify-between p-2 rounded-[8px] bg-[#F7F8FA] border border-[#E4E8EC] text-[11px]">
+                      <span className="text-[#6B7782] font-medium">Lifecycle:</span>
+                      <div className="flex items-center gap-1 font-mono">
+                        <span
+                          className={`px-1.5 py-0.5 rounded-[4px] font-semibold ${
+                            assignment.status === 'assigned'
+                              ? 'bg-[#EAF0F4] text-[#375A6B]'
+                              : 'text-[#8B959E]'
+                          }`}
+                        >
+                          Assigned
+                        </span>
+                        <span className="text-[#8B959E]">→</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded-[4px] font-semibold ${
+                            assignment.status === 'en_route'
+                              ? 'bg-[#FFF4E3] text-[#A87528]'
+                              : 'text-[#8B959E]'
+                          }`}
+                        >
+                          En Route
+                        </span>
+                        <span className="text-[#8B959E]">→</span>
+                        <span className="px-1.5 py-0.5 rounded-[4px] text-[#8B959E]">
+                          Completed
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Mission Telemetry: ETA, Cost, Approved At */}
-                    <div className="grid grid-cols-3 gap-2 pt-1 text-[#757B81] text-[11px] border-t border-[#E8E6E1]">
+                    <div className="grid grid-cols-3 gap-2 pt-1 text-[#6B7782] text-[11px] border-t border-[#E4E8EC] tabular-nums">
                       <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-[#92979D]" />
+                        <Clock className="w-3 h-3 text-[#8B959E]" />
                         <span>
-                          ETA: <strong className="text-[#252A30] font-mono">~{assignment.estimated_eta_minutes ?? 30}m</strong>
+                          ETA: <strong className="text-[#18232D] font-mono">~{assignment.estimated_eta_minutes ?? 30}m</strong>
                         </span>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <Coins className="w-3 h-3 text-[#92979D]" />
+                        <Coins className="w-3 h-3 text-[#8B959E]" />
                         <span>
-                          Cost: <strong className="text-[#252A30] font-mono">{formatPkr(Number(assignment.estimated_cost) || 0)}</strong>
+                          Cost: <strong className="text-[#18232D] font-mono">{formatPkr(Number(assignment.estimated_cost) || 0)}</strong>
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 text-[#757B81]">
-                        <FileText className="w-3 h-3 text-[#92979D]" />
+                      <div className="flex items-center gap-1">
+                        <FileText className="w-3 h-3 text-[#8B959E]" />
                         <span className="font-mono">
                           {new Date(assignment.approved_at).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -336,21 +360,21 @@ export function ConfirmedAssignmentsPanel({
 
                     {/* Note if logged */}
                     {assignment.note && (
-                      <div className="p-2 rounded bg-[#FFF2DD]/70 border border-[#A87426]/30 text-[11px] text-[#A87426] font-medium">
+                      <div className="p-2 rounded-[6px] bg-[#FFF4E3] border border-[#A87528]/25 text-[11px] text-[#A87528] font-medium">
                         {assignment.note}
                       </div>
                     )}
 
-                    {/* ACTION BUTTONS */}
-                    <div className="pt-2 border-t border-[#E8E6E1] flex items-center justify-between gap-2">
-                      <div className="text-[11px] text-[#757B81] font-medium">
+                    {/* Action Controls */}
+                    <div className="pt-2 border-t border-[#E4E8EC] flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-[#6B7782]">
                         {isEnRoute ? (
-                          <span className="flex items-center gap-1.5 text-[#536A82]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#536A82] inline-block" />
-                            Craft En Route (Live Mission)
+                          <span className="flex items-center gap-1.5 text-[#375A6B] font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#375A6B] inline-block animate-pulse" />
+                            Craft En Route (In Progress)
                           </span>
                         ) : (
-                          <span className="text-[#757B81]">Awaiting craft departure</span>
+                          <span className="text-[#6B7782]">Awaiting craft departure</span>
                         )}
                       </div>
 
@@ -359,8 +383,8 @@ export function ConfirmedAssignmentsPanel({
                           <button
                             onClick={() => handleStartOperation(assignment.id)}
                             disabled={isStarting}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#536A82] hover:bg-[#40566D] text-white transition-all shadow-2xs disabled:opacity-50"
-                            title="Signal craft departure: changes assignment to en_route and incident to in_progress"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-semibold bg-[#375A6B] hover:bg-[#294858] text-white transition-colors cursor-pointer disabled:opacity-50"
+                            title="Signal craft departure: marks assignment en_route"
                           >
                             <Play className="w-3 h-3 fill-current" />
                             <span>{isStarting ? 'Starting...' : 'Start Operation'}</span>
@@ -368,8 +392,8 @@ export function ConfirmedAssignmentsPanel({
                         ) : (
                           <button
                             onClick={() => handleOpenCompletionModal(assignment)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#377D65] hover:bg-[#2F6B56] text-white transition-all shadow-2xs"
-                            title="Open verified completion dialog to mark evacuees assisted and release rescue team"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-semibold bg-[#258167] hover:bg-[#1f6b55] text-white transition-colors cursor-pointer"
+                            title="Open completion modal to record evacuees and release team"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Mark Completed</span>
@@ -389,60 +413,57 @@ export function ConfirmedAssignmentsPanel({
       {activeTab === 'completed' && (
         <div className="space-y-3">
           {completedAssignments.length === 0 ? (
-            <div className="p-8 text-center rounded-xl bg-[#F7F6F2]/70 border border-dashed border-[#E8E6E1]">
-              <Clock className="w-8 h-8 text-[#92979D] mx-auto mb-2" />
-              <p className="text-sm font-semibold text-[#252A30]">No completed missions recorded yet.</p>
-              <p className="text-xs text-[#757B81] max-w-md mx-auto mt-1">
-                Completed rescue operations with timestamps and evacuee delivery receipts will appear here.
+            <div className="p-8 text-center rounded-xl bg-[#F7F8FA] border border-dashed border-[#E4E8EC]">
+              <Clock className="w-8 h-8 text-[#8B959E] mx-auto mb-2" />
+              <p className="text-sm font-semibold text-[#18232D]">No completed missions recorded yet.</p>
+              <p className="text-xs text-[#6B7782] max-w-md mx-auto mt-1 leading-relaxed">
+                Completed rescue operations with arrival timestamps and shelter delivery records will appear here.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[500px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[600px] overflow-y-auto pr-1">
               {completedAssignments.map((assignment) => {
-                const incident = incidentsMap[assignment.incident_id];
                 const team = teamsMap[assignment.team_id];
                 const shelter = shelters.find((s) => s.id === assignment.shelter_id);
 
                 return (
                   <div
                     key={assignment.id}
-                    className="p-4 rounded-xl border border-[#E8E6E1] bg-[#F7F6F2]/40 hover:bg-white hover:border-[#D5D2CA] transition-all space-y-2.5 text-xs shadow-2xs"
+                    className="p-4 rounded-xl border border-[#E4E8EC] bg-[#F7F8FA] space-y-2.5 text-xs shadow-subtle"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#377D65] bg-[#E5EEE8] px-2 py-0.5 rounded-md border border-[#377D65]/20">
+                        <span className="font-mono text-xs font-semibold text-[#258167] bg-[#E9F3EF] px-2 py-0.5 rounded-[6px] border border-[#258167]/20">
                           MISSION-{assignment.id.slice(0, 8)}
                         </span>
-                        <span className="text-[#92979D]">•</span>
-                        <span className="font-bold text-[#252A30]">
+                        <span className="text-[#8B959E]">•</span>
+                        <span className="font-semibold text-[#18232D]">
                           {team ? team.name : `Unit ${assignment.team_id.slice(0, 8)}`}
                         </span>
                       </div>
 
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#E5EEE8] text-[#377D65] border border-[#377D65]/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-semibold bg-[#E9F3EF] text-[#258167] border border-[#258167]/20">
                         <Check className="w-3 h-3" />
                         Completed
                       </span>
                     </div>
 
-                    {/* Target & Resolution details */}
-                    <div className="text-[#757B81] text-[11px] space-y-1">
+                    <div className="text-[#6B7782] text-[11px] space-y-1">
                       <div>
-                        Target Emergency: <strong className="text-[#252A30] font-mono">{assignment.incident_id.slice(0, 8)}</strong>
+                        Target Emergency: <strong className="text-[#18232D] font-mono">{assignment.incident_id.slice(0, 8)}</strong>
                       </div>
                       {shelter && (
-                        <div className="flex items-center gap-1.5 text-[#536A82] font-medium">
-                          <Building className="w-3 h-3 text-[#536A82]" />
-                          <span>Delivered to Shelter: <strong className="text-[#252A30]">{shelter.name}</strong></span>
+                        <div className="flex items-center gap-1.5 text-[#375A6B] font-medium">
+                          <Building className="w-3 h-3 text-[#375A6B]" />
+                          <span>Delivered to Shelter: <strong className="text-[#18232D]">{shelter.name}</strong></span>
                         </div>
                       )}
                     </div>
 
-                    {/* Completion Timestamps and Cost */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E8E6E1] text-[11px] text-[#757B81]">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E4E8EC] text-[11px] text-[#6B7782] tabular-nums">
                       <div>
                         Completed:{' '}
-                        <strong className="text-[#252A30] font-mono">
+                        <strong className="text-[#18232D] font-mono">
                           {assignment.completed_at
                             ? new Date(assignment.completed_at).toLocaleTimeString([], {
                                 hour: '2-digit',
@@ -452,16 +473,12 @@ export function ConfirmedAssignmentsPanel({
                         </strong>
                       </div>
                       <div className="text-right">
-                        Final Cost: <strong className="text-[#252A30] font-mono">{formatPkr(Number(assignment.estimated_cost) || 0)}</strong>
+                        Cost:{' '}
+                        <strong className="text-[#18232D] font-mono">
+                          {formatPkr(Number(assignment.estimated_cost) || 0)}
+                        </strong>
                       </div>
                     </div>
-
-                    {/* Note */}
-                    {assignment.note && (
-                      <div className="p-2 rounded bg-white border border-[#E8E6E1] text-[11px] text-[#252A30]">
-                        {assignment.note}
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -470,203 +487,162 @@ export function ConfirmedAssignmentsPanel({
         </div>
       )}
 
-      {/* MISSION COMPLETION MODAL */}
+      {/* Mission Completion Modal */}
       {completingAssignment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-[#E8E6E1] shadow-xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
+        >
+          <div
+            className="relative w-full max-w-lg bg-white rounded-xl shadow-xl border border-[#E4E8EC] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="p-5 border-b border-[#E8E6E1] flex items-center justify-between bg-[#F7F6F2]">
+            <div className="flex items-center justify-between p-5 border-b border-[#E4E8EC] bg-[#F7F8FA]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-[#E5EEE8] text-[#377D65] border border-[#377D65]/20">
+                <div className="p-2 rounded-[8px] bg-[#E9F3EF] text-[#258167]">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-[#252A30] tracking-tight">
-                    Authorize Mission Completion
-                  </h4>
-                  <p className="text-xs text-[#757B81] font-mono">
-                    MISSION-{completingAssignment.id.slice(0, 8)} • {targetTeam?.name}
-                  </p>
+                  <h3 className="text-base font-semibold text-[#18232D]">Verified Mission Completion</h3>
+                  <p className="text-xs text-[#6B7782]">Debrief extraction and release unit</p>
                 </div>
               </div>
-
               <button
                 onClick={() => setCompletingAssignment(null)}
-                className="p-1.5 rounded-lg text-[#92979D] hover:text-[#252A30] hover:bg-[#E8E6E1] transition-colors"
+                className="p-1 rounded-[6px] text-[#8B959E] hover:text-[#18232D] hover:bg-[#E4E8EC] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body Form */}
+            {/* Modal Form */}
             <form onSubmit={handleConfirmCompletion} className="p-5 space-y-4 text-xs">
               {dialogError && (
-                <div className="p-3 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-[#B74349] flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-[#B74349] shrink-0 mt-0.5" />
+                <div className="p-3 rounded-[8px] bg-[#FBECEE] border border-[#BC414A]/25 text-[#BC414A] flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{dialogError}</span>
                 </div>
               )}
 
-              {/* Requirement 1: Team Leader Confirmation Checkbox */}
-              <div className="p-3.5 rounded-xl bg-[#EDF1F5]/60 border border-[#536A82]/30 space-y-1.5">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={leaderConfirmed}
-                    onChange={(e) => setLeaderConfirmed(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 text-[#536A82] rounded border-[#E8E6E1] focus:ring-[#536A82]"
-                  />
-                  <div>
-                    <span className="font-bold text-[#252A30] block">
-                      Rescue Team Leader Confirmation Received
-                    </span>
-                    <span className="text-[11px] text-[#757B81]">
-                      On-scene leader confirmed via radio / satellite relay that search and extraction is completed.
-                    </span>
-                  </div>
-                </label>
+              {/* Target Details */}
+              <div className="p-3 rounded-[8px] bg-[#F7F8FA] border border-[#E4E8EC] space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-[#6B7782]">Emergency Target:</span>
+                  <strong className="font-mono text-[#18232D]">{completingAssignment.incident_id.slice(0, 8)}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6B7782]">Rescue Unit:</span>
+                  <strong className="text-[#18232D]">{targetTeam?.name || 'Unit'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6B7782]">Reported Victims:</span>
+                  <strong className="text-[#18232D] font-mono">{totalIncidentPeople} persons</strong>
+                </div>
               </div>
 
-              {/* Requirement 2: People Assisted / Partial Rescue Handling */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-[#252A30] flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#536A82]" />
-                    <span>Evacuees Safely Assisted in Mission:</span>
-                  </label>
-                  <span className="font-mono text-[#757B81]">
-                    Incident Total: <strong>{totalIncidentPeople} pax</strong>
+              {/* Leader Confirmation Checkbox */}
+              <label className="flex items-start gap-2.5 p-3 rounded-[8px] border border-[#E4E8EC] bg-white cursor-pointer hover:bg-[#F7F8FA] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={leaderConfirmed}
+                  onChange={(e) => setLeaderConfirmed(e.target.checked)}
+                  className="mt-0.5 rounded text-[#375A6B] focus:ring-[#375A6B]"
+                />
+                <div>
+                  <strong className="block font-semibold text-[#18232D]">Team Leader On-Scene Confirmation</strong>
+                  <span className="text-[#6B7782] text-[11px] leading-relaxed">
+                    Confirm that field craft has made contact and extracted evacuees.
                   </span>
                 </div>
+              </label>
 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={1}
-                    max={500}
-                    value={assistedCount}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      const safeVal = isNaN(val) ? 1 : Math.max(1, val);
-                      setAssistedCount(safeVal);
-                      if (selectedShelterId) {
-                        setShelterArrivalCount(safeVal);
-                      }
-                    }}
-                    className="w-24 px-3 py-1.5 border border-[#E8E6E1] rounded-lg text-[#252A30] font-bold focus:ring-1 focus:ring-[#536A82] focus:outline-none"
-                  />
-                  <div className="flex-1">
-                    {!isPartialRescue ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#377D65] bg-[#E5EEE8] px-2 py-1 rounded-md border border-[#377D65]/20">
-                        <Check className="w-3 h-3" />
-                        Full Rescue: Incident will be marked RESOLVED.
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#A87426] bg-[#FFF2DD] px-2 py-1 rounded-md border border-[#A87426]/20">
-                        <AlertTriangle className="w-3 h-3 text-[#A87426]" />
-                        Partial Rescue: {totalIncidentPeople - assistedCount} evacuees remain. Incident stays OPEN.
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Requirement 3: Destination Shelter Selection */}
-              <div className="space-y-1.5 pt-2 border-t border-[#E8E6E1]">
-                <label className="font-bold text-[#252A30] flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-[#536A82]" />
-                  <span>Destination Shelter (Optional):</span>
+              {/* Assisted People Count */}
+              <div className="space-y-1">
+                <label className="font-semibold text-[#18232D] block">
+                  Evacuees Successfully Assisted (Pax):
                 </label>
-                <select
-                  value={selectedShelterId}
-                  onChange={(e) => {
-                    setSelectedShelterId(e.target.value);
-                    if (e.target.value) {
-                      setShelterArrivalCount(assistedCount);
-                    } else {
-                      setShelterArrivalCount(0);
-                    }
-                  }}
-                  className="w-full px-3 py-1.5 border border-[#E8E6E1] rounded-lg text-[#252A30] bg-white focus:ring-1 focus:ring-[#536A82] focus:outline-none text-xs"
-                >
-                  <option value="">No Shelter (Field triage / dry-ground extraction)</option>
-                  {shelters.map((s) => {
-                    const remaining = s.capacity - s.occupied;
-                    return (
-                      <option key={s.id} value={s.id}>
-                        {s.name} — {s.occupied}/{s.capacity} occupied ({remaining} spots available)
-                      </option>
-                    );
-                  })}
-                </select>
-
-                {/* If shelter selected, ask for confirmation of arrived evacuees */}
-                {selectedShelterId && (
-                  <div className="mt-2 p-2.5 rounded-lg bg-[#F7F6F2] border border-[#E8E6E1] flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-[#757B81]">Evacuees delivered to shelter:</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={assistedCount}
-                      value={shelterArrivalCount}
-                      onChange={(e) => setShelterArrivalCount(parseInt(e.target.value, 10) || 0)}
-                      className="w-20 px-2 py-1 border border-[#E8E6E1] rounded-md text-xs font-bold text-[#252A30] text-center"
-                    />
-                  </div>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={assistedCount}
+                  onChange={(e) => setAssistedCount(parseInt(e.target.value) || 0)}
+                  className="w-full px-3 py-2 rounded-[10px] border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] text-xs focus:outline-none focus:ring-1 focus:ring-[#375A6B] font-mono"
+                />
+                {isPartialRescue && (
+                  <p className="text-[11px] text-[#A87528]">
+                    Notice: Reported count is less than incident total ({totalIncidentPeople} pax).
+                  </p>
                 )}
               </div>
 
-              {/* Requirement 4: Team Ready for Next Assignment */}
-              <div className="pt-2 border-t border-[#E8E6E1]">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={teamReady}
-                    onChange={(e) => setTeamReady(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 text-[#536A82] rounded border-[#E8E6E1] focus:ring-[#536A82]"
-                  />
-                  <div>
-                    <span className="font-bold text-[#252A30] block">
-                      Team ready for next assignment
-                    </span>
-                    <span className="text-[11px] text-[#757B81]">
-                      {teamReady
-                        ? 'Unit will immediately return to AVAILABLE pool for subsequent dispatches.'
-                        : 'Unit will remain BUSY for crew rest, equipment restocking, or decontamination.'}
-                    </span>
-                  </div>
+              {/* Destination Shelter Selection */}
+              <div className="space-y-1">
+                <label className="font-semibold text-[#18232D] block">
+                  Delivery Shelter Facility (Optional):
                 </label>
+                <select
+                  value={selectedShelterId}
+                  onChange={(e) => setSelectedShelterId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-[10px] border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] text-xs focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
+                >
+                  <option value="">No shelter drop-off (On-site staging/field care)</option>
+                  {shelters.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.occupied}/{s.capacity} occupied • {s.capacity - s.occupied} available)
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Requirement 5: Resolution Notes */}
-              <div className="space-y-1 pt-1">
-                <label className="font-bold text-[#757B81]">Dispatcher Resolution Log / Notes (Optional):</label>
+              {/* Release Team to Available Status */}
+              <label className="flex items-center gap-2 p-2.5 rounded-[8px] bg-[#F7F8FA] border border-[#E4E8EC] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={teamReady}
+                  onChange={(e) => setTeamReady(e.target.checked)}
+                  className="rounded text-[#375A6B] focus:ring-[#375A6B]"
+                />
+                <span className="text-[11px] text-[#18232D] font-medium">
+                  Release craft & team back to <strong>Available</strong> fleet status immediately
+                </span>
+              </label>
+
+              {/* Resolution Notes */}
+              <div className="space-y-1">
+                <label className="font-semibold text-[#18232D] block">
+                  Mission Debrief Notes (Optional):
+                </label>
                 <textarea
                   rows={2}
+                  placeholder="e.g. Evacuated 4 victims via shallow-draft zodiac to designated shelter..."
                   value={resolutionNotes}
                   onChange={(e) => setResolutionNotes(e.target.value)}
-                  placeholder="e.g. All evacuees in stable condition; transferred to rescue ambulancier."
-                  className="w-full px-3 py-1.5 border border-[#E8E6E1] rounded-lg text-[#252A30] text-xs focus:ring-1 focus:ring-[#536A82] focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-[10px] border border-[#E4E8EC] bg-[#F7F8FA] text-[#18232D] text-xs focus:outline-none focus:ring-1 focus:ring-[#375A6B]"
                 />
               </div>
 
               {/* Modal Actions */}
-              <div className="pt-3 border-t border-[#E8E6E1] flex items-center justify-end gap-2.5">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E4E8EC]">
                 <button
                   type="button"
                   onClick={() => setCompletingAssignment(null)}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-[#757B81] hover:bg-[#F7F6F2] transition-colors"
+                  className="px-4 py-2 rounded-[10px] text-xs font-semibold text-[#6B7782] hover:bg-[#F7F8FA] border border-[#E4E8EC] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !leaderConfirmed}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#377D65] hover:bg-[#2F6B56] text-white transition-all shadow-2xs disabled:opacity-50"
+                  className={`px-4 py-2 rounded-[10px] text-xs font-semibold transition-colors ${
+                    isSubmitting || !leaderConfirmed
+                      ? 'bg-[#E4E8EC] text-[#8B959E] cursor-not-allowed'
+                      : 'bg-[#258167] hover:bg-[#1f6b55] text-white shadow-subtle'
+                  }`}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? 'Recording Resolution...' : 'Finalize & Release'}</span>
+                  {isSubmitting ? 'Recording Completion...' : 'Complete & Close Mission'}
                 </button>
               </div>
             </form>

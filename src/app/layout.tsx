@@ -13,10 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FirstReach — Disaster Response Intelligence Platform",
+  title: "RAABTA — Disaster Response & Coordination",
   description:
-    "Prioritize flood emergencies by life-threat urgency, unmask silent high-risk households, and allocate rescue assets with operational intelligence.",
+    "Connecting vulnerable people, emergency coordinators, and rescue resources before situations become critical.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
+
+import { AuthProvider } from "@/lib/auth/AuthContext";
 
 export default function RootLayout({
   children,
@@ -28,12 +33,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        {/* Emergency styling link injection */}
-        <link href="https://jsdelivr.net" rel="stylesheet" />
-      </head>
-      <body className="min-h-full flex flex-col font-sans bg-[#F7F6F2] text-[#252A30]">
-        {children}
+      <body className="min-h-full flex flex-col font-sans bg-[#F7F8FA] text-[#18232D]">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

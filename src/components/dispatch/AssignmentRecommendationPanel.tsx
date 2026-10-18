@@ -5,11 +5,9 @@ import {
   DbIncident,
   DbRescueTeam,
   RecommendedAssignment,
-  TeamSuitability,
 } from '@/lib/dispatch/types';
 import { formatPkr } from '@/lib/dispatch/cost';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import {
   Sparkles,
   ShieldCheck,
@@ -18,18 +16,15 @@ import {
   Coins,
   Send,
   AlertTriangle,
-  HelpCircle,
   Scale,
   Users,
-  Compass,
   AlertOctagon,
-  ChevronDown,
   Anchor,
   Truck,
   LifeBuoy,
   Check,
-  ArrowRight,
-  Info,
+  Shield,
+  Layers,
 } from 'lucide-react';
 
 interface AssignmentRecommendationPanelProps {
@@ -39,6 +34,7 @@ interface AssignmentRecommendationPanelProps {
   onSelectTeam: (team: DbRescueTeam) => void;
   onApproveDispatch: (team: DbRescueTeam, overrideReason?: string) => void;
   isDispatching?: boolean;
+  onToggleFleetDrawer?: () => void;
   className?: string;
 }
 
@@ -49,6 +45,7 @@ export function AssignmentRecommendationPanel({
   onSelectTeam,
   onApproveDispatch,
   isDispatching = false,
+  onToggleFleetDrawer,
   className = '',
 }: AssignmentRecommendationPanelProps) {
   const [overrideReason, setOverrideReason] = useState('');
@@ -57,16 +54,15 @@ export function AssignmentRecommendationPanel({
   if (!selectedIncident) {
     return (
       <div
-        className={`p-8 rounded-2xl border border-dashed border-[#E8E6E1] bg-white text-center text-[#757B81] space-y-3 shadow-2xs ${className}`}
+        className={`p-8 rounded-xl border border-dashed border-[#E4E8EC] bg-white text-center text-[#6B7782] space-y-3 shadow-subtle ${className}`}
       >
-        <div className="w-12 h-12 rounded-xl bg-[#F7F6F2] flex items-center justify-center mx-auto text-[#757B81]">
+        <div className="w-12 h-12 rounded-[10px] bg-[#F7F8FA] border border-[#E4E8EC] flex items-center justify-center mx-auto text-[#6B7782]">
           <Scale className="w-6 h-6" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-[#252A30]">Select an Emergency from Queue</h4>
-          <p className="text-xs text-[#757B81] max-w-sm mx-auto mt-1 leading-relaxed">
-            Click on any incident in the Ranked Emergency Queue to evaluate algorithmic asset matching
-            based on life-threat urgency, mandatory craft capabilities, and simulated arrival.
+          <h4 className="text-sm font-semibold text-[#18232D]">Select an Emergency from Queue</h4>
+          <p className="text-xs text-[#6B7782] max-w-sm mx-auto mt-1 leading-relaxed">
+            Select an incident in the emergency queue to evaluate algorithmic unit matching based on threat priority, required craft capabilities, and estimated arrival windows.
           </p>
         </div>
       </div>
@@ -96,117 +92,114 @@ export function AssignmentRecommendationPanel({
   const getTeamIcon = (type?: string) => {
     switch (type) {
       case 'boat':
-        return <Anchor className="w-4 h-4 text-[#536A82]" />;
+        return <Anchor className="w-4 h-4 text-[#375A6B]" />;
       case 'vehicle':
-        return <Truck className="w-4 h-4 text-[#252A30]" />;
+        return <Truck className="w-4 h-4 text-[#18232D]" />;
       case 'medical':
-        return <LifeBuoy className="w-4 h-4 text-[#B74349]" />;
+        return <LifeBuoy className="w-4 h-4 text-[#BC414A]" />;
       default:
-        return <LifeBuoy className="w-4 h-4 text-[#536A82]" />;
+        return <LifeBuoy className="w-4 h-4 text-[#375A6B]" />;
     }
   };
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E8E6E1] shadow-sm p-5 sm:p-6 space-y-5 transition-all ${className}`}
+      className={`bg-white rounded-xl border border-[#E4E8EC] shadow-subtle p-4 sm:p-5 space-y-4 transition-all ${className}`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1]">
+      {/* Panel Header with subtle "Life Safety First" indicator */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#E4E8EC]">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-[#EDF1F5] text-[#536A82] border border-[#E8E6E1] shadow-2xs">
+          <div className="p-2 rounded-[8px] bg-[#EAF0F4] text-[#375A6B] border border-[#375A6B]/20">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-base font-bold text-[#252A30] tracking-tight">
-                Intelligent Allocation Engine
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-[#18232D] tracking-tight">
+                Rescue Recommendation
               </h3>
-              <span className="w-2 h-2 rounded-full bg-[#536A82] inline-block" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-[#E9F3EF] text-[#258167] border border-[#258167]/25 text-[10px] font-semibold">
+                <Shield className="w-2.5 h-2.5" />
+                Life Safety First
+              </span>
             </div>
-            <p className="text-xs text-[#757B81]">Algorithmic life-first match recommendation</p>
           </div>
         </div>
 
         {recommendation ? (
-          <div className="px-3 py-1 rounded-md text-xs font-bold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/30 shadow-2xs font-mono">
-            {recommendation.suitability.suitabilityScore}% MATCH
+          <div className="px-2.5 py-1 rounded-[6px] text-xs font-semibold bg-[#EAF0F4] text-[#375A6B] border border-[#375A6B]/25 font-mono tabular-nums">
+            {recommendation.suitability.suitabilityScore}% Match
           </div>
         ) : (
-          <div className="px-3 py-1 rounded-md text-xs font-semibold bg-[#FFF2DD] text-[#A87426] border border-[#A87426]/30">
-            No Automated Match
+          <div className="px-2.5 py-1 rounded-[6px] text-xs font-medium bg-[#FFF4E3] text-[#A87528] border border-[#A87528]/25">
+            Manual Review
           </div>
         )}
       </div>
 
-      {/* Selected Incident Summary Banner */}
-      <div className="p-4 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] space-y-2 text-xs">
+      {/* 1. Selected Emergency & Urgency Summary */}
+      <div className="p-3.5 rounded-[10px] bg-[#F7F8FA] border border-[#E4E8EC] space-y-2 text-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-bold text-[#252A30]">
-              {selectedIncident.id}
+            <span className="font-mono font-semibold text-[#18232D]">
+              {selectedIncident.id.length > 10 ? selectedIncident.id.slice(0, 8) : selectedIncident.id}
             </span>
-            <span className="text-[#92979D]">•</span>
-            <span className="font-medium text-[#757B81]">
-              Status: <strong className="capitalize text-[#252A30]">{selectedIncident.status}</strong>
+            <span className="text-[#8B959E]">•</span>
+            <span className="text-[#6B7782] capitalize">
+              Status: <strong className="text-[#18232D] font-medium">{selectedIncident.status}</strong>
             </span>
           </div>
           <PriorityBadge score={selectedIncident.priority_score ?? 0} size="sm" />
         </div>
 
-        <p className="text-[#252A30] font-normal leading-relaxed">
-          {selectedIncident.details || selectedIncident.priority_reason || 'No description provided.'}
+        <p className="text-[#18232D] leading-relaxed font-normal">
+          {selectedIncident.details || selectedIncident.priority_reason || 'Emergency rescue report logged in flood inundation sector.'}
         </p>
 
-        {/* Priority Explanation */}
         {selectedIncident.priority_reason && (
-          <div className="p-2.5 rounded-lg bg-white border border-[#E8E6E1] text-[11px] text-[#757B81] leading-normal">
-            <span className="font-bold text-[#252A30]">Triage Rationale: </span>
+          <div className="p-2 rounded-[6px] bg-white border border-[#E4E8EC] text-[11px] text-[#6B7782] leading-normal">
+            <strong className="text-[#18232D]">Triage Rationale: </strong>
             {selectedIncident.priority_reason}
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-4 text-[#757B81] text-[11px] pt-1 border-t border-[#E8E6E1]">
-          <span className="flex items-center gap-1 font-semibold text-[#252A30]">
-            <Users className="w-3.5 h-3.5 text-[#757B81]" />
-            {peopleCount} victims requiring extraction
+        <div className="flex flex-wrap items-center gap-3 text-[#6B7782] text-[11px] pt-1 border-t border-[#E4E8EC]">
+          <span className="flex items-center gap-1 font-medium text-[#18232D] tabular-nums">
+            <Users className="w-3.5 h-3.5 text-[#6B7782]" />
+            {peopleCount} persons requiring rescue
           </span>
           <span>
-            Flood Severity:{' '}
-            <strong className="text-[#252A30]">{selectedIncident.flood_severity ?? 0}/3</strong>
+            Flood Level: <strong className="text-[#18232D]">{selectedIncident.flood_severity ?? 0}/3</strong>
           </span>
           <span>
-            Verification:{' '}
-            <strong className="capitalize text-[#252A30]">
-              {selectedIncident.verification_status}
-            </strong>
+            Verification: <strong className="capitalize text-[#18232D]">{selectedIncident.verification_status}</strong>
           </span>
         </div>
       </div>
 
-      {/* Matched Rescue Team Card */}
+      {/* 2 & 3. Recommended Capable Team & Estimated Arrival Time */}
       {selectedTeam ? (
-        <div className="p-4 rounded-xl border border-[#E8E6E1] bg-white space-y-3.5 text-xs shadow-2xs">
+        <div className="p-3.5 rounded-[10px] border border-[#E4E8EC] bg-white space-y-3 text-xs">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2.5">
-              <div className="p-2 rounded-xl bg-[#F7F6F2] border border-[#E8E6E1] shadow-2xs mt-0.5">
+              <div className="p-2 rounded-[8px] bg-[#F7F8FA] border border-[#E4E8EC] mt-0.5">
                 {getTeamIcon(selectedTeam.team_type)}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#536A82]">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#375A6B]">
                     {isSelectedTeamOverride ? 'Manually Selected Unit' : 'Recommended Rescue Unit'}
                   </span>
                   {isSelectedTeamOverride && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-[#FFF2DD] text-[#A87426] border border-[#A87426]/30">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-[4px] bg-[#FFF4E3] text-[#A87528] border border-[#A87528]/25">
                       Override
                     </span>
                   )}
                 </div>
-                <h4 className="text-sm font-bold text-[#252A30] mt-0.5">
+                <h4 className="text-sm font-semibold text-[#18232D] mt-0.5">
                   {selectedTeam.name}
                 </h4>
-                <p className="text-[11px] text-[#757B81]">
-                  Type: <strong className="capitalize text-[#252A30]">{selectedTeam.team_type}</strong> • Single-Trip Capacity: {selectedTeam.capacity} pax
+                <p className="text-[11px] text-[#6B7782]">
+                  Type: <strong className="capitalize text-[#18232D]">{selectedTeam.team_type}</strong> • Single-Trip Capacity: {selectedTeam.capacity} pax
                 </p>
               </div>
             </div>
@@ -214,56 +207,56 @@ export function AssignmentRecommendationPanel({
             <div className="text-right font-mono tabular-nums shrink-0">
               {etaMinutes !== null ? (
                 <>
-                  <span className="text-base font-bold text-[#536A82] block">
+                  <span className="text-base font-semibold text-[#375A6B] block">
                     ~{etaMinutes} min
                   </span>
-                  <span className="text-[10px] text-[#757B81] font-sans font-medium">Simulated ETA</span>
+                  <span className="text-[10px] text-[#6B7782] font-sans font-medium">Simulated ETA</span>
                 </>
               ) : (
                 <>
-                  <span className="text-xs font-semibold text-[#A87426] block">Unverified Location</span>
-                  <span className="text-[10px] text-[#92979D] font-sans">Unknown Distance</span>
+                  <span className="text-xs font-semibold text-[#A87528] block">Unverified Location</span>
+                  <span className="text-[10px] text-[#8B959E] font-sans">Unknown Distance</span>
                 </>
               )}
             </div>
           </div>
 
-          {/* Capacity Utilization Progress Bar */}
-          <div className="space-y-1 bg-[#F7F6F2] p-2.5 rounded-lg border border-[#E8E6E1]">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-[#757B81] font-medium">Capacity Utilization:</span>
-              <span className="font-bold text-[#252A30]">
+          {/* Capacity Utilization */}
+          <div className="space-y-1 bg-[#F7F8FA] p-2.5 rounded-[8px] border border-[#E4E8EC]">
+            <div className="flex justify-between text-[11px] tabular-nums">
+              <span className="text-[#6B7782] font-medium">Capacity Utilization:</span>
+              <span className="font-semibold text-[#18232D]">
                 {peopleCount} of {teamCapacity} pax ({capacityPct}%)
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-[#E8E6E1] overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#E4E8EC] overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  capacityPct > 80 ? 'bg-[#A87426]' : 'bg-[#536A82]'
+                className={`h-full rounded-full transition-all duration-200 ${
+                  capacityPct > 80 ? 'bg-[#A87528]' : 'bg-[#258167]'
                 }`}
                 style={{ width: `${capacityPct}%` }}
               />
             </div>
           </div>
 
-          {/* Life-First Validation Checklist */}
-          <div className="grid grid-cols-2 gap-2 text-[11px] bg-[#F7F6F2] p-2.5 rounded-lg border border-[#E8E6E1]">
-            <div className="flex items-center gap-1.5 text-[#252A30]">
-              <div className="w-4 h-4 rounded-full bg-[#E5EEE8] text-[#377D65] flex items-center justify-center shrink-0">
+          {/* 5. Capability Validation Checklist */}
+          <div className="grid grid-cols-2 gap-2 text-[11px] bg-[#F7F8FA] p-2.5 rounded-[8px] border border-[#E4E8EC]">
+            <div className="flex items-center gap-1.5 text-[#18232D]">
+              <div className="w-4 h-4 rounded-full bg-[#E9F3EF] text-[#258167] flex items-center justify-center shrink-0">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </div>
               <span>Capacity Sufficient ({teamCapacity} $\ge$ {peopleCount})</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[#252A30]">
-              <div className="w-4 h-4 rounded-full bg-[#E5EEE8] text-[#377D65] flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-1.5 text-[#18232D]">
+              <div className="w-4 h-4 rounded-full bg-[#E9F3EF] text-[#258167] flex items-center justify-center shrink-0">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </div>
               <span>Flood-Capable Gear</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[#252A30]">
-              <div className="w-4 h-4 rounded-full bg-[#E5EEE8] text-[#377D65] flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-1.5 text-[#18232D]">
+              <div className="w-4 h-4 rounded-full bg-[#E9F3EF] text-[#258167] flex items-center justify-center shrink-0">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </div>
               <span>
@@ -271,88 +264,95 @@ export function AssignmentRecommendationPanel({
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[#252A30]">
-              <div
-                className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
-                  isPotentiallyTooLate
-                    ? 'bg-[#FAE8E7] text-[#B74349]'
-                    : 'bg-[#E5EEE8] text-[#377D65]'
-                }`}
-              >
-                {isPotentiallyTooLate ? (
-                  <AlertOctagon className="w-2.5 h-2.5 stroke-[3]" />
-                ) : (
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                )}
-              </div>
-              <span className={isPotentiallyTooLate ? 'text-[#B74349] font-bold' : ''}>
-                {isPotentiallyTooLate ? 'Risks Late Arrival' : 'Arrives Before Harm'}
-              </span>
+            <div className="flex items-center gap-1.5 text-[#18232D]">
+              {etaMinutes === null || selectedIncident.lat === null || selectedIncident.lng === null ? (
+                <>
+                  <div className="w-4 h-4 rounded-full bg-[#FFF4E3] text-[#A87528] flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-2.5 h-2.5" />
+                  </div>
+                  <span className="text-[#A87528] font-medium">ETA / Route Pending</span>
+                </>
+              ) : isPotentiallyTooLate ? (
+                <>
+                  <div className="w-4 h-4 rounded-full bg-[#FBECEE] text-[#BC414A] flex items-center justify-center shrink-0">
+                    <AlertOctagon className="w-2.5 h-2.5 stroke-[3]" />
+                  </div>
+                  <span className="text-[#BC414A] font-semibold">Risks Late Arrival</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-4 h-4 rounded-full bg-[#E9F3EF] text-[#258167] flex items-center justify-center shrink-0">
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </div>
+                  <span>Arrives Before Harm</span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Lateness Warnings */}
+          {/* Lateness Warning */}
           {isPotentiallyTooLate && (
-            <div className="p-3 rounded-xl bg-[#FAE8E7] border border-[#B74349]/30 text-[#B74349] text-xs flex items-start gap-2.5 shadow-2xs">
-              <AlertOctagon className="w-5 h-5 text-[#B74349] shrink-0 mt-0.5" />
+            <div className="p-3 rounded-[8px] bg-[#FBECEE] border border-[#BC414A]/25 text-[#BC414A] text-xs flex items-start gap-2.5">
+              <AlertOctagon className="w-4 h-4 text-[#BC414A] shrink-0 mt-0.5" />
               <div>
-                <strong className="block font-bold">Potentially too late — requires dispatcher escalation!</strong>
-                <span className="text-[11px] leading-relaxed">
-                  Simulated arrival (~{etaMinutes}m) exceeds estimated time to harm (~{selectedIncident.minutes_to_harm}m).
-                  Review air support or immediate field escalation.
+                <strong className="block font-semibold">Potentially too late — dispatcher escalation recommended</strong>
+                <span className="text-[11px] leading-relaxed text-[#6B7782]">
+                  Simulated arrival (~{etaMinutes}m) approaches or exceeds estimated time to harm (~{selectedIncident.minutes_to_harm}m).
                 </span>
               </div>
             </div>
           )}
 
           {activeSuitability?.warning && !isPotentiallyTooLate && (
-            <div className="p-2.5 rounded-lg bg-[#FFF2DD] border border-[#A87426]/30 text-[#A87426] text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#A87426] shrink-0" />
+            <div className="p-2.5 rounded-[8px] bg-[#FFF4E3] border border-[#A87528]/25 text-[#A87528] text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#A87528] shrink-0" />
               <span>{activeSuitability.warning}</span>
             </div>
           )}
 
           {/* Operational Rationale from Engine */}
-          <div className="p-3 rounded-lg bg-white border border-[#E8E6E1] text-xs text-[#252A30] space-y-1.5 leading-relaxed">
-            <div className="flex items-center gap-1.5 font-bold text-[#252A30]">
-              <ShieldCheck className="w-4 h-4 text-[#536A82]" />
+          <div className="p-2.5 rounded-[8px] bg-[#F7F8FA] border border-[#E4E8EC] text-xs text-[#18232D] space-y-1 leading-relaxed">
+            <div className="flex items-center gap-1.5 font-semibold text-[#18232D]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#375A6B]" />
               <span>Operational Rationale:</span>
             </div>
-            <p className="text-[#757B81] text-[11px]">
+            <p className="text-[#6B7782] text-[11px]">
               {recommendation?.explanation ||
-                `${selectedTeam.name} selected. Capacity of ${selectedTeam.capacity} meets incident requirement.`}
+                `${selectedTeam.name} allocated. Capacity of ${selectedTeam.capacity} fulfills requirements.`}
             </p>
           </div>
 
-          {/* Safety First Principle */}
-          <div className="text-[11px] text-[#757B81] italic bg-[#F7F6F2] p-2.5 rounded-lg border border-[#E8E6E1]">
-            <strong className="text-[#252A30]">Safety First Principle: </strong>
-            {recommendation?.safetyFirstPrinciple ||
-              'Life safety and medical urgency took precedence over financial cost.'}
-          </div>
-
-          {/* Estimated Cost vs Life Priority */}
-          <div className="flex items-center justify-between text-xs pt-2 border-t border-[#E8E6E1]">
-            <span className="text-[#757B81] flex items-center gap-1">
-              <Coins className="w-3.5 h-3.5 text-[#92979D]" />
-              Estimated Consumable Fuel Burn:
+          {/* 4. Estimated Dispatch Cost */}
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E4E8EC]">
+            <span className="text-[#6B7782] flex items-center gap-1">
+              <Coins className="w-3.5 h-3.5 text-[#8B959E]" />
+              Estimated Consumable Cost:
             </span>
-            <span className="font-mono font-bold text-[#252A30] text-xs">
+            <span className="font-mono font-semibold text-[#18232D] text-xs tabular-nums">
               {formatPkr(costPkr)}
             </span>
           </div>
 
-          {/* Alternative Eligible Teams with Instant Diff Comparison */}
+          {/* Alternative Eligible Teams (Top 2 at a glance) */}
           {recommendation && recommendation.alternativeTeams.length > 0 && (
-            <div className="pt-2 border-t border-[#E8E6E1] space-y-1.5">
+            <div className="pt-2 border-t border-[#E4E8EC] space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#252A30]">
+                <span className="text-[11px] font-semibold text-[#18232D]">
                   Alternative Eligible Units ({recommendation.alternativeTeams.length}):
                 </span>
-                <span className="text-[10px] text-[#757B81]">Click to compare & select</span>
+                {onToggleFleetDrawer && (
+                  <button
+                    type="button"
+                    onClick={onToggleFleetDrawer}
+                    className="text-[10px] text-[#375A6B] hover:underline font-medium"
+                  >
+                    View All Fleet
+                  </button>
+                )}
               </div>
+
               <div className="flex flex-wrap gap-1.5">
-                {recommendation.alternativeTeams.map((alt) => {
+                {recommendation.alternativeTeams.slice(0, 3).map((alt) => {
                   const isCurrent = selectedTeam.id === alt.team.id;
                   const altCost = alt.estimatedCostPkr ?? 0;
                   const altEta = alt.simulatedEtaMinutes ?? 0;
@@ -364,14 +364,14 @@ export function AssignmentRecommendationPanel({
                         onSelectTeam(alt.team);
                         setShowOverrideInput(true);
                       }}
-                      className={`text-[11px] px-3 py-1.5 rounded-lg border font-medium transition-all text-left flex items-center gap-2 ${
+                      className={`text-[11px] px-2.5 py-1.5 rounded-[8px] border transition-colors text-left flex items-center gap-2 cursor-pointer ${
                         isCurrent
-                          ? 'bg-[#536A82] text-white border-[#536A82] shadow-2xs font-bold'
-                          : 'bg-white text-[#252A30] border-[#E8E6E1] hover:border-[#536A82] hover:bg-[#EDF1F5]/40'
+                          ? 'bg-[#375A6B] text-white border-[#375A6B] font-semibold'
+                          : 'bg-white text-[#18232D] border-[#E4E8EC] hover:bg-[#F7F8FA] hover:border-[#CBD5E1]'
                       }`}
                     >
                       <span>{alt.team.name}</span>
-                      <span className={`text-[10px] font-mono ${isCurrent ? 'text-[#EDF1F5]' : 'text-[#757B81]'}`}>
+                      <span className={`text-[10px] font-mono tabular-nums ${isCurrent ? 'text-[#EAF0F4]' : 'text-[#6B7782]'}`}>
                         ~{altEta}m • {formatPkr(altCost)}
                       </span>
                     </button>
@@ -381,23 +381,22 @@ export function AssignmentRecommendationPanel({
             </div>
           )}
 
-          {/* Human Override Reason Input (when choosing alternative) */}
+          {/* Human Override Justification */}
           {(isSelectedTeamOverride || showOverrideInput) && (
-            <div className="pt-2 border-t border-[#A87426]/30 space-y-2 bg-[#FFF2DD]/70 p-3 rounded-xl border border-[#A87426]/20">
+            <div className="pt-2 border-t border-[#A87528]/25 space-y-2 bg-[#FFF4E3] p-3 rounded-[8px] border border-[#A87528]/25">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-[#A87426] block">
-                  Human Override Justification (Logged to Database Mission Audit):
+                <label className="text-[11px] font-semibold text-[#A87528] block">
+                  Human Override Justification (Logged to Audit Trail):
                 </label>
-                <span className="text-[10px] text-[#A87426] font-mono font-bold">Mandatory</span>
+                <span className="text-[10px] text-[#A87528] font-mono font-semibold">Required</span>
               </div>
               <input
                 type="text"
                 placeholder="e.g. Field staging requested team callsign; secondary road blockage..."
                 value={overrideReason}
                 onChange={(e) => setOverrideReason(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg border border-[#A87426]/30 bg-white text-xs text-[#252A30] placeholder-[#92979D] focus:outline-none focus:ring-1 focus:ring-[#536A82] font-medium"
+                className="w-full px-3 py-1.5 rounded-[8px] border border-[#A87528]/30 bg-white text-xs text-[#18232D] placeholder-[#8B959E] focus:outline-none focus:ring-1 focus:ring-[#375A6B] font-medium"
               />
-              {/* Quick justification chips */}
               <div className="flex flex-wrap gap-1 pt-1">
                 {['Field radio request', 'Closer secondary staging', 'Pre-allocated fuel reserves'].map(
                   (chip) => (
@@ -405,7 +404,7 @@ export function AssignmentRecommendationPanel({
                       key={chip}
                       type="button"
                       onClick={() => setOverrideReason(chip)}
-                      className="text-[10px] px-2 py-0.5 rounded bg-[#FFF2DD] text-[#A87426] border border-[#A87426]/20 hover:bg-[#FFF2DD]/90 transition-colors"
+                      className="text-[10px] px-2 py-0.5 rounded-[4px] bg-white text-[#A87528] border border-[#A87528]/25 hover:bg-[#FFF4E3] transition-colors"
                     >
                       +{chip}
                     </button>
@@ -416,17 +415,17 @@ export function AssignmentRecommendationPanel({
           )}
         </div>
       ) : (
-        <div className="p-6 rounded-xl border border-dashed border-[#B74349]/40 bg-[#FAE8E7]/30 text-center text-xs text-[#B74349] space-y-1">
-          <AlertOctagon className="w-6 h-6 text-[#B74349] mx-auto" />
-          <h4 className="font-bold text-sm">No Feasible Rescue Team Available</h4>
-          <p className="text-[11px] text-[#757B81]">
-            All active units are either committed or lack the mandatory capabilities. Refer to the Unserved Emergencies panel below for escalation.
+        <div className="p-5 rounded-[10px] border border-dashed border-[#BC414A]/30 bg-[#FBECEE]/40 text-center text-xs text-[#BC414A] space-y-1">
+          <AlertOctagon className="w-5 h-5 text-[#BC414A] mx-auto" />
+          <h4 className="font-semibold text-sm">No Feasible Rescue Unit Available</h4>
+          <p className="text-[11px] text-[#6B7782]">
+            All active units are engaged or lack mandatory equipment. View the Unserved tab to flag for mutual-aid escalation.
           </p>
         </div>
       )}
 
-      {/* Dispatch Action Button */}
-      <div>
+      {/* 6. Approval Action Button */}
+      <div className="pt-1">
         <button
           onClick={() => {
             if (selectedTeam) {
@@ -434,20 +433,20 @@ export function AssignmentRecommendationPanel({
             }
           }}
           disabled={!selectedTeam || isAssigned || isDispatching}
-          className={`w-full py-3.5 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all ${
+          className={`w-full py-3 px-4 rounded-[10px] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer ${
             !selectedTeam || isAssigned || isDispatching
-              ? 'bg-[#E8E6E1] text-[#92979D] cursor-not-allowed'
-              : 'bg-[#536A82] hover:bg-[#40566D] text-white active:scale-[0.99]'
+              ? 'bg-[#E4E8EC] text-[#8B959E] cursor-not-allowed'
+              : 'bg-[#375A6B] hover:bg-[#294858] text-white shadow-subtle'
           }`}
         >
           {isDispatching ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Verifying & Executing Database Transaction...</span>
+              <span>Authorizing Transaction...</span>
             </>
           ) : isAssigned ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-[#92979D]" />
+              <CheckCircle2 className="w-4 h-4 text-[#8B959E]" />
               <span>Incident Already Assigned</span>
             </>
           ) : (
@@ -458,8 +457,8 @@ export function AssignmentRecommendationPanel({
           )}
         </button>
 
-        <p className="text-[10px] text-center text-[#757B81] mt-2">
-          Verified Dispatcher Mode: Calls transactional RPC confirm_assignment on Supabase with server-side validation.
+        <p className="text-[10px] text-center text-[#8B959E] mt-2">
+          Verified Dispatcher Mode: Executes atomic RPC confirmation with live craft locking.
         </p>
       </div>
     </div>

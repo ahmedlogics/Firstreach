@@ -7,17 +7,25 @@ import {
   Footprints,
   Radio,
   Zap,
+  ChevronDown,
+  ChevronUp,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface SilenceEscalationTimelineProps {
   onTriggerEscalation?: () => Promise<void>;
   isEscalating?: boolean;
+  uncontactedCount?: number;
+  className?: string;
 }
 
 export function SilenceEscalationTimeline({
   onTriggerEscalation,
   isEscalating = false,
+  uncontactedCount = 0,
+  className = '',
 }: SilenceEscalationTimelineProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [activeStep, setActiveStep] = useState(2);
 
   const escalationSteps = [
@@ -31,7 +39,6 @@ export function SilenceEscalationTimeline({
         'Household is sent an automated welfare ping. Silence is safely treated as battery-saving, mobile network lag, or power conservation.',
       outcome: 'No emergency declared. Re-poll scheduled.',
       icon: Clock,
-      color: 'border-[#E8E6E1] text-[#252A30] bg-[#F7F6F2]',
     },
     {
       step: 2,
@@ -43,7 +50,6 @@ export function SilenceEscalationTimeline({
         'If water level is projected to rise within 6 hours, system attempts voice call and notifies registered verified neighbors in same sector.',
       outcome: 'Flagged for outreach. Not counted as confirmed disaster victim.',
       icon: Radio,
-      color: 'border-[#A87426]/30 text-[#A87426] bg-[#FFF2DD]',
     },
     {
       step: 3,
@@ -55,7 +61,6 @@ export function SilenceEscalationTimeline({
         'System automatically generates a door-to-door welfare check for mobile field scouts. Avoids deploying precious swiftwater craft blindly.',
       outcome: 'Field scout visits location to ascertain physical condition.',
       icon: Footprints,
-      color: 'border-[#536A82]/30 text-[#536A82] bg-[#EDF1F5]',
     },
     {
       step: 4,
@@ -67,36 +72,42 @@ export function SilenceEscalationTimeline({
         'Only once field scout physically confirms individuals are trapped or in medical distress does it enter the boat/vehicle dispatch pipeline.',
       outcome: 'Assigned to nearest qualified rescue team with target ETA.',
       icon: ShieldCheck,
-      color: 'border-[#B74349]/30 text-[#B74349] bg-[#FAE8E7]',
     },
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E8E6E1] shadow-xs p-5 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8E6E1]">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-[#252A30]">
-              Silence Escalation Protocol
-            </h3>
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EDF1F5] text-[#536A82] border border-[#536A82]/20">
-              Proactive Outreach Logic
-            </span>
+    <div
+      className={`bg-white rounded-xl border border-[#E4E8EC] shadow-subtle p-3.5 sm:p-4 space-y-3 ${className}`}
+    >
+      {/* Collapsed Compact State */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-[8px] bg-[#EAF0F4] text-[#375A6B] shrink-0">
+            <Radio className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[#18232D]">
+                Silence Escalation Protocol
+              </h3>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-[#FFF4E3] text-[#A87528] border border-[#A87426]/20">
+                Tier 2 Outreach Priority
+              </span>
+            </div>
+            <p className="text-xs text-[#6B7782] mt-0.5">
+              Current stage: 6–18h silence &bull; {uncontactedCount} households awaiting verification &bull; <strong className="text-[#18232D]">Silence &ne; Disaster Emergency</strong>
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="text-xs text-[#757B81] bg-[#F7F6F2] px-3 py-1.5 rounded-lg border border-[#E8E6E1] font-medium">
-            Core Rule: <strong className="text-[#252A30]">Silence &ne; Automatic Emergency</strong>
-          </div>
-
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
           {onTriggerEscalation && (
             <button
               type="button"
               disabled={isEscalating}
               onClick={onTriggerEscalation}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#536A82] hover:bg-[#40566D] disabled:bg-slate-300 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-xs font-semibold text-white bg-[#375A6B] hover:bg-[#294858] disabled:bg-[#E4E8EC] disabled:text-[#8B959E] shadow-subtle transition-colors cursor-pointer"
             >
               {isEscalating ? (
                 <>
@@ -111,89 +122,102 @@ export function SilenceEscalationTimeline({
               )}
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[8px] text-xs font-medium text-[#6B7782] hover:text-[#18232D] hover:bg-[#F7F8FA] border border-[#E4E8EC] transition-colors cursor-pointer"
+          >
+            <span>{isExpanded ? 'Hide Protocol' : 'View Protocol'}</span>
+            {isExpanded ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Interactive Step Navigator */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-        {escalationSteps.map((s) => {
-          const isSelected = activeStep === s.step;
-          const Icon = s.icon;
+      {/* Expanded Workflow Detail */}
+      {isExpanded && (
+        <div className="pt-3 border-t border-[#E4E8EC] space-y-3 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            {escalationSteps.map((s) => {
+              const isSelected = activeStep === s.step;
+              const Icon = s.icon;
 
-          return (
-            <button
-              key={s.step}
-              type="button"
-              onClick={() => setActiveStep(s.step)}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                isSelected
-                  ? 'border-[#536A82] bg-[#EDF1F5] ring-1 ring-[#536A82] shadow-xs'
-                  : 'border-[#E8E6E1] bg-[#F7F6F2] hover:bg-[#EDF1F5]/40'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#92979D]">
-                  Step 0{s.step}
-                </span>
-                <Icon
-                  className={`w-3.5 h-3.5 ${
-                    isSelected ? 'text-[#536A82]' : 'text-[#92979D]'
+              return (
+                <button
+                  key={s.step}
+                  type="button"
+                  onClick={() => setActiveStep(s.step)}
+                  className={`p-3 rounded-[10px] border text-left transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'border-[#375A6B] bg-[#F7F8FA] ring-1 ring-[#375A6B]/30'
+                      : 'border-[#E4E8EC] bg-white hover:bg-[#F7F8FA]'
                   }`}
-                />
-              </div>
-              <h4
-                className={`text-xs font-semibold leading-tight ${
-                  isSelected ? 'text-[#252A30]' : 'text-[#757B81]'
-                }`}
-              >
-                {s.title}
-              </h4>
-              <p className="text-[10px] text-[#92979D] mt-1 truncate">
-                {s.timeframe}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected Step Deep Dive Card */}
-      {(() => {
-        const current = escalationSteps.find((s) => s.step === activeStep)!;
-        const Icon = current.icon;
-
-        return (
-          <div
-            className={`p-4 rounded-xl border ${current.color} space-y-2.5 text-xs animate-in fade-in duration-150`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="font-bold text-sm">{current.title}</span>
-              </div>
-              <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white/90 border border-current/20">
-                {current.timeframe}
-              </span>
-            </div>
-
-            <p className="leading-relaxed">{current.description}</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-current/15">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
-                  Automated Outreach Action:
-                </span>
-                <span className="font-semibold">{current.action}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
-                  Triage Pipeline Result:
-                </span>
-                <span className="font-semibold">{current.outcome}</span>
-              </div>
-            </div>
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono font-semibold uppercase text-[#8B959E]">
+                      Stage 0{s.step}
+                    </span>
+                    <Icon
+                      className={`w-3.5 h-3.5 ${
+                        isSelected ? 'text-[#375A6B]' : 'text-[#8B959E]'
+                      }`}
+                    />
+                  </div>
+                  <h4
+                    className={`text-xs font-semibold leading-tight ${
+                      isSelected ? 'text-[#18232D]' : 'text-[#6B7782]'
+                    }`}
+                  >
+                    {s.title}
+                  </h4>
+                  <p className="text-[10px] text-[#8B959E] mt-1 truncate">
+                    {s.timeframe}
+                  </p>
+                </button>
+              );
+            })}
           </div>
-        );
-      })()}
+
+          {/* Active Stage Deep Dive */}
+          {(() => {
+            const step = escalationSteps.find((s) => s.step === activeStep)!;
+            const StepIcon = step.icon;
+
+            return (
+              <div className="p-3.5 rounded-[10px] bg-[#F7F8FA] border border-[#E4E8EC] text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <StepIcon className="w-4 h-4 text-[#375A6B]" />
+                    <span className="font-semibold text-[#18232D]">
+                      {step.title} ({step.timeframe})
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-white border border-[#E4E8EC] text-[#18232D]">
+                    {step.riskTier}
+                  </span>
+                </div>
+                <p className="text-[#6B7782] leading-relaxed">
+                  {step.description}
+                </p>
+                <div className="flex flex-wrap items-center gap-4 text-[11px] pt-1 border-t border-[#E4E8EC]">
+                  <span>
+                    <strong className="text-[#18232D]">Triggered Action: </strong>
+                    <span className="text-[#6B7782]">{step.action}</span>
+                  </span>
+                  <span>
+                    <strong className="text-[#18232D]">Operational Outcome: </strong>
+                    <span className="text-[#6B7782]">{step.outcome}</span>
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }

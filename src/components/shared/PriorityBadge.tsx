@@ -27,10 +27,10 @@ export function PriorityBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-md border font-medium ${meta.badge} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-[6px] border font-medium ${meta.badge} ${sizeClasses} ${className}`}
       title={`Calculated Priority Score: ${score}/100. Combines time-to-harm, mobility factors, medical necessity, and flood crest telemetry.`}
     >
-      <Flame className={`w-3.5 h-3.5 shrink-0 ${score >= 90 ? 'text-[#B74349]' : score >= 70 ? 'text-[#A87426]' : 'text-[#536A82]'}`} />
+      <Flame className={`w-3.5 h-3.5 shrink-0 ${score >= 90 ? 'text-[#BC414A]' : score >= 70 ? 'text-[#A87528]' : score >= 40 ? 'text-[#375A6B]' : 'text-[#258167]'}`} />
       <span>{meta.level}</span>
       {showScore && (
         <span className="font-mono tabular-nums font-bold border-l border-current/20 pl-1.5 ml-0.5">
