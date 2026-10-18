@@ -70,6 +70,9 @@ export interface ReportRepository {
   ): Promise<IncidentRecord>;
   getIncidentById(id: string): Promise<IncidentRecord | null>;
   findEarliestReportIdByIncidentId(incidentId: string): Promise<string | null>;
+  listReportsByIncident(
+    incidentId: string
+  ): Promise<Array<Pick<ReportRecord, 'id' | 'incident_id' | 'payload'> & { received_at?: string }>>;
   listLatest(limit?: number): Promise<Array<ReportRecord & { incident?: IncidentRecord | null }>>;
 }
 
@@ -172,6 +175,8 @@ export class MemoryReportRepository implements ReportRepository {
         medical_urgent: inc.medical_urgent,
         mobility_help: inc.mobility_help,
         verification_status: inc.verification_status,
+        priority_score: inc.priority_score,
+        priority_reason: inc.priority_reason,
       }));
   }
 
@@ -208,9 +213,17 @@ export class MemoryReportRepository implements ReportRepository {
       if (incomingReport) {
         // Re-run mergeRaiseOnly on fresh values and retry once
         const remerged = mergeRaiseOnly(current, incomingReport);
+        const finalScore = Math.max(current.priority_score ?? 0, updates.priority_score ?? 0);
+        const finalReason =
+          (updates.priority_score ?? 0) > (current.priority_score ?? 0)
+            ? (updates.priority_reason ?? current.priority_reason)
+            : current.priority_reason;
+
         const retried: IncidentRecord = {
           ...current,
           ...remerged.updatedFields,
+          priority_score: finalScore,
+          priority_reason: finalReason,
           updated_at: new Date().toISOString(),
         };
         this.incidents[idx] = retried;
@@ -245,6 +258,19 @@ export class MemoryReportRepository implements ReportRepository {
         incident: inc,
       };
     });
+  }
+
+  async listReportsByIncident(
+    incidentId: string
+  ): Promise<Array<Pick<ReportRecord, 'id' | 'incident_id' | 'payload'> & { received_at?: string }>> {
+    return this.reports
+      .filter((r) => r.incident_id === incidentId)
+      .map((r) => ({
+        id: r.id,
+        incident_id: r.incident_id,
+        payload: r.payload,
+        received_at: r.received_at,
+      }));
   }
 }
 
@@ -380,7 +406,7 @@ export class SupabaseReportRepository implements ReportRepository {
     const { data, error } = await client
       .from('incidents')
       .select(
-        'id, zone_id, household_id, lat, lng, status, created_at, updated_at, flood_severity, people_count, medical_urgent, mobility_help, verification_status'
+        'id, zone_id, household_id, lat, lng, status, created_at, updated_at, flood_severity, people_count, medical_urgent, mobility_help, verification_status, priority_score, priority_reason'
       )
       .gte('created_at', cutoff)
       .in('status', ['open', 'assigned', 'in_progress']);
@@ -451,10 +477,18 @@ export class SupabaseReportRepository implements ReportRepository {
         }
         // Re-run mergeRaiseOnly on the fresh values to guarantee we only raise
         const remerged = mergeRaiseOnly(fresh, incomingReport);
+        const finalScore = Math.max(fresh.priority_score ?? 0, updates.priority_score ?? 0);
+        const finalReason =
+          (updates.priority_score ?? 0) > (fresh.priority_score ?? 0)
+            ? (updates.priority_reason ?? fresh.priority_reason)
+            : fresh.priority_reason;
+
         const retryResult = await client
           .from('incidents')
           .update({
             ...remerged.updatedFields,
+            priority_score: finalScore,
+            priority_reason: finalReason,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
@@ -521,6 +555,22 @@ export class SupabaseReportRepository implements ReportRepository {
       incident: r.incident_id ? incidentMap[r.incident_id] ?? null : null,
     }));
   }
+
+  async listReportsByIncident(
+    incidentId: string
+  ): Promise<Array<Pick<ReportRecord, 'id' | 'incident_id' | 'payload'> & { received_at?: string }>> {
+    const client = await this.getClient();
+    const { data, error } = await client
+      .from('reports')
+      .select('id, incident_id, payload, received_at')
+      .eq('incident_id', incidentId);
+
+    if (error) {
+      throw new Error(`Failed to list reports by incident: ${error.message}`);
+    }
+
+    return (data || []) as Array<Pick<ReportRecord, 'id' | 'incident_id' | 'payload'> & { received_at?: string }>;
+  }
 }
 
 let activeRepository: ReportRepository = new SupabaseReportRepository();
@@ -550,5 +600,6 @@ export const reportRepository: ReportRepository = {
     activeRepository.updateIncident(id, updates, expectedUpdatedAt, incomingReport),
   getIncidentById: (id) => activeRepository.getIncidentById(id),
   findEarliestReportIdByIncidentId: (incidentId) => activeRepository.findEarliestReportIdByIncidentId(incidentId),
+  listReportsByIncident: (incidentId) => activeRepository.listReportsByIncident(incidentId),
   listLatest: (limit) => activeRepository.listLatest(limit),
 };
