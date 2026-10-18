@@ -103,6 +103,7 @@ export async function GET() {
  * 9. On unexpected errors return 500 { ok:false, error:"Could not save report" } without stack traces or internals.
  */
 export async function POST(request: NextRequest) {
+  let insertedReportId: string | null = null;
   try {
     // 1. Reject bodies over 20 KB with 413
     const contentLength = request.headers.get('content-length');
@@ -219,6 +220,7 @@ export async function POST(request: NextRequest) {
       possible_duplicate_of: null,
       needs_review: missingFields.length > 0,
     });
+    insertedReportId = insertedReport.id;
 
     // 6. Run findPossibleDuplicate. If found: link to incident, set needs_review & possible_duplicate_of, apply mergeRaiseOnly
     const recentIncidents = await reportRepository.listRecentIncidents(2);
@@ -246,10 +248,15 @@ export async function POST(request: NextRequest) {
         input
       );
 
+      // Find the earlier report id associated with this incident
+      const earlierReportId =
+        (await reportRepository.findEarliestReportIdByIncidentId(matchedIncident.id)) ||
+        matchedIncident.id;
+
       await reportRepository.updateReport(insertedReport.id, {
         incident_id: matchedIncident.id,
         needs_review: true,
-        possible_duplicate_of: matchedIncident.id,
+        possible_duplicate_of: earlierReportId,
       });
 
       return NextResponse.json(
@@ -259,7 +266,7 @@ export async function POST(request: NextRequest) {
           incidentId: matchedIncident.id,
           verificationStatus: updatedIncident.verification_status,
           needsReview: true,
-          possibleDuplicateOf: matchedIncident.id,
+          possibleDuplicateOf: earlierReportId,
           missingFields,
           priorityScore: updatedIncident.priority_score,
           priorityReason: updatedIncident.priority_reason,
@@ -302,6 +309,18 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch {
+    // If the original report was already inserted before downstream incident failure,
+    // ensure the orphan report is preserved in place with needs_review = true
+    if (insertedReportId) {
+      try {
+        await reportRepository.updateReport(insertedReportId, {
+          needs_review: true,
+        });
+      } catch {
+        // Best effort
+      }
+    }
+
     // 9. On unexpected errors return 500 { ok:false, error:"Could not save report" } without stack traces or internals
     return NextResponse.json(
       { ok: false, error: 'Could not save report' },
