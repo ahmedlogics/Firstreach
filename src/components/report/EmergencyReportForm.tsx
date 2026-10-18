@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { emergencyReportSchema } from '@/lib/reports/schema';
 import { ReportFormData, ReportSuccessResult, ZoneItem } from './types';
 import { ReportConfirmationModal } from './ReportConfirmationModal';
+import { offlineReportQueue } from '@/lib/reports/offlineQueue';
 import {
   MapPin,
   User,
@@ -148,9 +149,10 @@ export function EmergencyReportForm({
     setGpsError(null);
   };
 
-  // 5. Validation and submission error state
+  // 5. Validation, submission error, and offline state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [offlineNotice, setOfflineNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
 
@@ -224,6 +226,7 @@ export function EmergencyReportForm({
   const handleReviewClick = (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
+    setOfflineNotice(null);
 
     if (zonesError) {
       return;
@@ -240,8 +243,23 @@ export function EmergencyReportForm({
   const executeSubmission = async () => {
     setIsSubmitting(true);
     setGeneralError(null);
+    setOfflineNotice(null);
 
     const payload = buildPayload();
+
+    // Check if device is offline prior to dispatch
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsConfirmationOpen(false);
+      setIsSubmitting(false);
+      await offlineReportQueue.enqueue(payload);
+      setOfflineNotice('Saved on this device. NOT delivered yet.');
+      const nextKey = crypto.randomUUID();
+      setIdempotencyKey(nextKey);
+      setFormData(DEFAULT_FORM_DATA(nextKey));
+      setGpsSuccess(false);
+      setGpsError(null);
+      return;
+    }
 
     try {
       const res = await fetch('/api/reports', {
@@ -260,7 +278,7 @@ export function EmergencyReportForm({
         return;
       }
 
-      // Handle HTTP 400: Validation error with field details
+      // Handle HTTP 400: Validation error with field details (Rule 2: do NOT queue 400s; show "Needs correction")
       if (res.status === 400) {
         setIsConfirmationOpen(false);
         setIsSubmitting(false);
@@ -274,9 +292,9 @@ export function EmergencyReportForm({
             }
           }
           setErrors(serverFieldErrors);
-          setGeneralError('Please correct the highlighted fields and resubmit.');
+          setGeneralError('Needs correction: please check the highlighted fields.');
         } else {
-          setGeneralError(errData.error || 'Validation failed. Please verify your report details.');
+          setGeneralError('Needs correction: ' + (errData.error || 'Validation failed.'));
         }
         return;
       }
@@ -304,6 +322,7 @@ export function EmergencyReportForm({
       setIsSubmitting(false);
       setErrors({});
       setGeneralError(null);
+      setOfflineNotice(null);
 
       // Notify parent page with verified response and coordinate flag
       onSubmitSuccess({
@@ -325,10 +344,16 @@ export function EmergencyReportForm({
       setGpsSuccess(false);
       setGpsError(null);
     } catch {
-      // Network failure / offline
+      // Network failure / connection lost: save report locally with status 'local_only' (Rule 2)
       setIsConfirmationOpen(false);
       setIsSubmitting(false);
-      setGeneralError('Could not save report. Please try again.');
+      await offlineReportQueue.enqueue(payload);
+      setOfflineNotice('Saved on this device. NOT delivered yet.');
+      const nextKey = crypto.randomUUID();
+      setIdempotencyKey(nextKey);
+      setFormData(DEFAULT_FORM_DATA(nextKey));
+      setGpsSuccess(false);
+      setGpsError(null);
     }
   };
 
@@ -337,7 +362,31 @@ export function EmergencyReportForm({
   return (
     <>
       <form onSubmit={handleReviewClick} className={`space-y-6 ${className}`}>
-        {/* TOP LEVEL ERROR BANNER (429, 500, network error) */}
+        {/* OFFLINE NOTICE BANNER (Rule 3: Saved on this device. NOT delivered yet.) */}
+        {offlineNotice && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0" />
+              <div>
+                <h5 className="font-extrabold text-xs text-amber-900 tracking-tight">
+                  Saved on this device. NOT delivered yet.
+                </h5>
+                <p className="text-[11px] text-amber-800 mt-0.5">
+                  Your emergency intake is securely stored in your browser's offline storage. It will be dispatched automatically as soon as internet connection is restored.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOfflineNotice(null)}
+              className="px-2.5 py-1 rounded-lg text-amber-800 hover:bg-amber-100 text-xs font-semibold shrink-0 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* TOP LEVEL ERROR BANNER (429, 500, server error) */}
         {generalError && (
           <div
             className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
@@ -355,8 +404,8 @@ export function EmergencyReportForm({
               <span className="font-semibold">{generalError}</span>
             </div>
 
-            {/* Offer Retry button for 500 / network error (keeps form values & same idempotencyKey) */}
-            {!generalError.includes('minute') && !generalError.includes('highlighted') && (
+            {/* Offer Retry button for 500 (keeps form values & same idempotencyKey) */}
+            {!generalError.includes('minute') && !generalError.includes('Needs correction') && (
               <button
                 type="button"
                 onClick={executeSubmission}
