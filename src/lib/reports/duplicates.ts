@@ -8,6 +8,7 @@ export interface CandidateIncident {
   lng: number | null;
   status: string;
   created_at: string;
+  updated_at?: string;
   flood_severity: number;
   people_count: number;
   medical_urgent: boolean;
