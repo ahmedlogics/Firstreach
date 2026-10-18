@@ -220,6 +220,18 @@ test('API POST /api/reports: valid submission creates incident and returns 201',
 
 test('API POST /api/reports: near duplicate links to existing incident and returns 201 with duplicate flag', async () => {
   _resetRateLimitsForTesting();
+  setReportRepository(
+    new MemoryReportRepository({
+      zones: [
+        {
+          id: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+          name: 'Demo Zone A',
+          flood_risk: 2,
+          reporting_coverage: 'adequate',
+        },
+      ],
+    })
+  );
 
   // Initial report created 10 mins ago at 24.95000, 67.05000
   const initialPayload = {
@@ -276,8 +288,69 @@ test('API POST /api/reports: near duplicate links to existing incident and retur
 
   // Must link to original incident, NOT create a new one
   assert.equal(data2.incidentId, origIncidentId);
-  assert.equal(data2.possibleDuplicateOf, origIncidentId);
+  // possibleDuplicateOf must equal the earlier REPORT id, not the incident id
+  assert.equal(data2.possibleDuplicateOf, data1.reportId);
   assert.equal(data2.needsReview, true);
   // Severity difference |3 - 1| = 2 -> must be conflicting
   assert.equal(data2.verificationStatus, 'conflicting');
+});
+
+test('API POST /api/reports: failure in createIncident returns 500 ok:false and preserves orphan report with needs_review=true', async () => {
+  _resetRateLimitsForTesting();
+
+  // Create a repository where createIncident throws an error
+  class FailingIncidentRepository extends MemoryReportRepository {
+    async createIncident(): Promise<any> {
+      throw new Error('Database disk full / constraint failure');
+    }
+  }
+
+  const failingRepo = new FailingIncidentRepository({
+    zones: [
+      {
+        id: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+        name: 'Demo Zone A',
+        flood_risk: 2,
+        reporting_coverage: 'adequate',
+      },
+    ],
+  });
+  setReportRepository(failingRepo);
+
+  const payload = {
+    zoneId: 'a9713523-1c3d-4b8e-a7b0-4435d0ac6ea9',
+    locationDescription: 'Near Main Gate, House 10',
+    observedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    reportingFor: 'myself',
+    reporterRole: 'resident',
+    floodSeverity: 2,
+    peopleCount: 3,
+    trapped: false,
+    medicalUrgent: false,
+    mobilityHelp: false,
+    lat: 24.95,
+    lng: 67.05,
+    idempotencyKey: 'idemp-fail-test-1',
+  };
+
+  const req = new NextRequest('http://localhost:3000/api/reports', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '192.168.1.99' },
+  });
+
+  const res = await postReport(req);
+  assert.equal(res.status, 500);
+  const data = await res.json();
+  assert.equal(data.ok, false);
+  assert.equal(data.error, 'Could not save report');
+
+  // Verify the report was inserted first and preserved with needs_review = true
+  const savedReport = await failingRepo.findReportByIdempotencyKey('idemp-fail-test-1');
+  assert.ok(savedReport, 'Report should be preserved in repository');
+  assert.equal(savedReport.incident_id, null, 'Incident ID should be null since incident creation failed');
+  assert.equal(savedReport.needs_review, true, 'Report must be flagged with needs_review = true');
+
+  // Restore testRepo for other tests
+  setReportRepository(testRepo);
 });
