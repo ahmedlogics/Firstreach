@@ -36,9 +36,10 @@ interface DisasterMapClientProps {
   onSelectIncident?: (incident: DbIncident) => void;
 }
 
-// Controller component to safely invalidate map size after initial render
-function MapController() {
+// Controller component to safely invalidate map size after initial render and handle center updates
+function MapController({ center }: { center: [number, number] }) {
   const map = useMap();
+
   useEffect(() => {
     if (!map) return;
     const timer = setTimeout(() => {
@@ -47,9 +48,23 @@ function MapController() {
       } catch (e) {
         // Safe fallback
       }
-    }, 200);
+    }, 250);
     return () => clearTimeout(timer);
   }, [map]);
+
+  useEffect(() => {
+    if (!map) return;
+    try {
+      const current = map.getCenter();
+      const dist = Math.abs(current.lat - center[0]) + Math.abs(current.lng - center[1]);
+      if (dist > 0.001) {
+        map.setView(center, map.getZoom(), { animate: true });
+      }
+    } catch (e) {
+      // Safe fallback
+    }
+  }, [map, center]);
+
   return null;
 }
 
@@ -219,13 +234,13 @@ export default function DisasterMapClient({
 
       {/* Leaflet Map Container */}
       <MapContainer
-        key={`disaster-map-${initialCenter[0]}-${initialCenter[1]}`}
+        key="firstreach-disaster-map-canvas"
         center={initialCenter}
         zoom={13}
         scrollWheelZoom={true}
         style={{ width: '100%', height: '100%', background: '#0B1423' }}
       >
-        <MapController />
+        <MapController center={initialCenter} />
 
         {/* OpenStreetMap Tile Layer */}
         <TileLayer
