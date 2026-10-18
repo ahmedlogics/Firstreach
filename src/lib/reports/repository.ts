@@ -69,6 +69,7 @@ export interface ReportRepository {
     >
   ): Promise<IncidentRecord>;
   getIncidentById(id: string): Promise<IncidentRecord | null>;
+  findEarliestReportIdByIncidentId(incidentId: string): Promise<string | null>;
   listLatest(limit?: number): Promise<Array<ReportRecord & { incident?: IncidentRecord | null }>>;
 }
 
@@ -129,6 +130,15 @@ export class MemoryReportRepository implements ReportRepository {
   async getIncidentById(id: string): Promise<IncidentRecord | null> {
     const found = this.incidents.find((i) => i.id === id);
     return found ? { ...found } : null;
+  }
+
+  async findEarliestReportIdByIncidentId(incidentId: string): Promise<string | null> {
+    const matching = this.reports.filter((r) => r.incident_id === incidentId);
+    if (matching.length === 0) return null;
+    matching.sort(
+      (a, b) => new Date(a.received_at).getTime() - new Date(b.received_at).getTime()
+    );
+    return matching[0].id;
   }
 
   async findReportByIdempotencyKey(key: string): Promise<ReportRecord | null> {
@@ -330,6 +340,22 @@ export class SupabaseReportRepository implements ReportRepository {
     return (data as IncidentRecord) || null;
   }
 
+  async findEarliestReportIdByIncidentId(incidentId: string): Promise<string | null> {
+    const client = await this.getClient();
+    const { data, error } = await client
+      .from('reports')
+      .select('id')
+      .eq('incident_id', incidentId)
+      .order('received_at', { ascending: true })
+      .limit(1);
+
+    if (error) {
+      throw new Error(`Failed to find earliest report for incident: ${error.message}`);
+    }
+
+    return data && data.length > 0 ? (data[0].id as string) : null;
+  }
+
   async findReportByIdempotencyKey(key: string): Promise<ReportRecord | null> {
     if (!key) return null;
 
@@ -523,5 +549,6 @@ export const reportRepository: ReportRepository = {
   updateIncident: (id, updates, expectedUpdatedAt, incomingReport) =>
     activeRepository.updateIncident(id, updates, expectedUpdatedAt, incomingReport),
   getIncidentById: (id) => activeRepository.getIncidentById(id),
+  findEarliestReportIdByIncidentId: (incidentId) => activeRepository.findEarliestReportIdByIncidentId(incidentId),
   listLatest: (limit) => activeRepository.listLatest(limit),
 };
