@@ -217,7 +217,7 @@ export default function ReportPage() {
             </div>
 
             {/* Offline Device Queue Status */}
-            <OfflineQueueList language={language} />
+            <OfflineQueueList />
 
             {/* 4-Step Guided Intake Stepper */}
             <EmergencyReportForm

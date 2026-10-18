@@ -23,7 +23,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
@@ -278,5 +278,19 @@ export default function LoginPage() {
         </div>
       </div>
     </PublicShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-4">
+          <div className="text-xs font-mono text-[#5F6B7A] animate-pulse">Loading login workspace...</div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </React.Suspense>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Shield, Menu, X, ArrowRight } from 'lucide-react';
+import { RaabtaLogo } from '@/components/shared/RaabtaLogo';
 
 export function PublicNav() {
   const pathname = usePathname();
