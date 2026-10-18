@@ -47,6 +47,14 @@ export interface TranslationDictionary {
     lngLabel: string;
     latPlaceholder: string;
     lngPlaceholder: string;
+    mapPickerTitle: string;
+    mapPickerSubtitle: string;
+    toggleMapButtonOpen: string;
+    toggleMapButtonClose: string;
+    searchPlaceholder: string;
+    pinInstruction: string;
+    zoneAutoDetected: string;
+    currentCoords: string;
   };
   sectionC: {
     num: string;
@@ -195,6 +203,14 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       lngLabel: 'Longitude (Karachi: 66.7000 to 67.5000)',
       latPlaceholder: 'e.g. 24.86300 (or leave blank)',
       lngPlaceholder: 'e.g. 67.01400 (or leave blank)',
+      mapPickerTitle: 'Interactive Location & Map Pin-Drop',
+      mapPickerSubtitle: 'Search Karachi areas or click anywhere on the map to pinpoint location for someone else',
+      toggleMapButtonOpen: 'Pick on Map',
+      toggleMapButtonClose: 'Close Map',
+      searchPlaceholder: 'Search Karachi area, landmark or street (e.g. Clifton, Gulshan, Nazimabad)...',
+      pinInstruction: 'Click anywhere on the map or drag the emergency pin to set the exact coordinates.',
+      zoneAutoDetected: 'Nearest Emergency Zone automatically selected',
+      currentCoords: 'Selected Pin Coordinates',
     },
     sectionC: {
       num: '3',
@@ -342,6 +358,14 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       lngLabel: 'طول بلد (Longitude - کراچی: 66.7000 تا 67.5000)',
       latPlaceholder: 'مثال: 24.86300 (یا خالی چھوڑیں)',
       lngPlaceholder: 'مثال: 67.01400 (یا خالی چھوڑیں)',
+      mapPickerTitle: 'نقشے پر مقام کا درست انتخاب اور پن ڈراپ',
+      mapPickerSubtitle: 'کسی دوسرے شخص کے لیے علاقہ تلاش کریں یا براہ راست نقشے پر کلک کر کے لوکیشن منتخب کریں۔',
+      toggleMapButtonOpen: 'نقشے پر منتخب کریں',
+      toggleMapButtonClose: 'نقشہ بند کریں',
+      searchPlaceholder: 'کراچی کا علاقہ، نشانی یا گلی تلاش کریں (مثال: کلفٹن، گلشن، ناظم آباد، صدر)...',
+      pinInstruction: 'نقشے پر کہیں بھی کلک کریں یا پن کو درست جگہ پر لے جائیں۔',
+      zoneAutoDetected: 'قریبی ایمرجنسی زون خودکار طور پر منتخب ہو گیا ہے',
+      currentCoords: 'منتخب کردہ کوآرڈینیٹس',
     },
     sectionC: {
       num: '۳',
@@ -489,6 +513,14 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       lngLabel: 'ڊگھائي ڦاڪ (Longitude - ڪراچي: 66.7000 کان 67.5000)',
       latPlaceholder: 'مثال: 24.86300 (يا خالي ڇڏيو)',
       lngPlaceholder: 'مثال: 67.01400 (يا خالي ڇڏيو)',
+      mapPickerTitle: 'نقشي تي هنڌ جي صحيح چونڊ ۽ پن ڊراپ',
+      mapPickerSubtitle: 'ٻئي ڪنهن ماڻهو لاءِ علائقو ڳوليو يا نقشي تي ڪلڪ ڪري لوڪيشن طئي ڪريو.',
+      toggleMapButtonOpen: 'نقشي تي چونڊيو',
+      toggleMapButtonClose: 'نقشو بند ڪريو',
+      searchPlaceholder: 'ڪراچي جو علائقو، نشاني يا گهٽي ڳوليو (مثال: ڪلفٽن، گلشن، ناظم آباد، صدر)...',
+      pinInstruction: 'نقشي تي ڪٿي به ڪلڪ ڪريو يا پن کي صحيح هنڌ تي وٺي وڃو.',
+      zoneAutoDetected: 'ويجهو هنگامي علائقو پاڻمرادو چونڊجي ويو آهي',
+      currentCoords: 'چونڊيل ڪوآرڊينيٽس',
     },
     sectionC: {
       num: '۳',

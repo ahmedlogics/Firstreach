@@ -21,9 +21,11 @@ import {
   CheckCircle,
   X,
   Navigation,
+  Map,
 } from 'lucide-react';
 
 import { Language, TRANSLATIONS } from '@/lib/reports/i18n';
+import { LocationMapPicker } from './LocationMapPicker';
 
 interface EmergencyReportFormProps {
   onSubmitSuccess: (result: ReportSuccessResult) => void;
@@ -181,6 +183,48 @@ export function EmergencyReportForm({
     setFormData((prev) => ({ ...prev, lat: null, lng: null }));
     setGpsSuccess(false);
     setGpsError(null);
+  };
+
+  // Interactive Map & Pin-drop state
+  const [isMapOpen, setIsMapOpen] = useState<boolean>(false);
+
+  const handleMapLocationSelect = (newLat: number | null, newLng: number | null, areaName?: string) => {
+    setFormData((prev) => {
+      let desc = prev.locationDescription;
+      if (areaName && !desc.trim()) {
+        desc = areaName;
+      }
+      return {
+        ...prev,
+        lat: newLat,
+        lng: newLng,
+        locationDescription: desc,
+      };
+    });
+    setGpsSuccess(false);
+    setGpsError(null);
+    if (errors.lat || errors.lng) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.lat;
+        delete copy.lng;
+        return copy;
+      });
+    }
+  };
+
+  const handleMapZoneSelect = (newZoneId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      zoneId: newZoneId,
+    }));
+    if (errors.zoneId) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.zoneId;
+        return copy;
+      });
+    }
   };
 
   // 5. Validation, submission error, and offline state
@@ -516,9 +560,10 @@ export function EmergencyReportForm({
                   type="radio"
                   name="reportingFor"
                   checked={formData.reportingFor === 'someone_else'}
-                  onChange={() =>
-                    setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }))
-                  }
+                  onChange={() => {
+                    setFormData((prev) => ({ ...prev, reportingFor: 'someone_else' }));
+                    setIsMapOpen(true);
+                  }}
                   className="accent-[#14B8A6]"
                 />
                 <span>{t.sectionA.reportingForSomeoneElse}</span>
@@ -722,15 +767,30 @@ export function EmergencyReportForm({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Pick on Map button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMapOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-xs transition-colors cursor-pointer ${
+                    isMapOpen
+                      ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+                      : 'bg-white border-teal-300 text-[#0F766E] hover:bg-teal-50'
+                  }`}
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  <span>{isMapOpen ? t.sectionB.toggleMapButtonClose : t.sectionB.toggleMapButtonOpen}</span>
+                </button>
+
+                {/* Use My Location button */}
                 <button
                   type="button"
                   onClick={handleUseMyLocation}
                   disabled={gpsLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-teal-200 text-[#0F766E] hover:bg-teal-50 text-xs font-bold shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
                 >
                   <Navigation
-                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-teal-600' : 'text-teal-600'}`}
+                    className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin text-teal-600' : 'text-slate-500'}`}
                   />
                   <span>{gpsLoading ? t.sectionB.acquiringGps : t.sectionB.useGpsButton}</span>
                 </button>
@@ -748,6 +808,20 @@ export function EmergencyReportForm({
                 )}
               </div>
             </div>
+
+            {/* Inline Interactive Map with Search & Pin-Drop */}
+            {isMapOpen && (
+              <LocationMapPicker
+                lat={formData.lat}
+                lng={formData.lng}
+                zones={zones}
+                selectedZoneId={formData.zoneId}
+                onLocationSelect={handleMapLocationSelect}
+                onZoneSelect={handleMapZoneSelect}
+                language={language}
+                t={t}
+              />
+            )}
 
             {gpsSuccess && (
               <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1.5 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
